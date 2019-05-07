@@ -5,15 +5,16 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/ericm/yup/cmd"
 )
 
 const configFileName string = "yay.conf"
 
 // Global variables
 var (
-	configDir string
-	cacheDir  string
-
+	configDir  string
+	cacheDir   string
 	configFile string
 )
 
@@ -30,7 +31,7 @@ func main() {
 
 	exitError(paths())
 	exitError(makePaths())
-	exitError(initConfig())
+	exitError(cmd.Execute())
 }
 
 // Exits the program upon a core function returning an error.
@@ -80,16 +81,5 @@ func makePaths() error {
 		return err
 	}
 
-	return nil
-}
-
-func initConfig() error {
-	file, err := os.Open(configDir)
-
-	if !os.IsNotExist(err) && err != nil {
-		return fmt.Errorf("Failed to open config file '%s': %s", file, err)
-	}
-
-	defer file.Close()
 	return nil
 }
