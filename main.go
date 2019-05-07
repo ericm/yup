@@ -9,7 +9,7 @@ import (
 	"github.com/ericm/yup/cmd"
 )
 
-const configFileName string = "yay.conf"
+const configFileName = "yay.conf"
 
 // Global variables
 var (

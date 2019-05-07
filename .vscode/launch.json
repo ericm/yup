@@ -9,6 +9,24 @@
             "program": "${workspaceFolder}/main.go",
             "env": {},
             "args": []
+        },
+        {
+            "name": "test",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": ["test"]
+        },
+        {
+            "name": "-S test",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": ["-S", "test"]
         }
     ]
 }
