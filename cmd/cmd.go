@@ -11,6 +11,7 @@ import (
 type Arguments struct {
 	args         []string
 	sendToPacman bool
+	sync         bool
 }
 
 type pair struct {
@@ -26,6 +27,7 @@ func init() {
 	commandShort = mapset.NewSet()
 	commandLong = mapset.NewSet()
 
+	// Initial definition of custom commands
 	commands = []pair{
 		pair{"h", "help"},
 		pair{"v", "version"},
@@ -37,7 +39,17 @@ func init() {
 	}
 }
 
-var arguments = &Arguments{sendToPacman: false}
+// Routes actions for custom commands
+func action(arg string) {
+	switch arg {
+	case "h":
+		fmt.Println(`Usage:
+    yay`)
+		break
+	}
+}
+
+var arguments = &Arguments{sendToPacman: false, sync: false}
 
 // Execute initialises the arguments slice and parses args
 func Execute() error {
@@ -47,12 +59,37 @@ func Execute() error {
 		// send to pacman
 		fmt.Println(arguments.args)
 	} else {
-
+		arguments.getActions()
 	}
 	return nil
 }
 
 // Arguments methods
+
+// getActions routes the actions
+func (args *Arguments) getActions() {
+	if args.sync {
+		if len(args.args) == 0 {
+			// Update
+		} else {
+			// Call search
+		}
+	} else {
+		if len(args.args[0]) == 2 {
+			// Call action router if short command
+			action(args.args[0][1:])
+		} else {
+			// Else find the custom command
+			// One should always be found due to previous checks
+			for _, command := range commands {
+				if args.args[0][2:] == command.b {
+					action(command.a)
+					return
+				}
+			}
+		}
+	}
+}
 
 // isPacman checks if the commands are custom yup commands
 func (args *Arguments) isPacman() {
@@ -65,6 +102,7 @@ func (args *Arguments) isPacman() {
 			return
 		}
 	}
+	args.sync = true
 	args.sendToPacman = false
 }
 

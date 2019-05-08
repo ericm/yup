@@ -36,6 +36,24 @@
             "program": "${workspaceFolder}/main.go",
             "env": {},
             "args": ["-Syyu"]
+        },
+        {
+            "name": "-h",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": ["-h"]
+        },
+        {
+            "name": "--help",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": ["--help"]
         }
     ]
 }
