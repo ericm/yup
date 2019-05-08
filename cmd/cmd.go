@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	mapset "github.com/deckarep/golang-set"
@@ -22,10 +23,14 @@ var commandShort mapset.Set
 var commandLong mapset.Set
 
 func init() {
+	commandShort = mapset.NewSet()
+	commandLong = mapset.NewSet()
+
 	commands = []pair{
 		pair{"h", "help"},
 		pair{"v", "version"},
 	}
+
 	for _, arg := range commands {
 		commandShort.Add(arg.a)
 		commandLong.Add(arg.b)
@@ -36,10 +41,11 @@ var arguments = &Arguments{sendToPacman: false}
 
 // Execute initialises the arguments slice and parses args
 func Execute() error {
-	arguments.args = append(arguments.args, os.Args...)
+	arguments.args = append(arguments.args, os.Args[1:]...)
 	arguments.isPacman()
 	if arguments.sendToPacman {
 		// send to pacman
+		fmt.Println(arguments.args)
 	} else {
 
 	}
@@ -47,25 +53,25 @@ func Execute() error {
 }
 
 // Arguments methods
+
+// isPacman checks if the commands are custom yup commands
 func (args *Arguments) isPacman() {
-	check := false
-	for _, arg := range os.Args {
-		if check {
-			break
-		}
+	for _, arg := range args.args {
 		if len(arg) > 2 && arg[:2] == "--" {
-			check = customLong(arg)
+			args.sendToPacman = !customLong(arg[2:])
+			return
 		} else if len(arg) > 1 && arg[:1] == "-" {
-			check = customShort(arg)
+			args.sendToPacman = !customShort(arg[1:2])
+			return
 		}
 	}
-	args.sendToPacman = !check
+	args.sendToPacman = false
 }
 
 func customLong(arg string) bool {
-	return commandLong.Contains(arg[2:])
+	return commandLong.Contains(arg)
 }
 
 func customShort(arg string) bool {
-	return commandShort.Contains(arg[1:])
+	return commandShort.Contains(arg)
 }
