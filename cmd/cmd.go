@@ -19,6 +19,10 @@ type pair struct {
 	a, b string
 }
 
+// Constants for output
+const help = `Usage:
+    yay`
+
 // Custom commands not to be passed to pacman
 var commands []pair
 var commandShort mapset.Set
@@ -33,6 +37,7 @@ func init() {
 		pair{"h", "help"},
 		pair{"v", "version"},
 		// Handle sync
+		pair{"S", "sync"},
 	}
 
 	for _, arg := range commands {
@@ -45,8 +50,11 @@ func init() {
 func action(arg string) {
 	switch arg {
 	case "h":
-		fmt.Println(`Usage:
-    yay`)
+		fmt.Println(help)
+		break
+	case "S":
+		// Handle Sync
+		arguments.syncCheck()
 		break
 	}
 }
@@ -59,15 +67,19 @@ func Execute() error {
 	arguments.isPacman()
 	if arguments.sendToPacman {
 		// send to pacman
-		allArgs := append([]string{"pacman"}, arguments.args...)
-
-		pacman := exec.Command("sudo", allArgs...)
-		pacman.Stdout, pacman.Stdin, pacman.Stderr = os.Stdout, os.Stdin, os.Stderr
-		pacman.Run()
+		sendToPacman()
 	} else {
 		arguments.getActions()
 	}
 	return nil
+}
+
+func sendToPacman() {
+	allArgs := append([]string{"pacman"}, arguments.args...)
+
+	pacman := exec.Command("sudo", allArgs...)
+	pacman.Stdout, pacman.Stdin, pacman.Stderr = os.Stdout, os.Stdin, os.Stderr
+	pacman.Run()
 }
 
 // Arguments methods
@@ -110,6 +122,34 @@ func (args *Arguments) isPacman() {
 	}
 	args.sync = true
 	args.sendToPacman = false
+}
+
+// syncCheck checks -S argument options
+func (args *Arguments) syncCheck() {
+	flag := args.args[0][1:2]
+	switch flag {
+	case "s":
+		// search
+		break
+	case "p":
+		// print
+		break
+	case "c":
+		// clean
+		break
+	case "l":
+		// list
+		break
+	case "i":
+		// info
+		break
+
+	case "u":
+		// system upgrade
+		break
+	default:
+		sendToPacman()
+	}
 }
 
 // toString for args
