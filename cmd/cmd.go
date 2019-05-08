@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	mapset "github.com/deckarep/golang-set"
 )
@@ -57,7 +58,9 @@ func Execute() error {
 	arguments.isPacman()
 	if arguments.sendToPacman {
 		// send to pacman
-		fmt.Println(arguments.args)
+		pacman := exec.Command("pacman", arguments.args...)
+		pacman.Stdout, pacman.Stdin, pacman.Stderr = os.Stdout, os.Stdin, os.Stderr
+		pacman.Run()
 	} else {
 		arguments.getActions()
 	}
@@ -104,6 +107,15 @@ func (args *Arguments) isPacman() {
 	}
 	args.sync = true
 	args.sendToPacman = false
+}
+
+// toString for args
+func (args *Arguments) toString() string {
+	var str = ""
+	for _, arg := range args.args {
+		str += " " + arg
+	}
+	return str[1:]
 }
 
 func customLong(arg string) bool {
