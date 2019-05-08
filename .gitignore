@@ -1,2 +1,6 @@
+# Binaries
 yup
 debug
+
+# Go vendor
+vendor

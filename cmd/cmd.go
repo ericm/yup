@@ -32,6 +32,7 @@ func init() {
 	commands = []pair{
 		pair{"h", "help"},
 		pair{"v", "version"},
+		// Handle sync
 	}
 
 	for _, arg := range commands {
@@ -58,7 +59,9 @@ func Execute() error {
 	arguments.isPacman()
 	if arguments.sendToPacman {
 		// send to pacman
-		pacman := exec.Command("pacman", arguments.args...)
+		allArgs := append([]string{"pacman"}, arguments.args...)
+
+		pacman := exec.Command("sudo", allArgs...)
 		pacman.Stdout, pacman.Stdin, pacman.Stderr = os.Stdout, os.Stdin, os.Stderr
 		pacman.Run()
 	} else {
