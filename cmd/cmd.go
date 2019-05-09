@@ -104,13 +104,15 @@ func (args *Arguments) getActions() error {
 	} else {
 		if args.argExist("h", "help") {
 			// Help
+			return nil
 		}
 		if args.argExist("S", "sync") {
-			args.syncCheck()
+			return args.syncCheck()
 		}
 
 		if args.argExist("V", "version") {
 			// Version
+			return nil
 		}
 	}
 	// Probs shouldn't reach this point
@@ -156,7 +158,7 @@ func (args *Arguments) syncCheck() error {
 	}
 
 	// Default case
-	return sync.Sync()
+	return sync.Sync(args.targets)
 }
 
 // Returns whether or not an arg exists
