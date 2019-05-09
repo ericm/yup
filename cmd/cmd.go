@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-
-	mapset "github.com/deckarep/golang-set"
 )
 
 // Arguments represent the args passed
@@ -25,12 +23,12 @@ const help = `Usage:
 
 // Custom commands not to be passed to pacman
 var commands []pair
-var commandShort mapset.Set
-var commandLong mapset.Set
+var commandShort map[string]bool
+var commandLong map[string]bool
 
 func init() {
-	commandShort = mapset.NewSet()
-	commandLong = mapset.NewSet()
+	commandShort = make(map[string]bool)
+	commandLong = make(map[string]bool)
 
 	// Initial definition of custom commands
 	commands = []pair{
@@ -41,8 +39,8 @@ func init() {
 	}
 
 	for _, arg := range commands {
-		commandShort.Add(arg.a)
-		commandLong.Add(arg.b)
+		commandShort[arg.a] = true
+		commandLong[arg.b] = true
 	}
 }
 
@@ -126,30 +124,45 @@ func (args *Arguments) isPacman() {
 
 // syncCheck checks -S argument options
 func (args *Arguments) syncCheck() {
-	flag := args.args[0][1:2]
-	switch flag {
-	case "s":
+	if args.argExist('s') {
 		// search
-		break
-	case "p":
-		// print
-		break
-	case "c":
-		// clean
-		break
-	case "l":
-		// list
-		break
-	case "i":
-		// info
-		break
-
-	case "u":
-		// system upgrade
-		break
-	default:
-		sendToPacman()
 	}
+	// for _, r := range flag {
+	// 	switch r {
+	// 	case 's':
+	// 		// search
+	// 		break
+	// 	case 'p':
+	// 		// print
+	// 		break
+	// 	case 'c':
+	// 		// clean
+	// 		break
+	// 	case 'l':
+	// 		// list
+	// 		break
+	// 	case 'i':
+	// 		// info
+	// 		break
+	// 	case 'u':
+	// 		// system upgrade
+	// 		break
+	// 	default:
+	// 		sendToPacman()
+	// 	}
+	// }
+}
+
+// Returns whether or not an arg exists
+func (args *Arguments) argExist(keys ...rune) bool {
+	for _, key := range keys {
+		for _, r := range args.args[0] {
+			if r == key {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // toString for args
@@ -162,9 +175,11 @@ func (args *Arguments) toString() string {
 }
 
 func customLong(arg string) bool {
-	return commandLong.Contains(arg)
+	_, exists := commandLong[arg]
+	return exists
 }
 
 func customShort(arg string) bool {
-	return commandShort.Contains(arg)
+	_, exists := commandShort[arg]
+	return exists
 }
