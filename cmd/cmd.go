@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/ericm/yup/sync"
 )
 
 // Arguments represent the args passed
@@ -11,6 +13,9 @@ type Arguments struct {
 	args         []string
 	sendToPacman bool
 	sync         bool
+	// Map of individual args
+	options map[string]bool
+	targets []string
 }
 
 type pair struct {
@@ -33,7 +38,7 @@ func init() {
 	// Initial definition of custom commands
 	commands = []pair{
 		pair{"h", "help"},
-		pair{"v", "version"},
+		pair{"V", "version"},
 		// Handle sync
 		pair{"S", "sync"},
 	}
@@ -44,30 +49,18 @@ func init() {
 	}
 }
 
-// Routes actions for custom commands
-func action(arg string) {
-	switch arg {
-	case "h":
-		fmt.Println(help)
-		break
-	case "S":
-		// Handle Sync
-		arguments.syncCheck()
-		break
-	}
-}
-
-var arguments = &Arguments{sendToPacman: false, sync: false}
+var arguments = &Arguments{sendToPacman: false, sync: false, options: make(map[string]bool), targets: []string{}}
 
 // Execute initialises the arguments slice and parses args
 func Execute() error {
 	arguments.args = append(arguments.args, os.Args[1:]...)
+	arguments.genOptions()
 	arguments.isPacman()
 	if arguments.sendToPacman {
 		// send to pacman
 		sendToPacman()
 	} else {
-		arguments.getActions()
+		return arguments.getActions()
 	}
 	return nil
 }
@@ -82,8 +75,26 @@ func sendToPacman() {
 
 // Arguments methods
 
+// Generates arguments.options
+func (args *Arguments) genOptions() {
+	for _, arg := range args.args {
+		if arg[:2] == "--" {
+			// Long command
+			args.options[arg[2:]] = true
+		} else if arg[:1] == "-" {
+			// Short command
+			for i := 1; i < len(arg); i++ {
+				args.options[arg[i:i+1]] = true
+			}
+		} else {
+			// Set targets
+			args.targets = append(args.targets, arg)
+		}
+	}
+}
+
 // getActions routes the actions
-func (args *Arguments) getActions() {
+func (args *Arguments) getActions() error {
 	if args.sync {
 		if len(args.args) == 0 {
 			// Update
@@ -91,20 +102,19 @@ func (args *Arguments) getActions() {
 			// Call search
 		}
 	} else {
-		if len(args.args[0]) == 2 {
-			// Call action router if short command
-			action(args.args[0][1:])
-		} else {
-			// Else find the custom command
-			// One should always be found due to previous checks
-			for _, command := range commands {
-				if args.args[0][2:] == command.b {
-					action(command.a)
-					return
-				}
-			}
+		if args.argExist("h", "help") {
+			// Help
+		}
+		if args.argExist("S", "sync") {
+			args.syncCheck()
+		}
+
+		if args.argExist("V", "version") {
+			// Version
 		}
 	}
+	// Probs shouldn't reach this point
+	return fmt.Errorf("Error in parsing operations")
 }
 
 // isPacman checks if the commands are custom yup commands
@@ -118,48 +128,43 @@ func (args *Arguments) isPacman() {
 			return
 		}
 	}
+	// No flags passed
 	args.sync = true
 	args.sendToPacman = false
 }
 
 // syncCheck checks -S argument options
-func (args *Arguments) syncCheck() {
-	if args.argExist('s') {
+func (args *Arguments) syncCheck() error {
+	if args.argExist("s", "search") {
 		// search
+		// Check for q
 	}
-	// for _, r := range flag {
-	// 	switch r {
-	// 	case 's':
-	// 		// search
-	// 		break
-	// 	case 'p':
-	// 		// print
-	// 		break
-	// 	case 'c':
-	// 		// clean
-	// 		break
-	// 	case 'l':
-	// 		// list
-	// 		break
-	// 	case 'i':
-	// 		// info
-	// 		break
-	// 	case 'u':
-	// 		// system upgrade
-	// 		break
-	// 	default:
-	// 		sendToPacman()
-	// 	}
-	// }
+	if args.argExist("u", "upgrade") {
+
+	}
+	if args.argExist("p", "print") {
+
+	}
+	if args.argExist("c", "clean") {
+
+	}
+	if args.argExist("l", "list") {
+
+	}
+	if args.argExist("i", "info") {
+
+	}
+
+	// Default case
+	return sync.Sync()
 }
 
 // Returns whether or not an arg exists
-func (args *Arguments) argExist(keys ...rune) bool {
+func (args *Arguments) argExist(keys ...string) bool {
 	for _, key := range keys {
-		for _, r := range args.args[0] {
-			if r == key {
-				return true
-			}
+		_, exists := args.options[key]
+		if exists {
+			return true
 		}
 	}
 	return false

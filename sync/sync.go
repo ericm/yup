@@ -1,11 +1,10 @@
 package sync
 
-import (
-	"fmt"
+// func Search(terms ...string) error {
+// 	fmt.Println(aur.AURURL)
+// 	return nil
+// }
 
-	"github.com/mikkeloscar/aur"
-)
-
-func Search(terms []string) {
-	fmt.Println(aur.AURURL)
+func Sync(packages ...string) error {
+	return nil
 }
