@@ -24,7 +24,7 @@ type pair struct {
 
 // Constants for output
 const help = `Usage:
-    yay`
+    yup`
 
 // Custom commands not to be passed to pacman
 var commands []pair

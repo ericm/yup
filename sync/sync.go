@@ -3,6 +3,7 @@ package sync
 import (
 	"fmt"
 
+	"github.com/ericm/yup/config"
 	"github.com/mikkeloscar/aur"
 )
 
@@ -16,18 +17,31 @@ import (
 // This checks each package param individually
 func Sync(packages []string) error {
 	// TODO: Check with config
+	errChannel := make(chan error, len(packages))
 	for _, p := range packages {
 		repo, err := aur.Info([]string{p})
 		if err != nil {
-			return err
+			errChannel <- err
 		}
 		if len(repo) > 0 {
-			fmt.Println(repo[0].ID)
+			// Multithreaded downloads
+			go aurDload("https://aur.archlinux.org"+repo[0].URLPath, errChannel)
 		}
-
 	}
 
-	fmt.Println("Sync", aur.AURURL)
+	for _i := 0; _i < len(packages); _i++ {
+		err := <-errChannel
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
+}
+
+// Download an AUR package to cache
+func aurDload(url string, err chan error) {
+	conf := config.GetConfig()
+	fmt.Println(conf.CacheDir)
+	err <- nil
 }

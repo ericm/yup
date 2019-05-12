@@ -11,22 +11,22 @@
             "args": []
         },
         {
-            "name": "test",
+            "name": "yay",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "env": {},
-            "args": ["test"]
+            "args": ["yay"]
         },
         {
-            "name": "-S test",
+            "name": "-S yay",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "env": {},
-            "args": ["-S", "test"]
+            "args": ["-S", "yay"]
         },
         {
             "name": "-Syyu",
