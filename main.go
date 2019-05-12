@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/ericm/yup/config"
+
 	"github.com/ericm/yup/cmd"
 )
 
@@ -16,6 +18,7 @@ var (
 	configDir  string
 	cacheDir   string
 	configFile string
+	configSet  *config.Config
 )
 
 // Entrypoint to the program.
@@ -46,6 +49,8 @@ func exitError(err error) {
 
 // Sets global path variables
 func paths() error {
+	configSet = &config.Config{}
+
 	configDir = os.Getenv("HOME")
 	if len(configDir) == 0 {
 		return fmt.Errorf("HOME environment variable unset")
@@ -67,10 +72,16 @@ func makePaths() error {
 			return fmt.Errorf("Failed to create config directory: %s", err)
 		}
 		// Create file
-		os.OpenFile(configFile, os.O_CREATE, 0664)
+		_, err := os.OpenFile(configFile, os.O_CREATE, 0664)
+		if err != nil {
+			return err
+		}
 	} else if err != nil {
 		return err
 	}
+	// Set config
+	configSet.ConfigDir = configDir
+	configSet.ConfigFile = configFile
 
 	// Cache
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
@@ -80,6 +91,8 @@ func makePaths() error {
 	} else if err != nil {
 		return err
 	}
+	configSet.CacheDir = cacheDir
+	config.SetConfig(configSet)
 
 	return nil
 }
