@@ -3,6 +3,7 @@ package sync
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,9 +20,8 @@ import (
 // Download wrapper for io.Reader
 type Download struct {
 	io.Reader
-	total    int64
-	length   int64
-	progress float64
+	total int64
+	count int
 }
 
 // Read will override io.Reader's Read method
@@ -31,12 +31,13 @@ func (dl *Download) Read(p []byte) (int, error) {
 	num, err := dl.Reader.Read(p)
 	if num > 0 {
 		dl.total += int64(num)
-		percentage := float64(dl.total) / float64(dl.length) * float64(100)
-		perInt := int(percentage / float64(10))
-		out := fmt.Sprintf("%v", perInt)
-		if percentage-dl.progress > 2 {
-			fmt.Fprintf(os.Stderr, out)
+		st := ""
+		// Removes previous status message
+		if dl.count > 0 {
+			st = "\033[F\033[K"
 		}
+		fmt.Printf("%sDownloaded: %vB\n", st, dl.total)
+		dl.count++
 	}
 	return num, err
 }
@@ -72,12 +73,20 @@ func Sync(packages []string) error {
 
 // Download an AUR package to cache
 func aurDload(url string, fileName string, errChannel chan error) {
-	resp, err := http.Get(url)
+	client := &http.Client{}
+	resp, err := client.Get(url)
 	if err != nil {
 		errChannel <- err
 		return
 	}
 	defer resp.Body.Close()
+
+	download := &Download{Reader: resp.Body, count: 0}
+	body, err := ioutil.ReadAll(download)
+	if err != nil {
+		errChannel <- err
+		return
+	}
 
 	conf := config.GetConfig()
 	file := filepath.Join(conf.CacheDir, fileName)
@@ -89,7 +98,7 @@ func aurDload(url string, fileName string, errChannel chan error) {
 	}
 	defer out.Close()
 
-	_, errC := io.Copy(out, resp.Body)
+	_, errC := out.Write(body)
 	if errC != nil {
 		errChannel <- errC
 		return
