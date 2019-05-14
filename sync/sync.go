@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/ericm/yup/config"
@@ -22,6 +23,11 @@ type Download struct {
 	io.Reader
 	total int64
 	count int
+}
+
+type pkgBuild struct {
+	file string
+	dir  string
 }
 
 // Read will override io.Reader's Read method
@@ -46,8 +52,9 @@ func (dl *Download) Read(p []byte) (int, error) {
 //
 // This checks each package param individually
 func Sync(packages []string) error {
-	// TODO: Check with config
+	// Create channels for goroutines
 	errChannel := make(chan error, len(packages))
+	buildChannel := make(chan *pkgBuild, len(packages))
 	for _, p := range packages {
 		// Multithreaded downloads
 		go func(p string) {
@@ -56,23 +63,40 @@ func Sync(packages []string) error {
 				errChannel <- err
 			}
 			if len(repo) > 0 {
-				aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel)
+				aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel, buildChannel)
 			}
 		}(p)
 	}
 
-	for _i := 0; _i < len(packages); _i++ {
-		err := <-errChannel
-		if err != nil {
-			return err
+	for _i := 0; _i < len(packages)*2; _i++ {
+		// Check for both error and build Channels
+		select {
+		case err := <-errChannel:
+			if err != nil {
+				return err
+			}
+		case pkg := <-buildChannel:
+			os.Chdir(pkg.dir)
+			cmd := exec.Command("tar", "-zxvf", pkg.file)
+			if err := cmd.Run(); err != nil {
+				fmt.Fprint(os.Stderr, err)
+			}
 		}
+
 	}
 
 	return nil
 }
 
 // Download an AUR package to cache
-func aurDload(url string, fileName string, errChannel chan error) {
+func aurDload(url string, fileName string, errChannel chan error, buildChannel chan *pkgBuild) {
+	conf := config.GetConfig()
+	file := filepath.Join(conf.CacheDir, fileName)
+	// At the end, add file path to buildChannel
+	defer func() {
+		buildChannel <- &pkgBuild{file, conf.CacheDir}
+	}()
+
 	client := &http.Client{}
 	resp, err := client.Get(url)
 	if err != nil {
@@ -87,9 +111,6 @@ func aurDload(url string, fileName string, errChannel chan error) {
 		errChannel <- err
 		return
 	}
-
-	conf := config.GetConfig()
-	file := filepath.Join(conf.CacheDir, fileName)
 
 	out, err := os.Create(file)
 	if err != nil {
