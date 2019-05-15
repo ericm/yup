@@ -1,13 +1,16 @@
 package sync
 
 import (
-	"github.com/ericm/yup/output"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/ericm/yup/output"
+
+	"fmt"
 
 	"github.com/ericm/yup/config"
 	"github.com/mikkeloscar/aur"
@@ -56,7 +59,7 @@ func (dl *Download) Read(p []byte) (int, error) {
 func Sync(packages []string) error {
 	// Create channels for goroutines
 	// Step 1: Check AUR
-	output.Printf("Checking the \033[1mAUR\033[0m\n")
+	output.Printf("Checking the \033[1mAUR\033[0m")
 	errChannel := make(chan error, len(packages))
 	buildChannel := make(chan *pkgBuild, len(packages))
 	for _, p := range packages {
@@ -65,10 +68,14 @@ func Sync(packages []string) error {
 			repo, err := aur.Info([]string{p})
 			if err != nil {
 				errChannel <- err
+			} else {
+				if len(repo) > 0 {
+					aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel, buildChannel, repo[0].Name, repo[0].Version)
+				} else {
+					errChannel <- output.Errorf("Didn't find an \033[1mAUR\033[0m package, searching other repos")
+				}
 			}
-			if len(repo) > 0 {
-				aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel, buildChannel, repo[0].Name, repo[0].Version)
-			}
+
 		}(p)
 	}
 
@@ -76,11 +83,15 @@ func Sync(packages []string) error {
 		// Check for both error and build Channels
 		select {
 		case err := <-errChannel:
+			output.Printf("Err")
 			if err != nil {
-				return err
+				output.PrintL()
+				fmt.Println(err)
+				return nil
 			}
 		case pkg := <-buildChannel:
-			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR\n\n", pkg.name, pkg.version)
+			output.PrintL()
+			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
 
 			// Untar the package
 			os.Chdir(pkg.dir)
