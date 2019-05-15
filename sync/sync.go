@@ -26,8 +26,10 @@ type Download struct {
 }
 
 type pkgBuild struct {
-	file string
-	dir  string
+	file    string
+	dir     string
+	name    string
+	version string
 }
 
 // Read will override io.Reader's Read method
@@ -63,7 +65,7 @@ func Sync(packages []string) error {
 				errChannel <- err
 			}
 			if len(repo) > 0 {
-				aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel, buildChannel)
+				aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel, buildChannel, repo[0].Name, repo[0].Version)
 			}
 		}(p)
 	}
@@ -76,10 +78,25 @@ func Sync(packages []string) error {
 				return err
 			}
 		case pkg := <-buildChannel:
+			fmt.Printf("Installing %s %s\n", pkg.name, pkg.version)
+
+			// Untar the package
 			os.Chdir(pkg.dir)
-			cmd := exec.Command("tar", "-zxvf", pkg.file)
-			if err := cmd.Run(); err != nil {
-				fmt.Fprint(os.Stderr, err)
+			cmdTar := exec.Command("tar", "-zxvf", pkg.file)
+			if err := cmdTar.Run(); err != nil {
+				return err
+			}
+
+			// TODO: View PKGBUILD
+
+			// Make / Install the package
+			pkg.dir = filepath.Join(pkg.dir, pkg.name)
+			os.Chdir(pkg.dir)
+			cmdMake := exec.Command("makepkg", "-si")
+			// Pipe to stdout, etc
+			cmdMake.Stdout, cmdMake.Stdin, cmdMake.Stderr = os.Stdout, os.Stdin, os.Stderr
+			if err := cmdMake.Run(); err != nil {
+				return err
 			}
 		}
 
@@ -89,12 +106,13 @@ func Sync(packages []string) error {
 }
 
 // Download an AUR package to cache
-func aurDload(url string, fileName string, errChannel chan error, buildChannel chan *pkgBuild) {
+func aurDload(url string, fileName string, errChannel chan error, buildChannel chan *pkgBuild, name string, version string) {
+	// TODO: Check in cache
 	conf := config.GetConfig()
 	file := filepath.Join(conf.CacheDir, fileName)
 	// At the end, add file path to buildChannel
 	defer func() {
-		buildChannel <- &pkgBuild{file, conf.CacheDir}
+		buildChannel <- &pkgBuild{file, conf.CacheDir, name, version}
 	}()
 
 	client := &http.Client{}
