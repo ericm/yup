@@ -1,7 +1,7 @@
 package sync
 
 import (
-	"fmt"
+	"github.com/ericm/yup/output"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -39,12 +39,12 @@ func (dl *Download) Read(p []byte) (int, error) {
 	num, err := dl.Reader.Read(p)
 	if num > 0 {
 		dl.total += int64(num)
-		st := ""
-		// Removes previous status message
-		if dl.count > 0 {
-			st = "\033[F\033[K"
-		}
-		fmt.Printf("%sDownloaded: %vB\n", st, dl.total)
+		// st := ""
+		// // Removes previous status message
+		// if dl.count > 0 {
+		// 	st = "\033[F\033[K"
+		// }
+		// fmt.Printf("%sDownloaded: %vB\n", st, dl.total)
 		dl.count++
 	}
 	return num, err
@@ -55,6 +55,8 @@ func (dl *Download) Read(p []byte) (int, error) {
 // This checks each package param individually
 func Sync(packages []string) error {
 	// Create channels for goroutines
+	// Step 1: Check AUR
+	output.Printf("Checking the \033[1mAUR\033[0m\n")
 	errChannel := make(chan error, len(packages))
 	buildChannel := make(chan *pkgBuild, len(packages))
 	for _, p := range packages {
@@ -78,7 +80,7 @@ func Sync(packages []string) error {
 				return err
 			}
 		case pkg := <-buildChannel:
-			fmt.Printf("Installing %s %s\n", pkg.name, pkg.version)
+			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR\n\n", pkg.name, pkg.version)
 
 			// Untar the package
 			os.Chdir(pkg.dir)
