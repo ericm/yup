@@ -62,6 +62,9 @@ func Sync(packages []string) error {
 	output.Printf("Checking the \033[1mAUR\033[0m")
 	errChannel := make(chan error, len(packages))
 	buildChannel := make(chan *pkgBuild, len(packages))
+
+	pacmanArgs := []string{}
+
 	for _, p := range packages {
 		// Multithreaded downloads
 		go func(p string) {
@@ -73,6 +76,7 @@ func Sync(packages []string) error {
 					aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel, buildChannel, repo[0].Name, repo[0].Version)
 				} else {
 					errChannel <- output.Errorf("Didn't find an \033[1mAUR\033[0m package, searching other repos")
+					pacmanArgs = append(pacmanArgs, p)
 				}
 			}
 
@@ -83,14 +87,10 @@ func Sync(packages []string) error {
 		// Check for both error and build Channels
 		select {
 		case err := <-errChannel:
-			output.Printf("Err")
 			if err != nil {
-				output.PrintL()
 				fmt.Println(err)
-				return nil
 			}
 		case pkg := <-buildChannel:
-			output.PrintL()
 			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
 
 			// Untar the package
@@ -111,8 +111,19 @@ func Sync(packages []string) error {
 			if err := cmdMake.Run(); err != nil {
 				return err
 			}
+			output.PrintL()
 		}
 
+	}
+
+	// Now check pacman for unresolved args in pacmanArgs
+	if len(pacmanArgs) > 0 {
+		sync := pacmanSync(pacmanArgs)
+		for _, s := range sync {
+			if s != nil {
+				return s
+			}
+		}
 	}
 
 	return nil
@@ -157,4 +168,18 @@ func aurDload(url string, fileName string, errChannel chan error, buildChannel c
 	}
 
 	errChannel <- nil
+}
+
+// Passes arg to pacman -S
+func pacmanSync(args []string) []error {
+	errOut := []error{}
+	for _, arg := range args {
+		cmd := exec.Command("pacman", "-S", arg)
+		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+		if err := cmd.Run(); err != nil {
+			errOut = append(errOut, err)
+		}
+	}
+
+	return nil
 }
