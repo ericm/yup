@@ -76,6 +76,7 @@ func Sync(packages []string) error {
 					aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel, buildChannel, repo[0].Name, repo[0].Version)
 				} else {
 					errChannel <- output.Errorf("Didn't find an \033[1mAUR\033[0m package, searching other repos")
+					buildChannel <- nil
 					pacmanArgs = append(pacmanArgs, p)
 				}
 			}
@@ -91,27 +92,30 @@ func Sync(packages []string) error {
 				fmt.Println(err)
 			}
 		case pkg := <-buildChannel:
-			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
+			if pkg != nil {
+				output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
 
-			// Untar the package
-			os.Chdir(pkg.dir)
-			cmdTar := exec.Command("tar", "-zxvf", pkg.file)
-			if err := cmdTar.Run(); err != nil {
-				return err
+				// Untar the package
+				os.Chdir(pkg.dir)
+				cmdTar := exec.Command("tar", "-zxvf", pkg.file)
+				if err := cmdTar.Run(); err != nil {
+					return err
+				}
+
+				// TODO: View PKGBUILD
+
+				// Make / Install the package
+				pkg.dir = filepath.Join(pkg.dir, pkg.name)
+				os.Chdir(pkg.dir)
+				cmdMake := exec.Command("makepkg", "-si")
+				// Pipe to stdout, etc
+				cmdMake.Stdout, cmdMake.Stdin, cmdMake.Stderr = os.Stdout, os.Stdin, os.Stderr
+				if err := cmdMake.Run(); err != nil {
+					return err
+				}
+				output.PrintL()
 			}
 
-			// TODO: View PKGBUILD
-
-			// Make / Install the package
-			pkg.dir = filepath.Join(pkg.dir, pkg.name)
-			os.Chdir(pkg.dir)
-			cmdMake := exec.Command("makepkg", "-si")
-			// Pipe to stdout, etc
-			cmdMake.Stdout, cmdMake.Stdin, cmdMake.Stderr = os.Stdout, os.Stdin, os.Stderr
-			if err := cmdMake.Run(); err != nil {
-				return err
-			}
-			output.PrintL()
 		}
 
 	}
@@ -174,12 +178,13 @@ func aurDload(url string, fileName string, errChannel chan error, buildChannel c
 func pacmanSync(args []string) []error {
 	errOut := []error{}
 	for _, arg := range args {
-		cmd := exec.Command("pacman", "-S", arg)
+		output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg)
+		cmd := exec.Command("sudo", "pacman", "-S", arg)
 		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 		if err := cmd.Run(); err != nil {
 			errOut = append(errOut, err)
 		}
 	}
 
-	return nil
+	return errOut
 }
