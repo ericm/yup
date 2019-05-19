@@ -9,6 +9,7 @@ import (
 	"github.com/ericm/yup/config"
 
 	"github.com/ericm/yup/cmd"
+	"github.com/ericm/yup/output"
 )
 
 const configFileName = "yay.conf"
@@ -41,7 +42,7 @@ func main() {
 func exitError(err error) {
 	if err != nil {
 		if str := err.Error(); str != "" {
-			fmt.Fprintln(os.Stderr, str)
+			fmt.Fprintln(os.Stderr, output.Errorf(str))
 			os.Exit(1)
 		}
 	}

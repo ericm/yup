@@ -75,7 +75,7 @@ func Sync(packages []string) error {
 				if len(repo) > 0 {
 					aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel, buildChannel, repo[0].Name, repo[0].Version)
 				} else {
-					errChannel <- output.Errorf("Didn't find an \033[1mAUR\033[0m package, searching other repos")
+					errChannel <- output.Errorf("Didn't find an \033[1mAUR\033[0m package for \033[1m\033[32m%s\033[39m\033[0m, searching other repos", p)
 					buildChannel <- nil
 					pacmanArgs = append(pacmanArgs, p)
 				}
