@@ -89,7 +89,7 @@ func Sync(packages []string) error {
 		select {
 		case err := <-errChannel:
 			if err != nil {
-				fmt.Println(err)
+				fmt.Print(err)
 			}
 		case pkg := <-buildChannel:
 			if pkg != nil {

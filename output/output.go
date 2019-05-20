@@ -2,6 +2,8 @@ package output
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 )
 
 const (
@@ -24,4 +26,9 @@ func Errorf(format string, a ...interface{}) error {
 // PrintL - prints line break
 func PrintL() {
 	fmt.Printf("\033[95m- - - - - -\033[0m\n")
+}
+
+// SetStd sets cmd's Stdout, Stderr and Stdin to the OS's
+func SetStd(cmd *exec.Cmd) {
+	cmd.Stdout, cmd.Stdin, cmd.Stderr = os.Stdout, os.Stdin, os.Stderr
 }

@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/ericm/yup/output"
+
 	"github.com/ericm/yup/sync"
 )
 
@@ -69,7 +71,7 @@ func sendToPacman() {
 	allArgs := append([]string{"pacman"}, arguments.args...)
 
 	pacman := exec.Command("sudo", allArgs...)
-	pacman.Stdout, pacman.Stdin, pacman.Stderr = os.Stdout, os.Stdin, os.Stderr
+	output.SetStd(pacman)
 	pacman.Run()
 }
 
@@ -137,8 +139,18 @@ func (args *Arguments) isPacman() {
 
 // syncCheck checks -S argument options
 func (args *Arguments) syncCheck() error {
+	if args.argExist("y", "refresh") {
+		// Refresh
+		output.Printf("Refreshing local repositories")
+		refresh := exec.Command("sudo", "pacman", "-Sy")
+		output.SetStd(refresh)
+		if err := refresh.Run(); err != nil {
+			return err
+		}
+
+	}
 	if args.argExist("s", "search") {
-		// search
+		// Search
 		// Check for q
 	}
 	if args.argExist("u", "upgrade") {
@@ -164,8 +176,7 @@ func (args *Arguments) syncCheck() error {
 // Returns whether or not an arg exists
 func (args *Arguments) argExist(keys ...string) bool {
 	for _, key := range keys {
-		_, exists := args.options[key]
-		if exists {
+		if _, exists := args.options[key]; exists {
 			return true
 		}
 	}
