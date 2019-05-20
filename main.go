@@ -12,7 +12,7 @@ import (
 	"github.com/ericm/yup/output"
 )
 
-const configFileName = "yay.conf"
+const configFileName = "yup.conf"
 
 // Global variables
 var (
@@ -75,6 +75,9 @@ func makePaths() error {
 		}
 		// Create file
 		file, err := os.OpenFile(configFile, os.O_CREATE, 0664)
+		if err != nil {
+			return err
+		}
 		if err := config.InitConfig(file); err != nil {
 			return err
 		}
