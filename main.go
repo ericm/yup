@@ -35,6 +35,7 @@ func main() {
 
 	exitError(paths())
 	exitError(makePaths())
+	exitError(config.ReadConfigFile())
 	exitError(cmd.Execute())
 }
 
@@ -73,7 +74,10 @@ func makePaths() error {
 			return fmt.Errorf("Failed to create config directory: %s", err)
 		}
 		// Create file
-		_, err := os.OpenFile(configFile, os.O_CREATE, 0664)
+		file, err := os.OpenFile(configFile, os.O_CREATE, 0664)
+		if err := config.InitConfig(file); err != nil {
+			return err
+		}
 		if err != nil {
 			return err
 		}
