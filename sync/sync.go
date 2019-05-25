@@ -111,8 +111,26 @@ func Sync(packages []string) error {
 
 				switch strings.ToLower(out[:1]) {
 				case "y":
-					// TODO: View PKGBUILD
-					output.Printf("PKG")
+					showPkg := exec.Command("cat", filepath.Join(pkg.dir, pkg.name, "PKGBUILD"))
+					output.SetStd(showPkg)
+					if err := showPkg.Run(); err != nil {
+						return err
+					}
+				Diffs:
+					output.PrintIn("View Diffs? (y/N)")
+					diffs, _ := scanner.ReadString('\n')
+					switch diffs {
+					case "y":
+						// TODO: View Diffs
+						break
+					case "n":
+					case "\n":
+						break
+					default:
+						fmt.Println(output.Errorf("Please press N or Y"))
+						goto Diffs
+					}
+
 					break
 				case "n":
 				case "\n":
