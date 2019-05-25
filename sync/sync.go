@@ -1,12 +1,14 @@
 package sync
 
 import (
+	"bufio"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/ericm/yup/output"
 
@@ -102,7 +104,23 @@ func Sync(packages []string) error {
 					return err
 				}
 
-				// TODO: View PKGBUILD
+			Pkgbuild:
+				scanner := bufio.NewReader(os.Stdin)
+				output.PrintIn("View the PKGBUILD? (y/N)")
+				out, _ := scanner.ReadString('\n')
+
+				switch strings.ToLower(out[:1]) {
+				case "y":
+					// TODO: View PKGBUILD
+					output.Printf("PKG")
+					break
+				case "n":
+				case "\n":
+					break
+				default:
+					fmt.Println(output.Errorf("Please press N or Y"))
+					goto Pkgbuild
+				}
 
 				// Make / Install the package
 				pkg.dir = filepath.Join(pkg.dir, pkg.name)
