@@ -3,8 +3,6 @@ package sync
 import (
 	"bufio"
 	"io"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -75,7 +73,7 @@ func Sync(packages []string) error {
 				errChannel <- err
 			} else {
 				if len(repo) > 0 {
-					aurDload("https://aur.archlinux.org"+repo[0].URLPath, repo[0].Name+repo[0].Version+".tar.gz", errChannel, buildChannel, repo[0].Name, repo[0].Version)
+					aurDload("https://aur.archlinux.org/"+repo[0].Name+".git", errChannel, buildChannel, repo[0].Name, repo[0].Version)
 				} else {
 					errChannel <- output.Errorf("Didn't find an \033[1mAUR\033[0m package for \033[1m\033[32m%s\033[39m\033[0m, searching other repos", p)
 					buildChannel <- nil
@@ -170,41 +168,28 @@ func Sync(packages []string) error {
 }
 
 // Download an AUR package to cache
-func aurDload(url string, fileName string, errChannel chan error, buildChannel chan *pkgBuild, name string, version string) {
+func aurDload(url string, errChannel chan error, buildChannel chan *pkgBuild, name string, version string) {
 	// TODO: Check in cache
 	conf := config.GetConfig()
-	file := filepath.Join(conf.CacheDir, fileName)
-	// At the end, add file path to buildChannel
+	dir := filepath.Join(conf.CacheDir, name)
+	// At the end, add dir path to buildChannel
 	defer func() {
-		buildChannel <- &pkgBuild{file, conf.CacheDir, name, version}
+		buildChannel <- &pkgBuild{dir, conf.CacheDir, name, version}
 	}()
 
-	client := &http.Client{}
-	resp, err := client.Get(url)
-	if err != nil {
-		errChannel <- err
-		return
-	}
-	defer resp.Body.Close()
-
-	download := &Download{Reader: resp.Body, count: 0}
-	body, err := ioutil.ReadAll(download)
-	if err != nil {
-		errChannel <- err
-		return
-	}
-
-	out, err := os.Create(file)
-	if err != nil {
-		errChannel <- err
-		return
-	}
-	defer out.Close()
-
-	_, errC := out.Write(body)
-	if errC != nil {
-		errChannel <- errC
-		return
+	// Check if git repo is clones
+	if os.IsNotExist(os.Chdir(dir)) {
+		git := exec.Command("git", "clone", url, dir)
+		if err := git.Run(); err != nil {
+			errChannel <- err
+			return
+		}
+	} else {
+		git := exec.Command("git", "pull")
+		if err := git.Run(); err != nil {
+			errChannel <- err
+			return
+		}
 	}
 
 	errChannel <- nil
