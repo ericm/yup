@@ -35,24 +35,6 @@ type pkgBuild struct {
 	version string
 }
 
-// Read will override io.Reader's Read method
-//
-// Source: https://stackoverflow.com/questions/25645363/track-and-show-downloading-file-summary-in-percentage-go-lang#25645804
-func (dl *Download) Read(p []byte) (int, error) {
-	num, err := dl.Reader.Read(p)
-	if num > 0 {
-		dl.total += int64(num)
-		// st := ""
-		// // Removes previous status message
-		// if dl.count > 0 {
-		// 	st = "\033[F\033[K"
-		// }
-		// fmt.Printf("%sDownloaded: %vB\n", st, dl.total)
-		dl.count++
-	}
-	return num, err
-}
-
 // Sync from the AUR first, then other configured repos.
 //
 // This checks each package param individually
@@ -95,12 +77,8 @@ func Sync(packages []string) error {
 			if pkg != nil {
 				output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
 
-				// Untar the package
-				os.Chdir(pkg.dir)
-				cmdTar := exec.Command("tar", "-zxvf", pkg.file)
-				if err := cmdTar.Run(); err != nil {
-					return err
-				}
+				// Install from the AUR
+				os.Chdir(filepath.Join(pkg.dir, pkg.name))
 
 			Pkgbuild:
 				scanner := bufio.NewReader(os.Stdin)
@@ -109,7 +87,7 @@ func Sync(packages []string) error {
 
 				switch strings.ToLower(out[:1]) {
 				case "y":
-					showPkg := exec.Command("cat", filepath.Join(pkg.dir, pkg.name, "PKGBUILD"))
+					showPkg := exec.Command("cat", "PKGBUILD")
 					output.SetStd(showPkg)
 					if err := showPkg.Run(); err != nil {
 						return err
@@ -117,9 +95,16 @@ func Sync(packages []string) error {
 				Diffs:
 					output.PrintIn("View Diffs? (y/N)")
 					diffs, _ := scanner.ReadString('\n')
-					switch diffs {
+					switch strings.ToLower(diffs[:1]) {
 					case "y":
-						// TODO: View Diffs
+						// Use git diff @~..@
+						diff := exec.Command("git", "diff", "@~..@")
+						output.SetStd(diff)
+						if err := diff.Run(); err != nil {
+							return err
+						}
+						// Finally, ask if they want to edit the PKGBUILD
+
 						break
 					case "n":
 					case "\n":
