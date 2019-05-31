@@ -30,6 +30,11 @@ func Errorf(format string, a ...interface{}) error {
 	return fmt.Errorf("%s %s", ARROWERROR, fmt.Sprintf(format, a...))
 }
 
+// PrintErr prints Errorf
+func PrintErr(format string, a ...interface{}) {
+	fmt.Println(Errorf(format, a...))
+}
+
 // PrintL - prints line break
 func PrintL() {
 	fmt.Printf("\033[95m- - - - - -\033[0m\n")

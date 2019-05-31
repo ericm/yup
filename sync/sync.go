@@ -103,14 +103,40 @@ func Sync(packages []string) error {
 						if err := diff.Run(); err != nil {
 							return err
 						}
+					Edit:
 						// Finally, ask if they want to edit the PKGBUILD
+						output.PrintIn("Edit PKGBUILD? (y/N)")
+						edit, _ := scanner.ReadString('\n')
+						switch strings.ToLower(edit[:1]) {
+						case "y":
+							// Check for EDITOR
+							editor := os.Getenv("EDITOR")
+							if len(editor) == 0 {
+								// Ask for editor
+								output.PrintIn("No EDITOR environment variable set. Enter editor")
+								newEditor, _ := scanner.ReadString('\n')
+								editor = newEditor[:len(newEditor)-1]
+							}
 
+							editPkg := exec.Command(editor, "PKGBUILD")
+							output.SetStd(editPkg)
+							if err := editPkg.Run(); err != nil {
+								return err
+							}
+							break
+						case "n":
+						case "\n":
+							break
+						default:
+							output.PrintErr("Please press N or Y")
+							goto Edit
+						}
 						break
 					case "n":
 					case "\n":
 						break
 					default:
-						fmt.Println(output.Errorf("Please press N or Y"))
+						output.PrintErr("Please press N or Y")
 						goto Diffs
 					}
 
@@ -119,7 +145,7 @@ func Sync(packages []string) error {
 				case "\n":
 					break
 				default:
-					fmt.Println(output.Errorf("Please press N or Y"))
+					output.PrintErr("Please press N or Y")
 					goto Pkgbuild
 				}
 
