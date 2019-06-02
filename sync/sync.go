@@ -154,7 +154,7 @@ func Sync(packages []string) error {
 				os.Chdir(pkg.dir)
 				cmdMake := exec.Command("makepkg", "-si")
 				// Pipe to stdout, etc
-				cmdMake.Stdout, cmdMake.Stdin, cmdMake.Stderr = os.Stdout, os.Stdin, os.Stderr
+				output.SetStd(cmdMake)
 				if err := cmdMake.Run(); err != nil {
 					return err
 				}
@@ -212,7 +212,7 @@ func pacmanSync(args []string) []error {
 	for _, arg := range args {
 		output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg)
 		cmd := exec.Command("sudo", "pacman", "-S", arg)
-		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+		output.SetStd(cmd)
 		if err := cmd.Run(); err != nil {
 			errOut = append(errOut, err)
 		}
