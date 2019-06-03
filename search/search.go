@@ -32,8 +32,6 @@ func Pacman(query string) ([]Package, error) {
 	}
 
 	// Find Package vals
-	repoRe := regexp.MustCompile("^([A-z]+)")
-
 	searchOutput := string(run)
 	pacOut := []string{}
 	last := ""
@@ -45,13 +43,19 @@ func Pacman(query string) ([]Package, error) {
 		}
 	}
 
-	fmt.Println(pacOut[0])
+	// Regex definitions
+	repoRe := regexp.MustCompile("^([A-z]+)")
+	nameRe := regexp.MustCompile("(?:/)+(\\S+)")
 
+	packs := []Package{}
 	for _, pac := range pacOut {
-		fmt.Println(repoRe.FindString(pac))
+		pack := Package{
+			Name: nameRe.FindString(pac)[1:],
+			Repo: repoRe.FindString(pac),
+		}
+		fmt.Println()
+		packs = append(packs, pack)
 	}
-
-	var packs []Package
 
 	return packs, nil
 }

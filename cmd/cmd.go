@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/search"
@@ -19,7 +18,7 @@ type Arguments struct {
 	sync         bool
 	// Map of individual args
 	options map[string]bool
-	targets []string
+	target  string
 }
 
 type pair struct {
@@ -53,7 +52,7 @@ func init() {
 	}
 }
 
-var arguments = &Arguments{sendToPacman: false, sync: false, options: make(map[string]bool), targets: []string{}}
+var arguments = &Arguments{sendToPacman: false, sync: false, options: make(map[string]bool), target: ""}
 
 // Execute initialises the arguments slice and parses args
 func Execute() error {
@@ -92,7 +91,11 @@ func (args *Arguments) genOptions() {
 			}
 		} else {
 			// Set targets
-			args.targets = append(args.targets, arg)
+			if len(args.target) > 0 {
+				args.target = fmt.Sprintf("%s %s", args.target, arg)
+			} else {
+				args.target = arg
+			}
 		}
 	}
 }
@@ -154,7 +157,7 @@ func (args *Arguments) syncCheck() error {
 	if args.argExist("s", "search") {
 		// Search
 		// Check for q
-		_, err := search.Pacman(strings.Join(args.targets, " "))
+		_, err := search.Pacman(args.target)
 		return err
 	}
 	if args.argExist("u", "upgrade") {
@@ -174,7 +177,7 @@ func (args *Arguments) syncCheck() error {
 	}
 
 	// Default case
-	return sync.Sync(args.targets)
+	return sync.Sync([]string{args.target})
 }
 
 // Returns whether or not an arg exists
