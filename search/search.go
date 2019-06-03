@@ -46,14 +46,17 @@ func Pacman(query string) ([]Package, error) {
 	// Regex definitions
 	repoRe := regexp.MustCompile("^([A-z]+)")
 	nameRe := regexp.MustCompile("(?:/)+(\\S+)")
+	versionRe := regexp.MustCompile("^(?:\\S+ ){1}(\\S+)")
+	installedRe := regexp.MustCompile("\\[(.+)\\]")
 
 	packs := []Package{}
 	for _, pac := range pacOut {
 		pack := Package{
-			Name: nameRe.FindString(pac)[1:],
-			Repo: repoRe.FindString(pac),
+			Name:      nameRe.FindString(pac)[1:],
+			Repo:      repoRe.FindString(pac),
+			Version:   strings.Split(versionRe.FindString(pac), " ")[1],
+			Installed: len(installedRe.FindString(pac)) != 0,
 		}
-		fmt.Println()
 		packs = append(packs, pack)
 	}
 
