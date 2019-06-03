@@ -56,6 +56,15 @@
             "args": ["-Ss", "vim-runtime"]
         },
         {
+            "name": "-Ss a",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": ["-Ss", "a"]
+        },
+        {
             "name": "-h",
             "type": "go",
             "request": "launch",

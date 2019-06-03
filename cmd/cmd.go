@@ -81,7 +81,7 @@ func sendToPacman() {
 // Generates arguments.options
 func (args *Arguments) genOptions() {
 	for _, arg := range args.args {
-		if arg[:2] == "--" {
+		if len(arg) > 1 && arg[:2] == "--" {
 			// Long command
 			args.options[arg[2:]] = true
 		} else if arg[:1] == "-" {
