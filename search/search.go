@@ -68,6 +68,18 @@ func Pacman(query string, print bool) ([]Package, error) {
 				// Purple
 				pack.Repo = "\033[95mcore\033[0m"
 				break
+			case "extra":
+				// Green
+				pack.Repo = "\033[32mextra\033[0m"
+				break
+			case "community":
+				// Cyan
+				pack.Repo = "\033[36mcommunity\033[0m"
+				break
+			case "multilib":
+				// Yellow
+				pack.Repo = "\033[33mmultilib\033[0m"
+				break
 			}
 
 			if pack.Installed {
@@ -96,8 +108,8 @@ func Pacman(query string, print bool) ([]Package, error) {
 							break
 						}
 					}
-					pack.InstalledSize = info[len(info)-index][2:]
-					pack.DownloadSize = info[len(info)-index+1][2:]
+					pack.InstalledSize = info[len(info)-index+1][2:]
+					pack.DownloadSize = info[len(info)-index][2:]
 				}
 
 			}
@@ -105,10 +117,10 @@ func Pacman(query string, print bool) ([]Package, error) {
 			// Print
 			if print {
 				if pack.Installed {
-					fmt.Printf("\033[1m%s\033[0m \033[2m>>\033[0m %s %s [INSTALLED], Size: (Downloaded: %s | Installed: %s)\n    %s\n",
+					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), Size: (D: %s | I: %s)\n    %s\n",
 						pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, pack.Description)
 				} else {
-					fmt.Printf("\033[1m%s\033[0m \033[2m>>\033[0m %s %s\n    %s\n", pack.Repo, pack.Name, pack.Version, pack.Description)
+					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s\n    %s\n", pack.Repo, pack.Name, pack.Version, pack.Description)
 				}
 
 			}
