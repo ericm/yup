@@ -26,74 +26,82 @@ type Package struct {
 
 // Pacman returns []Package parsed from pacman
 func Pacman(query string, print bool) ([]Package, error) {
-	search := exec.Command("pacman", "-Ss", query)
-	run, err := search.Output()
-	if err != nil {
-		return []Package{}, err
-	}
-
-	// Find Package vals
-	searchOutput := string(run)
-	pacOut := []string{}
-	last := ""
-	for i, pac := range strings.Split(searchOutput, "\n") {
-		if i%2 == 0 {
-			last = pac
-		} else {
-			pacOut = append(pacOut, fmt.Sprintf("%s\n%s", last, pac))
-		}
-	}
-
-	// Regex definitions
-	nameRe := regexp.MustCompile("(?:/)+(\\S+)")
-	repoRe := regexp.MustCompile("^([A-z]+)")
-	versionRe := regexp.MustCompile("^(?:\\S+ ){1}(\\S+)")
-	installedRe := regexp.MustCompile("\\[(.+)\\]")
-	siRe := regexp.MustCompile("(?:\\:)(.+)")
-
-	packs := []Package{}
-	for _, pac := range pacOut {
-		pack := Package{
-			Name:        nameRe.FindString(pac)[1:],
-			Repo:        repoRe.FindString(pac),
-			Version:     strings.Split(versionRe.FindString(pac), " ")[1],
-			Installed:   len(installedRe.FindString(pac)) != 0,
-			Description: strings.Split(pac, "\n")[1][4:],
+	if len(query) > 0 {
+		search := exec.Command("pacman", "-Ss", query)
+		run, err := search.Output()
+		if err != nil {
+			return []Package{}, err
 		}
 
-		if pack.Installed {
-			// Add extra install info
-			// Get info from pacman -Si package
-			// Add extra install info
-			pacmanSi := exec.Command("pacman", "-Sii", pack.Name)
-			siOut, err := pacmanSi.Output()
-			if err != nil {
-				return []Package{}, output.Errorf("%s", err)
-			}
-			info := siRe.FindAllString(string(siOut), -1)
-			pack.InstalledVersion = info[2][2:]
-			pack.InstalledSize = info[15][2:]
-			pack.DownloadSize = info[16][2:]
-			if pack.InstalledSize == "None" {
-				pack.InstalledSize = info[17][2:]
-				pack.DownloadSize = info[18][2:]
-			}
-
-		}
-
-		// Print
-		if print {
-			if pack.Installed {
-				fmt.Printf("(%s) %s %s [INSTALLED], Size: (Downloaded: %s | Installed: %s)\n    %s\n",
-					pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, pack.Description)
+		// Find Package vals
+		searchOutput := string(run)
+		pacOut := []string{}
+		last := ""
+		for i, pac := range strings.Split(searchOutput, "\n") {
+			if i%2 == 0 {
+				last = pac
 			} else {
-				fmt.Printf("(%s) %s %s\n    %s\n", pack.Repo, pack.Name, pack.Version, pack.Description)
+				pacOut = append(pacOut, fmt.Sprintf("%s\n%s", last, pac))
 			}
-
 		}
 
-		packs = append(packs, pack)
-	}
+		// Regex definitions
+		nameRe := regexp.MustCompile("(?:/)+(\\S+)")
+		repoRe := regexp.MustCompile("^([A-z]+)")
+		versionRe := regexp.MustCompile("^(?:\\S+ ){1}(\\S+)")
+		installedRe := regexp.MustCompile("\\[(.+)\\]")
+		siRe := regexp.MustCompile("(?:\\:)(.+)")
 
-	return packs, nil
+		packs := []Package{}
+		for _, pac := range pacOut {
+			pack := Package{
+				Name:        nameRe.FindString(pac)[1:],
+				Repo:        repoRe.FindString(pac),
+				Version:     strings.Split(versionRe.FindString(pac), " ")[1],
+				Installed:   len(installedRe.FindString(pac)) != 0,
+				Description: strings.Split(pac, "\n")[1][4:],
+			}
+
+			if pack.Installed {
+				// Add extra install info
+				// Get info from pacman -Si package
+				// Add extra install info
+				pacmanSi := exec.Command("pacman", "-Sii", pack.Name)
+				siOut, err := pacmanSi.Output()
+				if err != nil {
+					return []Package{}, output.Errorf("%s", err)
+				}
+				info := siRe.FindAllString(string(siOut), -1)
+				pack.InstalledVersion = info[2][2:]
+				pack.InstalledSize = info[15][2:]
+				pack.DownloadSize = info[16][2:]
+				if pack.InstalledSize == "None" {
+					pack.InstalledSize = info[17][2:]
+					pack.DownloadSize = info[18][2:]
+				}
+
+			}
+
+			// Print
+			if print {
+				if pack.Installed {
+					fmt.Printf("(%s) %s %s [INSTALLED], Size: (Downloaded: %s | Installed: %s)\n    %s\n",
+						pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, pack.Description)
+				} else {
+					fmt.Printf("(%s) %s %s\n    %s\n", pack.Repo, pack.Name, pack.Version, pack.Description)
+				}
+
+			}
+
+			packs = append(packs, pack)
+		}
+
+		return packs, nil
+	}
+	// Else
+	pacman := exec.Command("pacman", "-Ss")
+	output.SetStd(pacman)
+	pacman.Run()
+
+	return []Package{}, nil
 }
