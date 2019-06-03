@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/ericm/yup/output"
+	"github.com/ericm/yup/search"
 
 	"github.com/ericm/yup/sync"
 )
@@ -152,6 +154,8 @@ func (args *Arguments) syncCheck() error {
 	if args.argExist("s", "search") {
 		// Search
 		// Check for q
+		_, err := search.Pacman(strings.Join(args.targets, " "))
+		return err
 	}
 	if args.argExist("u", "upgrade") {
 

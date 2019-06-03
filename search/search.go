@@ -1,7 +1,10 @@
 package search
 
 import (
+	"fmt"
 	"os/exec"
+	"regexp"
+	"strings"
 
 	"github.com/ericm/yup/output"
 )
@@ -21,12 +24,34 @@ type Package struct {
 }
 
 // Pacman returns []Package parsed from pacman
-func Pacman(query string) []Package {
+func Pacman(query string) ([]Package, error) {
 	search := exec.Command("pacman", "-Ss", query)
-	output.SetStd(search)
+	run, err := search.Output()
+	if err != nil {
+		return []Package{}, output.Errorf("%s", err)
+	}
+
+	// Find Package vals
+	repoRe := regexp.MustCompile("^([A-z]+)")
+
+	searchOutput := string(run)
+	pacOut := []string{}
+	last := ""
+	for i, pac := range strings.Split(searchOutput, "\n") {
+		if i%2 == 0 {
+			last = pac
+		} else {
+			pacOut = append(pacOut, fmt.Sprintf("%s\n%s", last, pac))
+		}
+	}
+
+	fmt.Println(pacOut[0])
+
+	for _, pac := range pacOut {
+		fmt.Println(repoRe.FindString(pac))
+	}
 
 	var packs []Package
-	// TODO: parse search
 
-	return packs
+	return packs, nil
 }

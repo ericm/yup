@@ -38,6 +38,15 @@
             "args": ["-Syyu"]
         },
         {
+            "name": "-Ss test",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": ["-Ss", "test"]
+        },
+        {
             "name": "-h",
             "type": "go",
             "request": "launch",
