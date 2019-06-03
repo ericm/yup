@@ -25,11 +25,11 @@ type Package struct {
 }
 
 // Pacman returns []Package parsed from pacman
-func Pacman(query string) ([]Package, error) {
+func Pacman(query string, print bool) ([]Package, error) {
 	search := exec.Command("pacman", "-Ss", query)
 	run, err := search.Output()
 	if err != nil {
-		return []Package{}, output.Errorf("%s", err)
+		return []Package{}, err
 	}
 
 	// Find Package vals
@@ -45,11 +45,10 @@ func Pacman(query string) ([]Package, error) {
 	}
 
 	// Regex definitions
-	repoRe := regexp.MustCompile("^([A-z]+)")
 	nameRe := regexp.MustCompile("(?:/)+(\\S+)")
+	repoRe := regexp.MustCompile("^([A-z]+)")
 	versionRe := regexp.MustCompile("^(?:\\S+ ){1}(\\S+)")
 	installedRe := regexp.MustCompile("\\[(.+)\\]")
-
 	siRe := regexp.MustCompile("(?:\\:)(.+)")
 
 	packs := []Package{}
@@ -61,19 +60,36 @@ func Pacman(query string) ([]Package, error) {
 			Installed:   len(installedRe.FindString(pac)) != 0,
 			Description: strings.Split(pac, "\n")[1][4:],
 		}
+
 		if pack.Installed {
 			// Add extra install info
-			pacmanSi := exec.Command("pacman", "-Si", pack.Name)
+			// Get info from pacman -Si package
+			// Add extra install info
+			pacmanSi := exec.Command("pacman", "-Sii", pack.Name)
 			siOut, err := pacmanSi.Output()
 			if err != nil {
 				return []Package{}, output.Errorf("%s", err)
 			}
-			// Get info from pacman -Si package
-			info := siRe.FindAllString(string(siOut), 18)
-
+			info := siRe.FindAllString(string(siOut), -1)
 			pack.InstalledVersion = info[2][2:]
-			pack.InstalledSize = info[14][2:]
-			pack.DownloadSize = info[13][2:]
+			pack.InstalledSize = info[15][2:]
+			pack.DownloadSize = info[16][2:]
+			if pack.InstalledSize == "None" {
+				pack.InstalledSize = info[17][2:]
+				pack.DownloadSize = info[18][2:]
+			}
+
+		}
+
+		// Print
+		if print {
+			if pack.Installed {
+				fmt.Printf("(%s) %s %s [INSTALLED], Size: (Downloaded: %s | Installed: %s)\n    %s\n",
+					pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, pack.Description)
+			} else {
+				fmt.Printf("(%s) %s %s\n    %s\n", pack.Repo, pack.Name, pack.Version, pack.Description)
+			}
+
 		}
 
 		packs = append(packs, pack)

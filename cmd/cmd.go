@@ -157,7 +157,7 @@ func (args *Arguments) syncCheck() error {
 	if args.argExist("s", "search") {
 		// Search
 		// Check for q
-		_, err := search.Pacman(args.target)
+		_, err := search.Pacman(args.target, true)
 		return err
 	}
 	if args.argExist("u", "upgrade") {
