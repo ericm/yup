@@ -19,7 +19,8 @@ type Package struct {
 	Size             int64
 	Installed        bool
 	InstalledVersion string
-	InstalledSize    int64
+	InstalledSize    string
+	DownloadSize     string
 	SortValue        float64
 }
 
@@ -49,14 +50,32 @@ func Pacman(query string) ([]Package, error) {
 	versionRe := regexp.MustCompile("^(?:\\S+ ){1}(\\S+)")
 	installedRe := regexp.MustCompile("\\[(.+)\\]")
 
+	siRe := regexp.MustCompile("(?:\\:)(.+)")
+
 	packs := []Package{}
 	for _, pac := range pacOut {
 		pack := Package{
-			Name:      nameRe.FindString(pac)[1:],
-			Repo:      repoRe.FindString(pac),
-			Version:   strings.Split(versionRe.FindString(pac), " ")[1],
-			Installed: len(installedRe.FindString(pac)) != 0,
+			Name:        nameRe.FindString(pac)[1:],
+			Repo:        repoRe.FindString(pac),
+			Version:     strings.Split(versionRe.FindString(pac), " ")[1],
+			Installed:   len(installedRe.FindString(pac)) != 0,
+			Description: strings.Split(pac, "\n")[1][4:],
 		}
+		if pack.Installed {
+			// Add extra install info
+			pacmanSi := exec.Command("pacman", "-Si", pack.Name)
+			siOut, err := pacmanSi.Output()
+			if err != nil {
+				return []Package{}, output.Errorf("%s", err)
+			}
+			// Get info from pacman -Si package
+			info := siRe.FindAllString(string(siOut), 18)
+
+			pack.InstalledVersion = info[2][2:]
+			pack.InstalledSize = info[14][2:]
+			pack.DownloadSize = info[13][2:]
+		}
+
 		packs = append(packs, pack)
 	}
 
