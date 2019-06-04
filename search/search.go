@@ -219,11 +219,12 @@ func PacmanQi(arg ...string) ([]output.Package, error) {
 		if len(parts) > 0 {
 			// Package it into the object
 			newPack := output.Package{
-				Name:          parts[0][2:],
-				Version:       parts[1][2:],
-				Description:   parts[2][2:],
-				InstalledSize: parts[len(parts)-7][2:],
-				Installed:     true,
+				Name:             parts[0][2:],
+				Version:          parts[1][2:],
+				InstalledVersion: parts[1][2:],
+				Description:      parts[2][2:],
+				InstalledSize:    parts[len(parts)-7][2:],
+				Installed:        true,
 			}
 
 			newPack.InstalledSizeInt = ToBytes(newPack.InstalledSize)

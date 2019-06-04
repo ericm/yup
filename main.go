@@ -26,7 +26,8 @@ var (
 // Runs intitialization and calls other packages.
 func main() {
 	if os.Geteuid() == 0 {
-		fmt.Fprintln(os.Stderr, "No need to run yup as sudo/root")
+		output.PrintErr("No need to run yup as sudo/root")
+		os.Exit(1)
 	}
 	if runtime.GOOS != "linux" {
 		fmt.Fprintln(os.Stderr, "Requires linux I'm afraid")
