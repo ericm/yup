@@ -29,6 +29,15 @@
             "args": ["-S", "yay"]
         },
         {
+            "name": "-S",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": ["-S"]
+        },
+        {
             "name": "-Syyu",
             "type": "go",
             "request": "launch",
@@ -47,22 +56,22 @@
             "args": ["-Ss", "test"]
         },
         {
-            "name": "-Sso",
+            "name": "-Ss",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "env": {},
-            "args": ["-Sso"]
+            "args": ["-Ss"]
         },
         {
-            "name": "-Ss vim-runtime",
+            "name": "-Ss ghidra",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "env": {},
-            "args": ["-Ss", "vim-runtime"]
+            "args": ["-Ss", "ghidra"]
         },
         {
             "name": "-Ss a",

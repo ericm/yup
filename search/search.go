@@ -35,6 +35,10 @@ func setColor(repo *string) {
 
 // Aur returns []Package parsed from the AUR
 func Aur(query string, print bool, installed bool) ([]output.Package, error) {
+	// Hardcoded query limit
+	limit := 100
+	i := 0
+
 	// Search the AUR
 	aurPacks, err := aur.Search(query)
 	packs := []output.Package{}
@@ -63,7 +67,13 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 			output.PrintPackage(newPack)
 		}
 
-		packs = append(packs, newPack)
+		if i < limit {
+			packs = append(packs, newPack)
+		} else {
+			return packs, nil
+		}
+		i++
+
 	}
 	return packs, nil
 }
