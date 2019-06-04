@@ -242,7 +242,7 @@ func (s sortPack) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s sortPack) Less(i, j int) bool { return s[i].SortValue < s[j].SortValue }
 
 // SortPacks is used to generate the dialogue for yup <query>
-func SortPacks(queryS string, packs []output.Package) {
+func SortPacks(queryS string, packs []output.Package) []output.Package {
 	// Replace query spaces with '-'
 	query := strings.ReplaceAll(queryS, " ", "-")
 	querySpl := strings.Split(query, "-")[0]
@@ -276,9 +276,13 @@ func SortPacks(queryS string, packs []output.Package) {
 	sort.Sort(sortPack(packs))
 
 	for i, pack := range packs {
-		fmt.Printf("\033[37m\033[1m%d \033[0m", len(packs)-i)
-		output.PrintPackage(pack)
+		fmt.Print("\033[37m\033[1m")
+		fmt.Printf("%-5s", fmt.Sprintf("(%d)", len(packs)-i))
+		fmt.Print("\033[0m")
+		output.PrintPackage(pack, "def")
 	}
+
+	return packs
 }
 
 // ToBytes Turns 1 KiB into 1024

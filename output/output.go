@@ -89,25 +89,27 @@ func PrintPackage(pack Package, mode ...string) {
 			fmt.Printf("\033[2m/\033[0m\033[1m%s\033[0m %s, (\033[95m\033[1mInstall Size: %s\033[0m)%s\n    %s\n",
 				pack.Name, pack.Version, pack.InstalledSize, outdated, pack.Description)
 			return
+		case "def":
+			pack.Description = fmt.Sprintf(" - %s", pack.Description)
 		}
-	} else {
-		if pack.Installed {
-			if pack.DownloadSize == "" {
-				if pack.InstalledSize == "" {
-					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m)%s\n    %s\n",
-						pack.Repo, pack.Name, pack.Version, outdated, pack.Description)
-				} else {
-					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), (Installed Size: %s)%s\n    %s\n",
-						pack.Repo, pack.Name, pack.Version, pack.InstalledSize, outdated, pack.Description)
-				}
-			} else {
-				fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), Size: (D: %s | I: %s)%s\n    %s\n",
-					pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, outdated, pack.Description)
-			}
+	}
 
+	if pack.Installed {
+		if pack.DownloadSize == "" {
+			if pack.InstalledSize == "" {
+				fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m)%s\n    %s\n",
+					pack.Repo, pack.Name, pack.Version, outdated, pack.Description)
+			} else {
+				fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), (Installed Size: %s)%s\n    %s\n",
+					pack.Repo, pack.Name, pack.Version, pack.InstalledSize, outdated, pack.Description)
+			}
 		} else {
-			fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s\n    %s\n", pack.Repo, pack.Name, pack.Version, pack.Description)
+			fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), Size: (D: %s | I: %s)%s\n    %s\n",
+				pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, outdated, pack.Description)
 		}
+
+	} else {
+		fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s\n    %s\n", pack.Repo, pack.Name, pack.Version, pack.Description)
 	}
 
 }
