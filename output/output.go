@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -53,7 +55,19 @@ func PrintErr(format string, a ...interface{}) {
 
 // PrintL - prints line break
 func PrintL() {
-	fmt.Printf("\033[95m- - - - - -\033[0m\n")
+	// Get tty size
+	tty := exec.Command("stty", "size")
+	tty.Stdin = os.Stdin
+	out, _ := tty.Output()
+	str := strings.Split(string(out), " ")
+	var n int
+	if len(str) > 1 {
+		n, _ = strconv.Atoi(strings.ReplaceAll(str[1], "\n", ""))
+	} else {
+		n = 40
+	}
+
+	fmt.Printf("\033[34m%s\033[0m\n", strings.Repeat("=", n))
 }
 
 // SetStd sets cmd's Stdout, Stderr and Stdin to the OS's

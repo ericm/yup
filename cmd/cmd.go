@@ -247,7 +247,8 @@ func (args *Arguments) syncCheck() error {
 		if len(args.target) > 0 {
 			_, errA := search.Aur(args.target, true, false)
 			if errA != nil {
-				return errA
+				defer output.PrintErr("AUR query error: %s", errA)
+				defer output.PrintL()
 			}
 		}
 

@@ -47,13 +47,13 @@
             "args": ["-Syyu"]
         },
         {
-            "name": "-Ss test",
+            "name": "-Ss git",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "env": {},
-            "args": ["-Ss", "test"]
+            "args": ["-Ss", "git"]
         },
         {
             "name": "-Ss",
