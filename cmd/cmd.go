@@ -110,19 +110,49 @@ func (args *Arguments) getActions() error {
 		} else {
 			// Call search
 			output.Printf("Searching and sorting your query...")
-			// Get aur packs
-			aur, errAur := search.Aur(args.target, false, false)
-			if errAur != nil {
-				return errAur
+
+			// Get aur packs in a gorroutine
+			aurChan := make(chan []output.Package)
+			var aurErr error
+			go func(ch chan []output.Package) {
+				aur, errAur := search.Aur(args.target, false, false)
+				if errAur != nil {
+					aurErr = errAur
+				}
+				ch <- aur
+			}(aurChan)
+
+			// Get pacman packs in a gorroutine
+			pacChan := make(chan []output.Package)
+			var pacErr error
+			go func(ch chan []output.Package) {
+				// Get pacman packs
+				pacman, errPac := search.Pacman(args.target, false, false)
+				if errPac != nil {
+					pacErr = errPac
+				}
+				ch <- pacman
+			}(pacChan)
+
+			// Combine into one slice
+			var packs []output.Package
+
+			for i := 0; i < 2; i++ {
+				select {
+				case aurPacks := <-aurChan:
+					if aurErr != nil {
+						return aurErr
+					}
+					packs = append(packs, aurPacks...)
+				case pacPacks := <-pacChan:
+					if pacErr != nil {
+						return pacErr
+					}
+					packs = append(packs, pacPacks...)
+				}
 			}
 
-			// Get pacman packs
-			pacman, errPac := search.Pacman(args.target, false, false)
-			if errPac != nil {
-				return errPac
-			}
-
-			search.SortPacks(args.target, aur, pacman)
+			search.SortPacks(args.target, packs)
 			return nil
 		}
 	} else {

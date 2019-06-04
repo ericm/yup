@@ -208,8 +208,10 @@ func PacmanQi(arg ...string) ([]output.Package, error) {
 }
 
 // SortPacks is used to generate the dialogue for yup <query>
-func SortPacks(query string, aurPacks []output.Package, pacPacks []output.Package) {
-
+func SortPacks(query string, packs []output.Package) {
+	// First of all, combine packages slices
+	// packs := append(aurPacks, pacPacks...)
+	// for _, pack := range
 }
 
 // ToBytes Turns 1 KiB into 1024
