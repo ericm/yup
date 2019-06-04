@@ -85,6 +85,7 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 		ins, errCheck := PacmanQi(newPack.Name)
 		if len(ins) > 0 && errCheck == nil {
 			newPack.Installed = true
+			newPack.InstalledVersion = ins[0].Version
 			newPack.InstalledSize = ins[0].InstalledSize
 			newPack.InstalledSizeInt = ins[0].InstalledSizeInt
 			newPack.DownloadSize = ins[0].DownloadSize

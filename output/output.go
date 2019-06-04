@@ -77,27 +77,32 @@ func SetStd(cmd *exec.Cmd) {
 
 // PrintPackage in formatted view
 func PrintPackage(pack Package, mode ...string) {
+	outdated := ""
+	if pack.Version != pack.InstalledVersion {
+		outdated = fmt.Sprintf(", (\033[1m\033[95mOUTDATED\033[0m %s)", pack.InstalledVersion)
+	}
+
 	if len(mode) > 0 {
 		switch mode[0] {
 		case "sso":
 			// yup -Sso mode
-			fmt.Printf("\033[2m/\033[0m\033[1m%s\033[0m %s, (\033[95m\033[1mInstall Size: %s\033[0m)\n    %s\n",
-				pack.Name, pack.Version, pack.InstalledSize, pack.Description)
+			fmt.Printf("\033[2m/\033[0m\033[1m%s\033[0m %s, (\033[95m\033[1mInstall Size: %s\033[0m)%s\n    %s\n",
+				pack.Name, pack.Version, pack.InstalledSize, outdated, pack.Description)
 			return
 		}
 	} else {
 		if pack.Installed {
 			if pack.DownloadSize == "" {
 				if pack.InstalledSize == "" {
-					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m)\n    %s\n",
-						pack.Repo, pack.Name, pack.Version, pack.Description)
+					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m)%s\n    %s\n",
+						pack.Repo, pack.Name, pack.Version, outdated, pack.Description)
 				} else {
-					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), (Installed Size: %s)\n    %s\n",
-						pack.Repo, pack.Name, pack.Version, pack.InstalledSize, pack.Description)
+					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), (Installed Size: %s)%s\n    %s\n",
+						pack.Repo, pack.Name, pack.Version, pack.InstalledSize, outdated, pack.Description)
 				}
 			} else {
-				fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), Size: (D: %s | I: %s)\n    %s\n",
-					pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, pack.Description)
+				fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), Size: (D: %s | I: %s)%s\n    %s\n",
+					pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, outdated, pack.Description)
 			}
 
 		} else {
