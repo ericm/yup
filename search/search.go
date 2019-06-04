@@ -234,17 +234,49 @@ func PacmanQi(arg ...string) ([]output.Package, error) {
 	return out, nil
 }
 
+type sortPack []output.Package
+
+func (s sortPack) Len() int           { return len(s) }
+func (s sortPack) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s sortPack) Less(i, j int) bool { return s[i].SortValue < s[j].SortValue }
+
 // SortPacks is used to generate the dialogue for yup <query>
 func SortPacks(queryS string, packs []output.Package) {
 	// Replace query spaces with '-'
 	query := strings.ReplaceAll(queryS, " ", "-")
+	querySpl := strings.Split(query, "-")[0]
 
 	// Set sort weighting
-	for _, pack := range packs {
+	for i, pack := range packs {
 		// See how close the package name is to the query
-		if pack.Name == query {
-			pack.SortValue = 1
+
+		// Check for exact match
+		if packs[i].Name == query {
+			packs[i].SortValue = 1
+			continue
 		}
+
+		name := float64(len(pack.Name))
+		q := float64(len(query))
+
+		// Check for partial match
+		if strings.Contains(pack.Name, query) {
+			packs[i].SortValue = 1 / (name / q)
+			continue
+		}
+
+		// Else one part of the query
+		if strings.Contains(pack.Name, querySpl) {
+			packs[i].SortValue = 1 / (name / q) / 2
+			continue
+		}
+	}
+
+	sort.Sort(sortPack(packs))
+
+	for i, pack := range packs {
+		fmt.Printf("\033[37m\033[1m%d \033[0m", len(packs)-i)
+		output.PrintPackage(pack)
 	}
 }
 
