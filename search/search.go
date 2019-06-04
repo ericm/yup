@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -39,12 +40,38 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 	limit := 100
 	i := 0
 
+	// Generate query
+	queryS := strings.Split(query, " ")
+	aurPacksB := []aur.Pkg{}
+	aurPacks := []aur.Pkg{}
+
 	// Search the AUR
-	aurPacks, err := aur.Search(query)
-	packs := []output.Package{}
-	if err != nil {
-		return []output.Package{}, err
+	for _, q := range queryS {
+		aurPack, err := aur.Search(q)
+		if err != nil {
+			return []output.Package{}, err
+		}
+		aurPacksB = append(aurPacksB, aurPack...)
 	}
+
+	// Filter aurPacksB (before) to aurPacks
+	for _, pack := range aurPacksB {
+		matched := true
+
+		for _, q := range queryS {
+			if !((strings.Contains(pack.Name, q) || strings.Contains(pack.Description, q)) && matched) {
+				matched = false
+			}
+		}
+
+		if matched && sort.Search(len(aurPacks), func(i int) bool { return aurPacks[i].Name == pack.Name }) >= len(aurPacks) {
+			aurPacks = append(aurPacks, pack)
+		}
+
+	}
+
+	packs := []output.Package{}
+
 	for _, pack := range aurPacks {
 		newPack := output.Package{
 			Aur:         true,
@@ -80,8 +107,8 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 
 // Pacman returns []Package parsed from pacman
 func Pacman(query string, print bool, installed bool) ([]output.Package, error) {
-
-	search := exec.Command("pacman", "-Ss", query)
+	// Split query
+	search := exec.Command("pacman", append([]string{"-Ss"}, strings.Split(query, " ")...)...)
 	run, err := search.Output()
 	if err != nil {
 		return []output.Package{}, nil
@@ -208,10 +235,17 @@ func PacmanQi(arg ...string) ([]output.Package, error) {
 }
 
 // SortPacks is used to generate the dialogue for yup <query>
-func SortPacks(query string, packs []output.Package) {
-	// First of all, combine packages slices
-	// packs := append(aurPacks, pacPacks...)
-	// for _, pack := range
+func SortPacks(queryS string, packs []output.Package) {
+	// Replace query spaces with '-'
+	query := strings.ReplaceAll(queryS, " ", "-")
+
+	// Set sort weighting
+	for _, pack := range packs {
+		// See how close the package name is to the query
+		if pack.Name == query {
+			pack.SortValue = 1
+		}
+	}
 }
 
 // ToBytes Turns 1 KiB into 1024

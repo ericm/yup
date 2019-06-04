@@ -74,6 +74,15 @@
             "args": ["-Ss", "ghidra"]
         },
         {
+            "name": "-Ss spotify bin",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": ["-Ss", "spotify", "bin"]
+        },
+        {
             "name": "-Ss a",
             "type": "go",
             "request": "launch",
