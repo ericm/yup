@@ -196,6 +196,10 @@ func (args *Arguments) syncCheck() error {
 			return nil
 		}
 
+		_, errA := search.Aur(args.target, true, false)
+		if errA != nil {
+			return errA
+		}
 		_, err := search.Pacman(args.target, true, false)
 		return err
 	}

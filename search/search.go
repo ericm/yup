@@ -2,13 +2,13 @@ package search
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/ericm/yup/output"
+	"github.com/mikkeloscar/aur"
 )
 
 func setColor(repo *string) {
@@ -35,7 +35,37 @@ func setColor(repo *string) {
 
 // Aur returns []Package parsed from the AUR
 func Aur(query string, print bool, installed bool) ([]output.Package, error) {
-	return nil, nil
+	// Search the AUR
+	aurPacks, err := aur.Search(query)
+	packs := []output.Package{}
+	if err != nil {
+		return []output.Package{}, err
+	}
+	for _, pack := range aurPacks {
+		newPack := output.Package{
+			Aur:         true,
+			Name:        pack.Name,
+			Repo:        "\033[91maur\033[0m",
+			Description: pack.Description,
+			Version:     pack.Version,
+		}
+
+		// Check if its installed
+		ins, errCheck := PacmanQi(newPack.Name)
+		if len(ins) > 0 && errCheck == nil {
+			newPack.Installed = true
+			newPack.InstalledSize = ins[0].InstalledSize
+			newPack.InstalledSizeInt = ins[0].InstalledSizeInt
+			newPack.DownloadSize = ins[0].DownloadSize
+		}
+
+		if print {
+			output.PrintPackage(newPack)
+		}
+
+		packs = append(packs, newPack)
+	}
+	return packs, nil
 }
 
 // Pacman returns []Package parsed from pacman
@@ -44,7 +74,7 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 	search := exec.Command("pacman", "-Ss", query)
 	run, err := search.Output()
 	if err != nil {
-		return []output.Package{}, err
+		return []output.Package{}, nil
 	}
 
 	// Find Package vals
@@ -88,7 +118,7 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 			pacmanSi := exec.Command("pacman", "-Sii", pack.Name)
 			siOut, err := pacmanSi.Output()
 			if err != nil {
-				return []output.Package{}, output.Errorf("%s", err)
+				return []output.Package{}, err
 			}
 
 			// Sets the other vals
@@ -130,11 +160,13 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 
 }
 
-// PacmanQi parses Installed only from pacman -Si
-func PacmanQi() ([]output.Package, error) {
+// PacmanQi parses Installed only from pacman -Qi
+func PacmanQi(arg ...string) ([]output.Package, error) {
 	out := []output.Package{}
 
-	pacmanSi := exec.Command("pacman", "-Qi")
+	args := []string{"-Qi"}
+	args = append(args, arg...)
+	pacmanSi := exec.Command("pacman", args...)
 	siOut, err := pacmanSi.Output()
 	if err != nil {
 		return []output.Package{}, err
@@ -169,7 +201,7 @@ func PacmanQi() ([]output.Package, error) {
 func ToBytes(data string) int {
 	valF, err := strconv.ParseFloat(data[:len(data)-4], 32)
 	if err != nil {
-		fmt.Fprint(os.Stderr, output.Errorf("%s", err))
+		return 0
 	}
 	val := int(valF)
 	switch data[len(data)-3:] {

@@ -39,6 +39,10 @@ type pkgBuild struct {
 //
 // This checks each package param individually
 func Sync(packages []string) error {
+	if len(packages) > 0 && len(packages[0]) == 0 {
+		return fmt.Errorf("No targets specified (use -h for help)")
+	}
+
 	// Create channels for goroutines
 	// Step 1: Check AUR
 	errChannel := make(chan error, len(packages))

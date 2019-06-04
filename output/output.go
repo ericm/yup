@@ -74,8 +74,13 @@ func PrintPackage(pack Package, mode ...string) {
 	} else {
 		if pack.Installed {
 			if pack.DownloadSize == "" {
-				fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m)\n    %s\n",
-					pack.Repo, pack.Name, pack.Version, pack.Description)
+				if pack.InstalledSize == "" {
+					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m)\n    %s\n",
+						pack.Repo, pack.Name, pack.Version, pack.Description)
+				} else {
+					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), (Installed Size: %s)\n    %s\n",
+						pack.Repo, pack.Name, pack.Version, pack.InstalledSize, pack.Description)
+				}
 			} else {
 				fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), Size: (D: %s | I: %s)\n    %s\n",
 					pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, pack.Description)
