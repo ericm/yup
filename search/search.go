@@ -207,6 +207,11 @@ func PacmanQi(arg ...string) ([]output.Package, error) {
 	return out, nil
 }
 
+// SortPacks is used to generate the dialogue for yup <query>
+func SortPacks(query string, aurPacks []output.Package, pacPacks []output.Package) {
+
+}
+
 // ToBytes Turns 1 KiB into 1024
 func ToBytes(data string) int {
 	valF, err := strconv.ParseFloat(data[:len(data)-4], 32)

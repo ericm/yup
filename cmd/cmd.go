@@ -109,6 +109,21 @@ func (args *Arguments) getActions() error {
 			// Update
 		} else {
 			// Call search
+			output.Printf("Searching and sorting your query...")
+			// Get aur packs
+			aur, errAur := search.Aur(args.target, false, false)
+			if errAur != nil {
+				return errAur
+			}
+
+			// Get pacman packs
+			pacman, errPac := search.Pacman(args.target, false, false)
+			if errPac != nil {
+				return errPac
+			}
+
+			search.SortPacks(args.target, aur, pacman)
+			return nil
 		}
 	} else {
 		if args.argExist("h", "help") {
