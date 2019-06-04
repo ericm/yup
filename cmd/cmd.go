@@ -71,9 +71,7 @@ func Execute() error {
 }
 
 func sendToPacman() {
-	allArgs := append([]string{"pacman"}, arguments.args...)
-
-	pacman := exec.Command("sudo", allArgs...)
+	pacman := exec.Command("pacman", arguments.args...)
 	output.SetStd(pacman)
 	pacman.Run()
 }
@@ -142,6 +140,10 @@ func (args *Arguments) getActions() error {
 
 				return err
 			}
+
+			// Default case
+			sendToPacman()
+			return nil
 		}
 	}
 	// Probs shouldn't reach this point
