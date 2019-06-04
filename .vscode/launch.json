@@ -47,6 +47,15 @@
             "args": ["-Ss", "test"]
         },
         {
+            "name": "-Sso",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": ["-Sso"]
+        },
+        {
             "name": "-Ss vim-runtime",
             "type": "go",
             "request": "launch",

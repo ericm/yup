@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/search"
@@ -27,7 +28,8 @@ type pair struct {
 
 // Constants for output
 const help = `Usage:
-    yup`
+  yup
+`
 
 // Custom commands not to be passed to pacman
 var commands []pair
@@ -111,6 +113,7 @@ func (args *Arguments) getActions() error {
 	} else {
 		if args.argExist("h", "help") {
 			// Help
+			fmt.Print(help)
 			return nil
 		}
 		if args.argExist("S", "sync") {
@@ -142,6 +145,14 @@ func (args *Arguments) isPacman() {
 	args.sendToPacman = false
 }
 
+// Soring for packages
+// By size
+type bySize []output.Package
+
+func (s bySize) Len() int           { return len(s) }
+func (s bySize) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s bySize) Less(i, j int) bool { return s[i].InstalledSizeInt < s[j].InstalledSizeInt }
+
 // syncCheck checks -S argument options
 func (args *Arguments) syncCheck() error {
 	if args.argExist("y", "refresh") {
@@ -152,12 +163,34 @@ func (args *Arguments) syncCheck() error {
 		if err := refresh.Run(); err != nil {
 			return err
 		}
+		if len(args.target) == 0 {
+			return nil
+		}
 
 	}
 	if args.argExist("s", "search") {
 		// Search
 		// Check for q
-		_, err := search.Pacman(args.target, true)
+		if args.argExist("q") {
+			return nil
+		}
+
+		// Check for custom flag; o
+		// This sorts by Install size
+		if args.argExist("o") {
+			output.Printf("Sorting your query by install size")
+			pacman, err := search.PacmanSi()
+			sort.Sort(bySize(pacman))
+
+			// Print sorted
+			for _, pack := range pacman {
+				output.PrintPackage(pack, "sso")
+			}
+
+			return err
+		}
+
+		_, err := search.Pacman(args.target, true, false)
 		return err
 	}
 	if args.argExist("u", "upgrade") {

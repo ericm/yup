@@ -2,35 +2,44 @@ package search
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/ericm/yup/output"
 )
 
-// Package represents a package in pacman or the AUR
-type Package struct {
-	Aur              bool
-	Repo             string
-	Name             string
-	Version          string
-	Description      string
-	Size             int64
-	Installed        bool
-	InstalledVersion string
-	InstalledSize    string
-	DownloadSize     string
-	SortValue        float64
+func setColor(repo *string) {
+	// Set colour for repo
+	switch *repo {
+	case "core":
+		// Purple
+		*repo = "\033[95mcore\033[0m"
+		break
+	case "extra":
+		// Green
+		*repo = "\033[32mextra\033[0m"
+		break
+	case "community":
+		// Cyan
+		*repo = "\033[36mcommunity\033[0m"
+		break
+	case "multilib":
+		// Yellow
+		*repo = "\033[33mmultilib\033[0m"
+		break
+	}
 }
 
 // Pacman returns []Package parsed from pacman
-func Pacman(query string, print bool) ([]Package, error) {
+func Pacman(query string, print bool, installed bool) ([]output.Package, error) {
 
 	search := exec.Command("pacman", "-Ss", query)
 	run, err := search.Output()
 	if err != nil {
-		return []Package{}, err
+		return []output.Package{}, err
 	}
 
 	// Find Package vals
@@ -52,9 +61,9 @@ func Pacman(query string, print bool) ([]Package, error) {
 	installedRe := regexp.MustCompile("\\[(.+)\\]")
 	siRe := regexp.MustCompile("(?:\\:)(.+)")
 
-	packs := []Package{}
+	packs := []output.Package{}
 	for _, pac := range pacOut {
-		pack := Package{
+		pack := output.Package{
 			Name:        nameRe.FindString(pac)[1:],
 			Repo:        repoRe.FindString(pac),
 			Version:     strings.Split(versionRe.FindString(pac), " ")[1],
@@ -62,26 +71,11 @@ func Pacman(query string, print bool) ([]Package, error) {
 			Description: strings.Split(pac, "\n")[1][4:],
 		}
 
-		// Set colour for repo
-		switch pack.Repo {
-		case "core":
-			// Purple
-			pack.Repo = "\033[95mcore\033[0m"
-			break
-		case "extra":
-			// Green
-			pack.Repo = "\033[32mextra\033[0m"
-			break
-		case "community":
-			// Cyan
-			pack.Repo = "\033[36mcommunity\033[0m"
-			break
-		case "multilib":
-			// Yellow
-			pack.Repo = "\033[33mmultilib\033[0m"
-			break
-		}
+		setColor(&pack.Repo)
 
+		if installed {
+			query = "="
+		}
 		if pack.Installed && len(query) > 0 {
 			// Add extra install info
 			// Get info from pacman -Sii package
@@ -89,7 +83,7 @@ func Pacman(query string, print bool) ([]Package, error) {
 			pacmanSi := exec.Command("pacman", "-Sii", pack.Name)
 			siOut, err := pacmanSi.Output()
 			if err != nil {
-				return []Package{}, output.Errorf("%s", err)
+				return []output.Package{}, output.Errorf("%s", err)
 			}
 
 			// Sets the other vals
@@ -116,24 +110,75 @@ func Pacman(query string, print bool) ([]Package, error) {
 
 		// Print
 		if print {
-			if pack.Installed {
-				if pack.DownloadSize == "" {
-					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m)\n    %s\n",
-						pack.Repo, pack.Name, pack.Version, pack.Description)
-				} else {
-					fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), Size: (D: %s | I: %s)\n    %s\n",
-						pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, pack.Description)
-				}
-
-			} else {
-				fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s\n    %s\n", pack.Repo, pack.Name, pack.Version, pack.Description)
-			}
-
+			output.PrintPackage(pack)
 		}
 
-		packs = append(packs, pack)
+		if installed && pack.Installed {
+			packs = append(packs, pack)
+		} else if !installed {
+			packs = append(packs, pack)
+		}
+
 	}
 
 	return packs, nil
 
+}
+
+// PacmanSi parses Installed only from pacman -Si
+func PacmanSi() ([]output.Package, error) {
+	out := []output.Package{}
+
+	pacmanSi := exec.Command("pacman", "-Si")
+	siOut, err := pacmanSi.Output()
+	if err != nil {
+		return []output.Package{}, err
+	}
+
+	siRe := regexp.MustCompile("(?:\\:)(.+)")
+
+	// Get each pack
+	packs := strings.Split(string(siOut), "\n\n")
+	for _, pack := range packs {
+		parts := siRe.FindAllString(string(pack), -1)
+		if len(parts) > 0 {
+			// Package it into the object
+			newPack := output.Package{
+				Name:          parts[1][2:],
+				Version:       parts[2][2:],
+				Repo:          parts[0][2:],
+				Description:   parts[3][2:],
+				DownloadSize:  parts[len(parts)-5][2:],
+				InstalledSize: parts[len(parts)-4][2:],
+				Installed:     true,
+			}
+
+			setColor(&newPack.Repo)
+
+			newPack.InstalledSizeInt = ToBytes(newPack.InstalledSize)
+			out = append(out, newPack)
+		}
+
+	}
+
+	return out, nil
+}
+
+// ToBytes Turns 1 KiB into 1024
+func ToBytes(data string) int {
+	valF, err := strconv.ParseFloat(data[:len(data)-4], 32)
+	if err != nil {
+		fmt.Fprint(os.Stderr, output.Errorf("%s", err))
+	}
+	val := int(valF)
+	switch data[len(data)-3:] {
+	case "KiB":
+		return val * 1000
+	case "MiB":
+		return val * 1000000
+	case "GiB":
+		return val * 1000000000
+	default:
+		return -1
+	}
 }
