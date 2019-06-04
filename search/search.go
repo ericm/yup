@@ -33,6 +33,11 @@ func setColor(repo *string) {
 	}
 }
 
+// Aur returns []Package parsed from the AUR
+func Aur(query string, print bool, installed bool) ([]output.Package, error) {
+	return nil, nil
+}
+
 // Pacman returns []Package parsed from pacman
 func Pacman(query string, print bool, installed bool) ([]output.Package, error) {
 
@@ -125,11 +130,11 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 
 }
 
-// PacmanSi parses Installed only from pacman -Si
-func PacmanSi() ([]output.Package, error) {
+// PacmanQi parses Installed only from pacman -Si
+func PacmanQi() ([]output.Package, error) {
 	out := []output.Package{}
 
-	pacmanSi := exec.Command("pacman", "-Si")
+	pacmanSi := exec.Command("pacman", "-Qi")
 	siOut, err := pacmanSi.Output()
 	if err != nil {
 		return []output.Package{}, err
@@ -144,16 +149,12 @@ func PacmanSi() ([]output.Package, error) {
 		if len(parts) > 0 {
 			// Package it into the object
 			newPack := output.Package{
-				Name:          parts[1][2:],
-				Version:       parts[2][2:],
-				Repo:          parts[0][2:],
-				Description:   parts[3][2:],
-				DownloadSize:  parts[len(parts)-5][2:],
-				InstalledSize: parts[len(parts)-4][2:],
+				Name:          parts[0][2:],
+				Version:       parts[1][2:],
+				Description:   parts[2][2:],
+				InstalledSize: parts[len(parts)-7][2:],
 				Installed:     true,
 			}
-
-			setColor(&newPack.Repo)
 
 			newPack.InstalledSizeInt = ToBytes(newPack.InstalledSize)
 			out = append(out, newPack)

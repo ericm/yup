@@ -67,8 +67,8 @@ func PrintPackage(pack Package, mode ...string) {
 		switch mode[0] {
 		case "sso":
 			// yup -Sso mode
-			fmt.Printf("%s\033[2m/\033[0m\033[1m%s\033[0m %s, Size: (D: %s | \033[95m\033[1mI: %s\033[0m)\n    %s\n",
-				pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, pack.Description)
+			fmt.Printf("\033[2m/\033[0m\033[1m%s\033[0m %s, (\033[95m\033[1mInstall Size: %s\033[0m)\n    %s\n",
+				pack.Name, pack.Version, pack.InstalledSize, pack.Description)
 			return
 		}
 	} else {

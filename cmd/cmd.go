@@ -44,8 +44,8 @@ func init() {
 	commands = []pair{
 		pair{"h", "help"},
 		pair{"V", "version"},
-		// Handle sync
 		pair{"S", "sync"},
+		pair{"Q", "query"},
 	}
 
 	for _, arg := range commands {
@@ -116,6 +116,7 @@ func (args *Arguments) getActions() error {
 			fmt.Print(help)
 			return nil
 		}
+
 		if args.argExist("S", "sync") {
 			return args.syncCheck()
 		}
@@ -123,6 +124,24 @@ func (args *Arguments) getActions() error {
 		if args.argExist("V", "version") {
 			// Version
 			return nil
+		}
+
+		if args.argExist("Q", "query") {
+			// Check for custom flag; o
+			// This sorts by Install size
+			if args.argExist("o", "order-by-size") {
+				output.Printf("Sorting your query by install size")
+				pacman, err := search.PacmanQi()
+				sort.Sort(bySize(pacman))
+
+				// Print sorted
+				for i, pack := range pacman {
+					fmt.Print(len(pacman) - i)
+					output.PrintPackage(pack, "sso")
+				}
+
+				return err
+			}
 		}
 	}
 	// Probs shouldn't reach this point
@@ -173,21 +192,6 @@ func (args *Arguments) syncCheck() error {
 		// Check for q
 		if args.argExist("q") {
 			return nil
-		}
-
-		// Check for custom flag; o
-		// This sorts by Install size
-		if args.argExist("o") {
-			output.Printf("Sorting your query by install size")
-			pacman, err := search.PacmanSi()
-			sort.Sort(bySize(pacman))
-
-			// Print sorted
-			for _, pack := range pacman {
-				output.PrintPackage(pack, "sso")
-			}
-
-			return err
 		}
 
 		_, err := search.Pacman(args.target, true, false)
