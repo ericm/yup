@@ -71,7 +71,9 @@ func Execute() error {
 }
 
 func sendToPacman() {
-	pacman := exec.Command("pacman", arguments.args...)
+	allArgs := append([]string{"pacman"}, arguments.args...)
+
+	pacman := exec.Command("sudo", allArgs...)
 	output.SetStd(pacman)
 	pacman.Run()
 }
