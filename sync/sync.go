@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/ericm/yup/output"
+	"github.com/mikkeloscar/aur"
 
 	"fmt"
 
 	"github.com/ericm/yup/config"
-	"github.com/mikkeloscar/aur"
 )
 
 // func Search(terms ...string) error {
@@ -38,7 +38,7 @@ type pkgBuild struct {
 // Sync from the AUR first, then other configured repos.
 //
 // This checks each package param individually
-func Sync(packages []string) error {
+func Sync(packages []string, isAur bool) error {
 	if len(packages) > 0 && len(packages[0]) == 0 {
 		return fmt.Errorf("No targets specified (use -h for help)")
 	}
@@ -53,6 +53,12 @@ func Sync(packages []string) error {
 	for _, p := range packages {
 		// Multithreaded downloads
 		go func(p string) {
+			// If designated, install from pacman
+			if !isAur {
+				buildChannel <- nil
+				errChannel <- nil
+				pacmanArgs = append(pacmanArgs, p)
+			}
 			repo, err := aur.Info([]string{p})
 			if err != nil {
 				errChannel <- err
@@ -161,7 +167,6 @@ func Sync(packages []string) error {
 				if err := cmdMake.Run(); err != nil {
 					return err
 				}
-				output.PrintL()
 			}
 
 		}
