@@ -213,7 +213,7 @@ func (args *Arguments) isPacman() {
 	args.sendToPacman = false
 }
 
-// Soring for packages
+// Sorting for packages
 // By size
 type bySize []output.Package
 

@@ -1,7 +1,9 @@
 package search
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"sort"
@@ -243,7 +245,7 @@ func (s sortPack) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s sortPack) Less(i, j int) bool { return s[i].SortValue < s[j].SortValue }
 
 // SortPacks is used to generate the dialogue for yup <query>
-func SortPacks(queryS string, packs []output.Package) []output.Package {
+func SortPacks(queryS string, packs []output.Package) {
 	// Replace query spaces with '-'
 	query := strings.ReplaceAll(queryS, " ", "-")
 	querySpl := strings.Split(query, "-")[0]
@@ -283,7 +285,36 @@ func SortPacks(queryS string, packs []output.Package) []output.Package {
 		output.PrintPackage(pack, "def")
 	}
 
-	return packs
+	packsToInstall := []output.Package{}
+
+	output.PrintL()
+	output.Printf("Click on a package above")
+
+	// Read Stdin
+	output.PrintIn("Or type packages to install (eg: 1 2 3, 1-3 or ^4)")
+	scanner := bufio.NewReader(os.Stdin)
+	input, _ := scanner.ReadString('\n')
+
+	inputs := strings.Split((strings.ToLower(strings.TrimSpace(input))), " ")
+	for _, s := range inputs {
+		// 1-3
+		if strings.Contains(s, "-") {
+			continue
+		}
+		// ^4
+		if strings.Contains(s, "^") {
+			continue
+		}
+
+		if num, err := strconv.Atoi(s); err == nil {
+			// Find package from input
+			index := len(packs) - num
+			// Add to the slice
+			if index < len(packs) && index > 0 {
+				packsToInstall = append(packsToInstall, packs[index])
+			}
+		}
+	}
 }
 
 // ToBytes Turns 1 KiB into 1024
