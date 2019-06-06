@@ -247,13 +247,19 @@ type depBuild struct {
 // Downloads PKGBUILD's recursively
 func (pkg *pkgBuild) depCheck() ([]pkgBuild, error) {
 	// Dependencies
+	deps := []depBuild{}
 	for _, dep := range pkg.depends {
-		fmt.Println(dep)
+		// TODO: fix for specifiers
+		deps = append(deps, parseDep(dep))
 	}
 	// Make Dependencies
+	makeDeps := []depBuild{}
 	for _, dep := range pkg.makeDepends {
-		fmt.Println(dep)
+		makeDeps = append(makeDeps, parseDep(dep))
 	}
+
+	// Get PKGBUILDs
+	// TODO: add silent bool param to Sync
 
 	return nil, nil
 }
@@ -265,5 +271,6 @@ func parseDep(dep string) depBuild {
 	if strings.Contains(dep, "=<") {
 
 	}
-	return depBuild{}
+
+	return depBuild{name: dep}
 }
