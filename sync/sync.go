@@ -29,10 +29,12 @@ type Download struct {
 }
 
 type pkgBuild struct {
-	file    string
-	dir     string
-	name    string
-	version string
+	file        string
+	dir         string
+	name        string
+	version     string
+	depends     []string
+	makeDepends []string
 }
 
 // Sync from the AUR first, then other configured repos.
@@ -64,7 +66,7 @@ func Sync(packages []string, isAur bool) error {
 				errChannel <- err
 			} else {
 				if len(repo) > 0 {
-					aurDload("https://aur.archlinux.org/"+repo[0].Name+".git", errChannel, buildChannel, repo[0].Name, repo[0].Version)
+					aurDload("https://aur.archlinux.org/"+repo[0].Name+".git", errChannel, buildChannel, repo[0].Name, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
 				} else {
 					errChannel <- output.Errorf("Didn't find an \033[1mAUR\033[0m package for \033[1m\033[32m%s\033[39m\033[0m, searching other repos\n", p)
 					buildChannel <- nil
@@ -160,7 +162,13 @@ func Sync(packages []string, isAur bool) error {
 
 				// Make / Install the package
 				pkg.dir = filepath.Join(pkg.dir, pkg.name)
-				os.Chdir(pkg.dir)
+				os.Chdir(pkg.name)
+
+				// Check for dependencies
+				if _, err := pkg.depCheck(); err != nil {
+					return err
+				}
+
 				cmdMake := exec.Command("makepkg", "-si")
 				// Pipe to stdout, etc
 				output.SetStd(cmdMake)
@@ -187,16 +195,16 @@ func Sync(packages []string, isAur bool) error {
 }
 
 // Download an AUR package to cache
-func aurDload(url string, errChannel chan error, buildChannel chan *pkgBuild, name string, version string) {
+func aurDload(url string, errChannel chan error, buildChannel chan *pkgBuild, name string, version string, depends []string, makeDepends []string) {
 	// TODO: Check in cache
 	conf := config.GetConfig()
 	dir := filepath.Join(conf.CacheDir, name)
 	// At the end, add dir path to buildChannel
 	defer func() {
-		buildChannel <- &pkgBuild{dir, conf.CacheDir, name, version}
+		buildChannel <- &pkgBuild{dir, conf.CacheDir, name, version, depends, makeDepends}
 	}()
 
-	// Check if git repo is clones
+	// Check if git repo is cloned
 	if os.IsNotExist(os.Chdir(dir)) {
 		git := exec.Command("git", "clone", url, dir)
 		if err := git.Run(); err != nil {
@@ -227,4 +235,19 @@ func pacmanSync(args []string) []error {
 	}
 
 	return errOut
+}
+
+// depCheck for AUR dependencies
+// Downloads PKGBUILD's recursively
+func (pkg *pkgBuild) depCheck() ([]pkgBuild, error) {
+	// Dependencies
+	for _, dep := range pkg.depends {
+		fmt.Println(dep)
+	}
+	// Make Dependencies
+	for _, dep := range pkg.makeDepends {
+		fmt.Println(dep)
+	}
+
+	return nil, nil
 }
