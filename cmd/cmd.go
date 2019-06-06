@@ -172,9 +172,9 @@ func (args *Arguments) getActions() error {
 		}
 
 		if args.argExist("Q", "query") {
-			// Check for custom flag; o
+			// Check for custom flag; -Qos
 			// This sorts by Install size
-			if args.argExist("o", "order-by-size") {
+			if args.argExist("o", "order-by-size") && args.argExist("s") {
 				output.Printf("Sorting your query by install size")
 				pacman, err := search.PacmanQi()
 				sort.Sort(bySize(pacman))

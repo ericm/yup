@@ -237,6 +237,12 @@ func pacmanSync(args []string) []error {
 	return errOut
 }
 
+type depBuild struct {
+	name    string
+	version string
+	greater bool
+}
+
 // depCheck for AUR dependencies
 // Downloads PKGBUILD's recursively
 func (pkg *pkgBuild) depCheck() ([]pkgBuild, error) {
@@ -250,4 +256,14 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, error) {
 	}
 
 	return nil, nil
+}
+
+// Get dependency syntax
+func parseDep(dep string) depBuild {
+	dep = strings.TrimSpace(dep)
+
+	if strings.Contains(dep, "=<") {
+
+	}
+	return depBuild{}
 }
