@@ -35,6 +35,7 @@ type pkgBuild struct {
 	version     string
 	depends     []string
 	makeDepends []string
+	update      bool
 }
 
 // Sync from the AUR first, then other configured repos.
@@ -109,6 +110,7 @@ func Sync(packages []string, isAur bool, silent bool) error {
 }
 
 // Install the pkgBuild
+// assuming repo is now cloned or fetched
 func (pkg *pkgBuild) Install(silent bool) error {
 	if !silent {
 		output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
@@ -118,74 +120,83 @@ func (pkg *pkgBuild) Install(silent bool) error {
 	os.Chdir(filepath.Join(pkg.dir, pkg.name))
 
 	if !silent {
-	Pkgbuild:
+		i := 0
 		scanner := bufio.NewReader(os.Stdin)
 		output.PrintIn("\033[1m\033[4mV\033[0m\033[92miew, see \033[1m\033[4mD\033[0m\033[92miffs or \033[1m\033[4mE\033[0m\033[92mdit the PKGBUILD? (\033[1m\033[4mA\033[0m\033[92mll or \033[1m\033[4mN\033[0m\033[92mone)")
 		out, _ := scanner.ReadString('\n')
 
-		switch strings.ToLower(out[:1]) {
-		case "y":
-			showPkg := exec.Command("cat", "PKGBUILD")
-			output.SetStd(showPkg)
-			if err := showPkg.Run(); err != nil {
-				return err
-			}
-		Diffs:
-			output.PrintIn("View Diffs? (y/N)")
-			diffs, _ := scanner.ReadString('\n')
-			switch strings.ToLower(diffs[:1]) {
-			case "y":
-				// Use git diff @~..@
-				diff := exec.Command("git", "diff", "@~..@")
-				output.SetStd(diff)
-				if err := diff.Run(); err != nil {
-					return err
-				}
-			Edit:
-				// Finally, ask if they want to edit the PKGBUILD
-				output.PrintIn("Edit PKGBUILD? (y/N)")
-				edit, _ := scanner.ReadString('\n')
-				switch strings.ToLower(edit[:1]) {
-				case "y":
-					// Check for EDITOR
-					editor := os.Getenv("EDITOR")
-					if len(editor) == 0 {
-						// Ask for editor
-						output.PrintIn("No EDITOR environment variable set. Enter editor")
-						newEditor, _ := scanner.ReadString('\n')
-						editor = newEditor[:len(newEditor)-1]
-					}
+		cmds := []*exec.Cmd{}
 
-					editPkg := exec.Command(editor, "PKGBUILD")
-					output.SetStd(editPkg)
-					if err := editPkg.Run(); err != nil {
-						return err
-					}
-					break
-				case "n":
-				case "\n":
-					break
-				default:
-					output.PrintErr("Please press N or Y")
-					goto Edit
+		// Handle 'a'
+		out = strings.TrimSpace(strings.ToLower(out))
+		if strings.Contains(out, "a") {
+			out = "vde"
+		}
+
+	Pkgbuild:
+		if i < len(out) {
+			switch out[i : i+1] {
+			case "v":
+				// View
+				cmds = append(cmds, exec.Command("cat", "PKGBUILD"))
+				i++
+				goto Pkgbuild
+
+			case "d":
+				// Diffs
+				var diff *exec.Cmd
+				if pkg.update {
+					diff = exec.Command("git", "diff", "master", "origin/master")
+				} else {
+					diff = exec.Command("git", "diff", "@~..@")
 				}
-				break
+
+				cmds = append(cmds, diff)
+
+				i++
+				goto Pkgbuild
+
+			case "e":
+				// Check for EDITOR
+				editor := os.Getenv("EDITOR")
+				if len(editor) == 0 {
+					// Ask for editor
+					output.PrintIn("No EDITOR environment variable set. Enter editor")
+					newEditor, _ := scanner.ReadString('\n')
+					editor = newEditor[:len(newEditor)-1]
+				}
+
+				cmds = append(cmds, exec.Command(editor, "PKGBUILD"))
+				i++
+				goto Pkgbuild
+
 			case "n":
 			case "\n":
 				break
-			default:
-				output.PrintErr("Please press N or Y")
-				goto Diffs
-			}
 
-			break
-		case "n":
-		case "\n":
-			break
-		default:
-			output.PrintErr("Please press N or Y")
-			goto Pkgbuild
+			default:
+				i++
+				goto Pkgbuild
+			}
 		}
+
+		// Exectue commands
+		for _, cmd := range cmds {
+			output.SetStd(cmd)
+			cmd.Run()
+			output.PrintIn("Continue?")
+			n, _ := scanner.ReadString('\n')
+			if strings.ToLower(n[:1]) == "n" {
+				return nil
+			}
+		}
+
+		// Then merge if update
+		if pkg.update {
+			merge := exec.Command("git", "merge", "origin/master")
+			merge.Run()
+		}
+
 	}
 
 	// Make / Install the package
@@ -214,12 +225,9 @@ func aurDload(url string, errChannel chan error, buildChannel chan *pkgBuild, na
 	// TODO: Check in cache
 	conf := config.GetConfig()
 	dir := filepath.Join(conf.CacheDir, name)
-	// At the end, add dir path to buildChannel
-	defer func() {
-		buildChannel <- &pkgBuild{dir, conf.CacheDir, name, version, depends, makeDepends}
-	}()
 
 	// Check if git repo is cloned
+	update := false
 	if os.IsNotExist(os.Chdir(dir)) {
 		git := exec.Command("git", "clone", url, dir)
 		if err := git.Run(); err != nil {
@@ -227,12 +235,18 @@ func aurDload(url string, errChannel chan error, buildChannel chan *pkgBuild, na
 			return
 		}
 	} else {
-		git := exec.Command("git", "pull")
+		git := exec.Command("git", "fetch")
 		if err := git.Run(); err != nil {
 			errChannel <- err
 			return
 		}
+		update = true
 	}
+
+	// At the end, add dir path to buildChannel
+	defer func() {
+		buildChannel <- &pkgBuild{dir, conf.CacheDir, name, version, depends, makeDepends, update}
+	}()
 
 	errChannel <- nil
 }
