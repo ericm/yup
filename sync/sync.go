@@ -86,99 +86,8 @@ func Sync(packages []string, isAur bool, silent bool) error {
 			}
 		case pkg := <-buildChannel:
 			if pkg != nil {
-				if !silent {
-					output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
-				}
-
-				// Install from the AUR
-				os.Chdir(filepath.Join(pkg.dir, pkg.name))
-
-				if !silent {
-				Pkgbuild:
-					scanner := bufio.NewReader(os.Stdin)
-					output.PrintIn("View the PKGBUILD? (y/N)")
-					out, _ := scanner.ReadString('\n')
-
-					switch strings.ToLower(out[:1]) {
-					case "y":
-						showPkg := exec.Command("cat", "PKGBUILD")
-						output.SetStd(showPkg)
-						if err := showPkg.Run(); err != nil {
-							return err
-						}
-					Diffs:
-						output.PrintIn("View Diffs? (y/N)")
-						diffs, _ := scanner.ReadString('\n')
-						switch strings.ToLower(diffs[:1]) {
-						case "y":
-							// Use git diff @~..@
-							diff := exec.Command("git", "diff", "@~..@")
-							output.SetStd(diff)
-							if err := diff.Run(); err != nil {
-								return err
-							}
-						Edit:
-							// Finally, ask if they want to edit the PKGBUILD
-							output.PrintIn("Edit PKGBUILD? (y/N)")
-							edit, _ := scanner.ReadString('\n')
-							switch strings.ToLower(edit[:1]) {
-							case "y":
-								// Check for EDITOR
-								editor := os.Getenv("EDITOR")
-								if len(editor) == 0 {
-									// Ask for editor
-									output.PrintIn("No EDITOR environment variable set. Enter editor")
-									newEditor, _ := scanner.ReadString('\n')
-									editor = newEditor[:len(newEditor)-1]
-								}
-
-								editPkg := exec.Command(editor, "PKGBUILD")
-								output.SetStd(editPkg)
-								if err := editPkg.Run(); err != nil {
-									return err
-								}
-								break
-							case "n":
-							case "\n":
-								break
-							default:
-								output.PrintErr("Please press N or Y")
-								goto Edit
-							}
-							break
-						case "n":
-						case "\n":
-							break
-						default:
-							output.PrintErr("Please press N or Y")
-							goto Diffs
-						}
-
-						break
-					case "n":
-					case "\n":
-						break
-					default:
-						output.PrintErr("Please press N or Y")
-						goto Pkgbuild
-					}
-				}
-
-				// Make / Install the package
-				pkg.dir = filepath.Join(pkg.dir, pkg.name)
-				os.Chdir(pkg.name)
-
-				// Check for dependencies
-				if _, err := pkg.depCheck(); err != nil {
-					return err
-				}
-
-				cmdMake := exec.Command("makepkg", "-si")
-				// Pipe to stdout, etc
-				if !silent {
-					output.SetStd(cmdMake)
-				}
-				if err := cmdMake.Run(); err != nil {
+				// Install the package
+				if err := pkg.Install(silent); err != nil {
 					return err
 				}
 			}
@@ -194,6 +103,107 @@ func Sync(packages []string, isAur bool, silent bool) error {
 				return s
 			}
 		}
+	}
+
+	return nil
+}
+
+// Install the pkgBuild
+func (pkg *pkgBuild) Install(silent bool) error {
+	if !silent {
+		output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
+	}
+
+	// Install from the AUR
+	os.Chdir(filepath.Join(pkg.dir, pkg.name))
+
+	if !silent {
+	Pkgbuild:
+		scanner := bufio.NewReader(os.Stdin)
+		output.PrintIn("\033[1m\033[4mV\033[0m\033[92miew, see \033[1m\033[4mD\033[0m\033[92miffs or \033[1m\033[4mE\033[0m\033[92mdit the PKGBUILD? (\033[1m\033[4mA\033[0m\033[92mll or \033[1m\033[4mN\033[0m\033[92mone)")
+		out, _ := scanner.ReadString('\n')
+
+		switch strings.ToLower(out[:1]) {
+		case "y":
+			showPkg := exec.Command("cat", "PKGBUILD")
+			output.SetStd(showPkg)
+			if err := showPkg.Run(); err != nil {
+				return err
+			}
+		Diffs:
+			output.PrintIn("View Diffs? (y/N)")
+			diffs, _ := scanner.ReadString('\n')
+			switch strings.ToLower(diffs[:1]) {
+			case "y":
+				// Use git diff @~..@
+				diff := exec.Command("git", "diff", "@~..@")
+				output.SetStd(diff)
+				if err := diff.Run(); err != nil {
+					return err
+				}
+			Edit:
+				// Finally, ask if they want to edit the PKGBUILD
+				output.PrintIn("Edit PKGBUILD? (y/N)")
+				edit, _ := scanner.ReadString('\n')
+				switch strings.ToLower(edit[:1]) {
+				case "y":
+					// Check for EDITOR
+					editor := os.Getenv("EDITOR")
+					if len(editor) == 0 {
+						// Ask for editor
+						output.PrintIn("No EDITOR environment variable set. Enter editor")
+						newEditor, _ := scanner.ReadString('\n')
+						editor = newEditor[:len(newEditor)-1]
+					}
+
+					editPkg := exec.Command(editor, "PKGBUILD")
+					output.SetStd(editPkg)
+					if err := editPkg.Run(); err != nil {
+						return err
+					}
+					break
+				case "n":
+				case "\n":
+					break
+				default:
+					output.PrintErr("Please press N or Y")
+					goto Edit
+				}
+				break
+			case "n":
+			case "\n":
+				break
+			default:
+				output.PrintErr("Please press N or Y")
+				goto Diffs
+			}
+
+			break
+		case "n":
+		case "\n":
+			break
+		default:
+			output.PrintErr("Please press N or Y")
+			goto Pkgbuild
+		}
+	}
+
+	// Make / Install the package
+	pkg.dir = filepath.Join(pkg.dir, pkg.name)
+	os.Chdir(pkg.name)
+
+	// Check for dependencies
+	if _, err := pkg.depCheck(); err != nil {
+		return err
+	}
+
+	cmdMake := exec.Command("makepkg", "-si")
+	// Pipe to stdout, etc
+	if !silent {
+		output.SetStd(cmdMake)
+	}
+	if err := cmdMake.Run(); err != nil {
+		return err
 	}
 
 	return nil
@@ -263,7 +273,7 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, error) {
 		makeDeps = append(makeDeps, parseDep(dep))
 	}
 
-	// Get PKGBUILDs
+	// Sync
 	// TODO: add silent bool param to Sync
 
 	return nil, nil
