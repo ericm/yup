@@ -40,7 +40,7 @@ type pkgBuild struct {
 // Sync from the AUR first, then other configured repos.
 //
 // This checks each package param individually
-func Sync(packages []string, isAur bool) error {
+func Sync(packages []string, isAur bool, silent bool) error {
 	if len(packages) > 0 && len(packages[0]) == 0 {
 		return fmt.Errorf("No targets specified (use -h for help)")
 	}
@@ -81,58 +81,69 @@ func Sync(packages []string, isAur bool) error {
 		// Check for both error and build Channels
 		select {
 		case err := <-errChannel:
-			if err != nil {
+			if err != nil && !silent {
 				fmt.Print(err)
 			}
 		case pkg := <-buildChannel:
 			if pkg != nil {
-				output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
+				if !silent {
+					output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
+				}
 
 				// Install from the AUR
 				os.Chdir(filepath.Join(pkg.dir, pkg.name))
 
-			Pkgbuild:
-				scanner := bufio.NewReader(os.Stdin)
-				output.PrintIn("View the PKGBUILD? (y/N)")
-				out, _ := scanner.ReadString('\n')
+				if !silent {
+				Pkgbuild:
+					scanner := bufio.NewReader(os.Stdin)
+					output.PrintIn("View the PKGBUILD? (y/N)")
+					out, _ := scanner.ReadString('\n')
 
-				switch strings.ToLower(out[:1]) {
-				case "y":
-					showPkg := exec.Command("cat", "PKGBUILD")
-					output.SetStd(showPkg)
-					if err := showPkg.Run(); err != nil {
-						return err
-					}
-				Diffs:
-					output.PrintIn("View Diffs? (y/N)")
-					diffs, _ := scanner.ReadString('\n')
-					switch strings.ToLower(diffs[:1]) {
+					switch strings.ToLower(out[:1]) {
 					case "y":
-						// Use git diff @~..@
-						diff := exec.Command("git", "diff", "@~..@")
-						output.SetStd(diff)
-						if err := diff.Run(); err != nil {
+						showPkg := exec.Command("cat", "PKGBUILD")
+						output.SetStd(showPkg)
+						if err := showPkg.Run(); err != nil {
 							return err
 						}
-					Edit:
-						// Finally, ask if they want to edit the PKGBUILD
-						output.PrintIn("Edit PKGBUILD? (y/N)")
-						edit, _ := scanner.ReadString('\n')
-						switch strings.ToLower(edit[:1]) {
+					Diffs:
+						output.PrintIn("View Diffs? (y/N)")
+						diffs, _ := scanner.ReadString('\n')
+						switch strings.ToLower(diffs[:1]) {
 						case "y":
-							// Check for EDITOR
-							editor := os.Getenv("EDITOR")
-							if len(editor) == 0 {
-								// Ask for editor
-								output.PrintIn("No EDITOR environment variable set. Enter editor")
-								newEditor, _ := scanner.ReadString('\n')
-								editor = newEditor[:len(newEditor)-1]
-							}
-
-							editPkg := exec.Command(editor, "PKGBUILD")
-							output.SetStd(editPkg)
-							if err := editPkg.Run(); err != nil {
+							// Use git diff @~..@
+							diff := exec.Command("git", "diff", "@~..@")
+							output.SetStd(diff)
+							if err := diff.Run(); err != nil {
 								return err
+							}
+						Edit:
+							// Finally, ask if they want to edit the PKGBUILD
+							output.PrintIn("Edit PKGBUILD? (y/N)")
+							edit, _ := scanner.ReadString('\n')
+							switch strings.ToLower(edit[:1]) {
+							case "y":
+								// Check for EDITOR
+								editor := os.Getenv("EDITOR")
+								if len(editor) == 0 {
+									// Ask for editor
+									output.PrintIn("No EDITOR environment variable set. Enter editor")
+									newEditor, _ := scanner.ReadString('\n')
+									editor = newEditor[:len(newEditor)-1]
+								}
+
+								editPkg := exec.Command(editor, "PKGBUILD")
+								output.SetStd(editPkg)
+								if err := editPkg.Run(); err != nil {
+									return err
+								}
+								break
+							case "n":
+							case "\n":
+								break
+							default:
+								output.PrintErr("Please press N or Y")
+								goto Edit
 							}
 							break
 						case "n":
@@ -140,24 +151,17 @@ func Sync(packages []string, isAur bool) error {
 							break
 						default:
 							output.PrintErr("Please press N or Y")
-							goto Edit
+							goto Diffs
 						}
+
 						break
 					case "n":
 					case "\n":
 						break
 					default:
 						output.PrintErr("Please press N or Y")
-						goto Diffs
+						goto Pkgbuild
 					}
-
-					break
-				case "n":
-				case "\n":
-					break
-				default:
-					output.PrintErr("Please press N or Y")
-					goto Pkgbuild
 				}
 
 				// Make / Install the package
@@ -171,12 +175,13 @@ func Sync(packages []string, isAur bool) error {
 
 				cmdMake := exec.Command("makepkg", "-si")
 				// Pipe to stdout, etc
-				output.SetStd(cmdMake)
+				if !silent {
+					output.SetStd(cmdMake)
+				}
 				if err := cmdMake.Run(); err != nil {
 					return err
 				}
 			}
-
 		}
 
 	}

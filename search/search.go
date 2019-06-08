@@ -340,7 +340,7 @@ Redo:
 
 	// Then, install the packages
 	for _, pack := range packsToInstall {
-		sync.Sync([]string{pack.Name}, pack.Aur)
+		sync.Sync([]string{pack.Name}, pack.Aur, false)
 	}
 }
 

@@ -272,7 +272,7 @@ func (args *Arguments) syncCheck() error {
 	}
 
 	// Default case
-	return sync.Sync([]string{args.target}, true)
+	return sync.Sync([]string{args.target}, true, false)
 }
 
 // Returns whether or not an arg exists
