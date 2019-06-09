@@ -141,7 +141,7 @@ func (args *Arguments) getActions() error {
 				select {
 				case aurPacks := <-aurChan:
 					if aurErr != nil {
-						return aurErr
+						output.PrintErr("AUR lookup error: %s", aurErr)
 					}
 					packs = append(packs, aurPacks...)
 				case pacPacks := <-pacChan:
