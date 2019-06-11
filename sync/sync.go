@@ -287,8 +287,18 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, error) {
 		makeDeps = append(makeDeps, parseDep(dep))
 	}
 
-	// Sync
-	// TODO: add silent bool param to Sync
+	output.Printf("Dowloading dependencies")
+	// Sync deps
+	depNames := []string{}
+	for _, dep := range deps {
+		// Check if installed
+		check := exec.Command("pacman", "-Qi", dep.name)
+		if err := check.Run(); err != nil {
+			// Probs not installed
+			depNames = append(depNames, dep.name)
+		}
+	}
+	// Now, get PKGBUILDs
 
 	return nil, nil
 }

@@ -1,12 +1,2 @@
-github.com/Morganamilo/go-pacmanconf v0.0.0-20180910220353-9c5265e1b14f h1:ptFKynTV1p8JCzqk81NcMj0DV0Xle+PdKxfHjPbdIOU=
-github.com/Morganamilo/go-pacmanconf v0.0.0-20180910220353-9c5265e1b14f/go.mod h1:Hk55m330jNiwxRodIlMCvw5iEyoRUCIY64W1p9D+tHc=
-github.com/deckarep/golang-set v1.7.1 h1:SCQV0S6gTtp6itiFrTqI+pfmJ4LN85S1YzhDf9rTHJQ=
-github.com/deckarep/golang-set v1.7.1/go.mod h1:93vsz/8Wt4joVM7c2AVqh+YRMiUSc14yDtF28KmMOgQ=
-github.com/jguer/go-alpm v0.0.0-20190302211415-9c82d5170ce0 h1:wZzXS9/D7IIySAdxND1YkS2Gn4UVG5xEwHYehJ4ltNs=
-github.com/jguer/go-alpm v0.0.0-20190302211415-9c82d5170ce0/go.mod h1:1F60/e8oQFVJrZRH0TBqwtiB5ajJ5avOc4MoGRY9CFU=
 github.com/mikkeloscar/aur v0.0.0-20190424180024-f956f121b3fa h1:ZP2gNB0Q9e5yGc5/zmEWpcKxzEnJ+dnYsxhtYVQqORI=
 github.com/mikkeloscar/aur v0.0.0-20190424180024-f956f121b3fa/go.mod h1:n1NKHoldRNhIEufSx1PiDYcd2W+wpbz5/5K+p2eNDVk=
-github.com/spf13/cobra v0.0.3 h1:ZlrZ4XsMRm04Fr5pSFxBgfND2EBVa1nLpiy1stUsX/8=
-github.com/spf13/cobra v0.0.3/go.mod h1:1l0Ry5zgKvJasoi3XT1TypsSe7PqH0Sj9dhYf7v3XqQ=
-github.com/spf13/pflag v1.0.3 h1:zPAT6CGy6wXeQ7NtTnaTerfKOsV6V6F8agHXFiazDkg=
-github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
