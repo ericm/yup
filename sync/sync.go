@@ -203,15 +203,13 @@ func (pkg *pkgBuild) Install(silent bool) error {
 	// Make / Install the package
 	pkg.dir = filepath.Join(pkg.dir, pkg.name)
 
-	// Check for dependencies
-	deps, _, err := pkg.depCheck()
-	if err != nil {
-		return err
-	}
-
-	remMakes := false
-
 	if !silent {
+		// Check for dependencies
+		remMakes := false
+		deps, _, err := pkg.depCheck()
+		if err != nil {
+			return err
+		}
 		output.Printf("Found uninstalled dependencies:")
 		fmt.Print("    ")
 		for _, dep := range deps {
@@ -228,35 +226,32 @@ func (pkg *pkgBuild) Install(silent bool) error {
 		}
 
 		output.Printf("Installing dependencies")
-	}
-
-	// Install dep packages
-	for _, dep := range deps {
-		if dep.pacman {
-			// Install from pacman in silent mode
-			pacmanSync([]string{dep.name}, true)
-		} else {
-			// Install using Install in silent mode
-			err := dep.Install(true)
-			if err != nil {
-				output.PrintErr("Dep Install error:")
-				return err
+		// Install dep packages
+		for _, dep := range deps {
+			if dep.pacman {
+				// Install from pacman in silent mode
+				pacmanSync([]string{dep.name}, true)
+			} else {
+				// Install using Install in silent mode
+				err := dep.Install(true)
+				if err != nil {
+					output.PrintErr("Dep Install error:")
+					return err
+				}
 			}
 		}
+		fmt.Print(remMakes)
 	}
 
-	os.Chdir(pkg.name)
+	os.Chdir(pkg.dir)
 
 	cmdMake := exec.Command("makepkg", "-si")
 	// Pipe to stdout, etc
-	if !silent {
-		output.SetStd(cmdMake)
-	}
+	output.SetStd(cmdMake)
 	if err := cmdMake.Run(); err != nil {
+		output.PrintErr("%s", pkg.dir)
 		return err
 	}
-
-	fmt.Print(remMakes)
 
 	return nil
 }
