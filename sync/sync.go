@@ -337,10 +337,19 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 		}
 	}
 
-	// Now, get PKGBUILDs
-	errChannel := make(chan error, len(depNames))
-	buildChannel := make(chan *pkgBuild, len(depNames))
-	for _, dep := range depNames {
+	// Sync makeDeps
+	makeDepNames := []string{}
+	for _, dep := range makeDeps {
+		// Check if installed
+		check := exec.Command("pacman", "-Qi", dep.name)
+		if err := check.Run(); err != nil {
+			// Probs not installed
+			makeDepNames = append(makeDepNames, dep.name)
+		}
+	}
+
+	// Download func
+	dload := func(errChannel chan error, buildChannel chan *pkgBuild, dep string) {
 		repo, err := aur.Info([]string{dep})
 		if err != nil {
 			output.PrintErr("Dependencies error: %s", err)
@@ -354,15 +363,53 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 		}
 	}
 
+	// Now, get PKGBUILDs
+	// For deps
+	errChannel := make(chan error, len(depNames))
+	buildChannel := make(chan *pkgBuild, len(depNames))
+	for _, dep := range depNames {
+		dload(errChannel, buildChannel, dep)
+	}
+
+	// For makeDeps
+	errChannelM := make(chan error, len(makeDepNames))
+	buildChannelM := make(chan *pkgBuild, len(makeDepNames))
+	for _, dep := range makeDepNames {
+		dload(errChannelM, buildChannelM, dep)
+	}
+
 	out := []pkgBuild{}
-	// outMake := []pkgBuild{}
+	outMake := []pkgBuild{}
+	// Collect deps
 	for _i := 0; _i < len(depNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannel:
 			out = append(out, *pkg)
 			// Map dependency tree
-			newDeps, _, _ := pkg.depCheck()
-			out = append(out, newDeps...)
+			if !pkg.pacman {
+				newDeps, newMakeDeps, _ := pkg.depCheck()
+				out = append(out, newDeps...)
+				outMake = append(outMake, newMakeDeps...)
+			}
+		case err := <-errChannel:
+			if err != nil {
+				output.PrintErr("Dependencies error: %s", err)
+			}
+		}
+	}
+
+	// Collect makeDeps
+
+	for _i := 0; _i < len(makeDepNames)*2; _i++ {
+		select {
+		case pkg := <-buildChannel:
+			outMake = append(outMake, *pkg)
+			// Map dependency tree
+			if !pkg.pacman {
+				newDeps, newMakeDeps, _ := pkg.depCheck()
+				out = append(out, newDeps...)
+				outMake = append(outMake, newMakeDeps...)
+			}
 		case err := <-errChannel:
 			if err != nil {
 				output.PrintErr("Dependencies error: %s", err)
