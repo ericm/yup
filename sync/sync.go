@@ -99,7 +99,7 @@ func Sync(packages []string, isAur bool, silent bool) error {
 
 	// Now check pacman for unresolved args in pacmanArgs
 	if len(pacmanArgs) > 0 {
-		sync := pacmanSync(pacmanArgs)
+		sync := pacmanSync(pacmanArgs, false)
 		for _, s := range sync {
 			if s != nil {
 				return s
@@ -120,9 +120,9 @@ func (pkg *pkgBuild) Install(silent bool) error {
 	// Install from the AUR
 	os.Chdir(filepath.Join(pkg.dir, pkg.name))
 
+	scanner := bufio.NewReader(os.Stdin)
 	if !silent {
 		i := 0
-		scanner := bufio.NewReader(os.Stdin)
 		output.PrintIn("\033[1m\033[4mV\033[0m\033[92miew, see \033[1m\033[4mD\033[0m\033[92miffs or \033[1m\033[4mE\033[0m\033[92mdit the PKGBUILD? (\033[1m\033[4mA\033[0m\033[92mll or \033[1m\033[4mN\033[0m\033[92mone)")
 		out, _ := scanner.ReadString('\n')
 
@@ -192,28 +192,60 @@ func (pkg *pkgBuild) Install(silent bool) error {
 			}
 		}
 
-		// Then merge if update
-		if pkg.update {
-			merge := exec.Command("git", "merge", "origin/master")
-			merge.Run()
-		}
+	}
 
+	// Then merge if update
+	if pkg.update {
+		merge := exec.Command("git", "merge", "origin/master")
+		merge.Run()
 	}
 
 	// Make / Install the package
 	pkg.dir = filepath.Join(pkg.dir, pkg.name)
-	os.Chdir(pkg.name)
 
 	// Check for dependencies
 	deps, _, err := pkg.depCheck()
 	if err != nil {
 		return err
 	}
-	output.Printf("Found packages: \n   ")
-	for _, dep := range deps {
-		fmt.Print(dep.name)
+
+	remMakes := false
+
+	if !silent {
+		output.Printf("Found uninstalled dependencies:")
+		fmt.Print("    ")
+		for _, dep := range deps {
+			fmt.Printf("%s  ", dep.name)
+		}
+		fmt.Print("\n")
+
+		output.PrintIn("Remove make dependencies after install? (y/N)")
+		rem, _ := scanner.ReadString('\n')
+		switch strings.TrimSpace(strings.ToLower(rem[:1])) {
+		case "y":
+			remMakes = true
+			break
+		}
+
+		output.Printf("Installing dependencies")
 	}
-	fmt.Print("\n")
+
+	// Install dep packages
+	for _, dep := range deps {
+		if dep.pacman {
+			// Install from pacman in silent mode
+			pacmanSync([]string{dep.name}, true)
+		} else {
+			// Install using Install in silent mode
+			err := dep.Install(true)
+			if err != nil {
+				output.PrintErr("Dep Install error:")
+				return err
+			}
+		}
+	}
+
+	os.Chdir(pkg.name)
 
 	cmdMake := exec.Command("makepkg", "-si")
 	// Pipe to stdout, etc
@@ -223,6 +255,8 @@ func (pkg *pkgBuild) Install(silent bool) error {
 	if err := cmdMake.Run(); err != nil {
 		return err
 	}
+
+	fmt.Print(remMakes)
 
 	return nil
 }
@@ -259,12 +293,16 @@ func aurDload(url string, errChannel chan error, buildChannel chan *pkgBuild, na
 }
 
 // Passes arg to pacman -S
-func pacmanSync(args []string) []error {
+func pacmanSync(args []string, silent bool) []error {
 	errOut := []error{}
 	for _, arg := range args {
-		output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg)
+		if !silent {
+			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg)
+		}
 		cmd := exec.Command("sudo", "pacman", "-S", arg)
-		output.SetStd(cmd)
+		if !silent {
+			output.SetStd(cmd)
+		}
 		if err := cmd.Run(); err != nil {
 			errOut = append(errOut, err)
 		}
@@ -294,7 +332,6 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 		makeDeps = append(makeDeps, parseDep(dep))
 	}
 
-	output.Printf("Dowloading dependencies")
 	// Sync deps
 	depNames := []string{}
 	for _, dep := range deps {
@@ -312,7 +349,7 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 	for _, dep := range depNames {
 		repo, err := aur.Info([]string{dep})
 		if err != nil {
-			return nil, nil, err
+			output.PrintErr("Dependencies error: %s", err)
 		}
 		if len(repo) > 0 {
 			go aurDload("https://aur.archlinux.org/"+repo[0].Name+".git", errChannel, buildChannel, repo[0].Name, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
@@ -331,7 +368,7 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 			out = append(out, *pkg)
 		case err := <-errChannel:
 			if err != nil {
-				return nil, nil, err
+				output.PrintErr("Dependencies error: %s", err)
 			}
 		}
 	}
