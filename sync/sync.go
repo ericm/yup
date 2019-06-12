@@ -249,7 +249,6 @@ func (pkg *pkgBuild) Install(silent bool) error {
 	// Pipe to stdout, etc
 	output.SetStd(cmdMake)
 	if err := cmdMake.Run(); err != nil {
-		output.PrintErr("%s", pkg.dir)
 		return err
 	}
 
@@ -361,6 +360,9 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 		select {
 		case pkg := <-buildChannel:
 			out = append(out, *pkg)
+			// Map dependency tree
+			newDeps, _, _ := pkg.depCheck()
+			out = append(out, newDeps...)
 		case err := <-errChannel:
 			if err != nil {
 				output.PrintErr("Dependencies error: %s", err)
