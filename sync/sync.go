@@ -206,23 +206,34 @@ func (pkg *pkgBuild) Install(silent bool) error {
 	if !silent {
 		// Check for dependencies
 		remMakes := false
-		deps, _, err := pkg.depCheck()
+		deps, makeDeps, err := pkg.depCheck()
 		if err != nil {
 			return err
 		}
-		output.Printf("Found uninstalled dependencies:")
-		fmt.Print("    ")
-		for _, dep := range deps {
-			fmt.Printf("%s  ", dep.name)
-		}
-		fmt.Print("\n")
 
-		output.PrintIn("Remove make dependencies after install? (y/N)")
-		rem, _ := scanner.ReadString('\n')
-		switch strings.TrimSpace(strings.ToLower(rem[:1])) {
-		case "y":
-			remMakes = true
-			break
+		if len(deps) > 0 {
+			output.Printf("Found uninstalled Dependencies:")
+			fmt.Print("    ")
+			for _, dep := range deps {
+				fmt.Printf("%s  ", dep.name)
+			}
+			fmt.Print("\n")
+		}
+
+		if len(makeDeps) > 0 {
+			output.Printf("Found uninstalled Make Dependencies:")
+			fmt.Print("    ")
+			for _, dep := range makeDeps {
+				fmt.Printf("%s  ", dep.name)
+			}
+			fmt.Print("\n")
+			output.PrintIn("Remove Make Dependencies after install? (y/N)")
+			rem, _ := scanner.ReadString('\n')
+			switch strings.TrimSpace(strings.ToLower(rem[:1])) {
+			case "y":
+				remMakes = true
+				break
+			}
 		}
 
 		output.Printf("Installing dependencies")
@@ -417,7 +428,7 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 		}
 	}
 
-	return out, nil, nil
+	return out, outMake, nil
 }
 
 // Get dependency syntax
