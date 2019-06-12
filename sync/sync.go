@@ -236,38 +236,32 @@ func (pkg *pkgBuild) Install(silent bool) error {
 			}
 		}
 
+		// Gather packages
+		aurInstall := []pkgBuild{}
+		pacInstall := []string{}
+
 		if len(deps) > 0 {
-			output.Printf("Installing dependencies")
 			// Install deps packages
 			for _, dep := range deps {
 				if dep.pacman {
-					// Install from pacman in silent mode
-					pacmanSync([]string{dep.name}, true)
+					// Install from pacman
+					pacInstall = append(pacInstall, dep.name)
 				} else {
 					// Install using Install in silent mode
-					err := dep.Install(true)
-					if err != nil {
-						output.PrintErr("Dep Install error:")
-						return err
-					}
+					aurInstall = append(aurInstall, dep)
 				}
 			}
 		}
 
 		if len(makeDeps) > 0 {
-			output.Printf("Installing dependencies")
 			// Install makeDeps packages
 			for _, dep := range makeDeps {
 				if dep.pacman {
-					// Install from pacman in silent mode
-					pacmanSync([]string{dep.name}, true)
+					// Install from pacman
+					pacInstall = append(pacInstall, dep.name)
 				} else {
 					// Install using Install in silent mode
-					err := dep.Install(true)
-					if err != nil {
-						output.PrintErr("Dep Install error:")
-						return err
-					}
+					aurInstall = append(aurInstall, dep)
 				}
 			}
 
@@ -283,6 +277,20 @@ func (pkg *pkgBuild) Install(silent bool) error {
 						}
 					}
 				}(makeDeps)
+			}
+		}
+
+		output.Printf("Installing Dependencies")
+		// Pacman deps
+		if err := pacmanSync(pacInstall, true); err != nil {
+			output.PrintErr("%s", err)
+		}
+		// Aur deps
+		for _, dep := range aurInstall {
+			err := dep.Install(true)
+			if err != nil {
+				output.PrintErr("Dep Install error:")
+				return err
 			}
 		}
 
@@ -445,7 +453,7 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 
 	for _i := 0; _i < len(makeDepNames)*2; _i++ {
 		select {
-		case pkg := <-buildChannel:
+		case pkg := <-buildChannelM:
 			outMake = append(outMake, *pkg)
 			// Map dependency tree
 			if !pkg.pacman {
@@ -453,7 +461,7 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 				out = append(out, newDeps...)
 				outMake = append(outMake, newMakeDeps...)
 			}
-		case err := <-errChannel:
+		case err := <-errChannelM:
 			if err != nil {
 				output.PrintErr("Dependencies error: %s", err)
 			}
