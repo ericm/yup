@@ -203,9 +203,9 @@ func (pkg *pkgBuild) Install(silent bool) error {
 	// Make / Install the package
 	pkg.dir = filepath.Join(pkg.dir, pkg.name)
 
+	remMakes := false
 	if !silent {
 		// Check for dependencies
-		remMakes := false
 		deps, makeDeps, err := pkg.depCheck()
 		if err != nil {
 			return err
@@ -236,26 +236,60 @@ func (pkg *pkgBuild) Install(silent bool) error {
 			}
 		}
 
-		output.Printf("Installing dependencies")
-		// Install dep packages
-		for _, dep := range deps {
-			if dep.pacman {
-				// Install from pacman in silent mode
-				pacmanSync([]string{dep.name}, true)
-			} else {
-				// Install using Install in silent mode
-				err := dep.Install(true)
-				if err != nil {
-					output.PrintErr("Dep Install error:")
-					return err
+		if len(deps) > 0 {
+			output.Printf("Installing dependencies")
+			// Install deps packages
+			for _, dep := range deps {
+				if dep.pacman {
+					// Install from pacman in silent mode
+					pacmanSync([]string{dep.name}, true)
+				} else {
+					// Install using Install in silent mode
+					err := dep.Install(true)
+					if err != nil {
+						output.PrintErr("Dep Install error:")
+						return err
+					}
 				}
 			}
 		}
-		fmt.Print(remMakes)
+
+		if len(makeDeps) > 0 {
+			output.Printf("Installing dependencies")
+			// Install makeDeps packages
+			for _, dep := range makeDeps {
+				if dep.pacman {
+					// Install from pacman in silent mode
+					pacmanSync([]string{dep.name}, true)
+				} else {
+					// Install using Install in silent mode
+					err := dep.Install(true)
+					if err != nil {
+						output.PrintErr("Dep Install error:")
+						return err
+					}
+				}
+			}
+
+			// At end, remove make packs as necessary
+			if remMakes {
+				defer func(depM []pkgBuild) {
+					output.Printf("Removing Make Dependencies")
+					for _, dep := range depM {
+						rm := exec.Command("sudo", "pacman", "-R", dep.name)
+						output.SetStd(rm)
+						if err := rm.Run(); err != nil {
+							output.PrintErr("Dep Remove Error: %s", err)
+						}
+					}
+				}(makeDeps)
+			}
+		}
+
 	}
 
+	// Now, Install the actual package
 	os.Chdir(pkg.dir)
-
 	cmdMake := exec.Command("makepkg", "-si")
 	// Pipe to stdout, etc
 	output.SetStd(cmdMake)
@@ -305,9 +339,7 @@ func pacmanSync(args []string, silent bool) []error {
 			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg)
 		}
 		cmd := exec.Command("sudo", "pacman", "-S", arg)
-		if !silent {
-			output.SetStd(cmd)
-		}
+		output.SetStd(cmd)
 		if err := cmd.Run(); err != nil {
 			errOut = append(errOut, err)
 		}
