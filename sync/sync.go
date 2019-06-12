@@ -36,6 +36,7 @@ type pkgBuild struct {
 	depends     []string
 	makeDepends []string
 	update      bool
+	pacman      bool
 }
 
 // Sync from the AUR first, then other configured repos.
@@ -204,9 +205,15 @@ func (pkg *pkgBuild) Install(silent bool) error {
 	os.Chdir(pkg.name)
 
 	// Check for dependencies
-	if _, err := pkg.depCheck(); err != nil {
+	deps, _, err := pkg.depCheck()
+	if err != nil {
 		return err
 	}
+	output.Printf("Found packages: \n   ")
+	for _, dep := range deps {
+		fmt.Print(dep.name)
+	}
+	fmt.Print("\n")
 
 	cmdMake := exec.Command("makepkg", "-si")
 	// Pipe to stdout, etc
@@ -245,7 +252,7 @@ func aurDload(url string, errChannel chan error, buildChannel chan *pkgBuild, na
 
 	// At the end, add dir path to buildChannel
 	defer func() {
-		buildChannel <- &pkgBuild{dir, conf.CacheDir, name, version, depends, makeDepends, update}
+		buildChannel <- &pkgBuild{dir, conf.CacheDir, name, version, depends, makeDepends, update, false}
 	}()
 
 	errChannel <- nil
@@ -274,7 +281,7 @@ type depBuild struct {
 
 // depCheck for AUR dependencies
 // Downloads PKGBUILD's recursively
-func (pkg *pkgBuild) depCheck() ([]pkgBuild, error) {
+func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 	// Dependencies
 	deps := []depBuild{}
 	for _, dep := range pkg.depends {
@@ -298,9 +305,38 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, error) {
 			depNames = append(depNames, dep.name)
 		}
 	}
-	// Now, get PKGBUILDs
 
-	return nil, nil
+	// Now, get PKGBUILDs
+	errChannel := make(chan error, len(depNames))
+	buildChannel := make(chan *pkgBuild, len(depNames))
+	for _, dep := range depNames {
+		repo, err := aur.Info([]string{dep})
+		if err != nil {
+			return nil, nil, err
+		}
+		if len(repo) > 0 {
+			go aurDload("https://aur.archlinux.org/"+repo[0].Name+".git", errChannel, buildChannel, repo[0].Name, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
+		} else {
+			// Not on the aur
+			errChannel <- nil
+			buildChannel <- &pkgBuild{name: dep, pacman: true}
+		}
+	}
+
+	out := []pkgBuild{}
+	// outMake := []pkgBuild{}
+	for _i := 0; _i < len(depNames)*2; _i++ {
+		select {
+		case pkg := <-buildChannel:
+			out = append(out, *pkg)
+		case err := <-errChannel:
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+
+	return out, nil, nil
 }
 
 // Get dependency syntax
