@@ -206,6 +206,7 @@ func (pkg *pkgBuild) Install(silent bool) error {
 	remMakes := false
 	if !silent {
 		// Check for dependencies
+		output.Printf("Checking for dependencies")
 		deps, makeDeps, err := pkg.depCheck()
 		if err != nil {
 			return err
@@ -476,7 +477,15 @@ func parseDep(dep string) depBuild {
 	dep = strings.TrimSpace(dep)
 
 	if strings.Contains(dep, "=<") {
-
+		dep = strings.Split(dep, "=<")[0]
+	} else if strings.Contains(dep, "==") {
+		dep = strings.Split(dep, "==")[0]
+	} else if strings.Contains(dep, "=>") {
+		dep = strings.Split(dep, "=>")[0]
+	} else if strings.Contains(dep, ">") {
+		dep = strings.Split(dep, ">")[0]
+	} else if strings.Contains(dep, "<") {
+		dep = strings.Split(dep, "<")[0]
 	}
 
 	return depBuild{name: dep}
