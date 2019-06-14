@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/ericm/yup/config"
+	"strconv"
 )
 
 // func Search(terms ...string) error {
@@ -109,6 +110,42 @@ func Sync(packages []string, isAur bool, silent bool) error {
 	}
 
 	return nil
+}
+
+// ParseNumbers filters according to user input
+func ParseNumbers(input string, packs *[]PkgBuild) {
+	inputs := strings.Split((strings.ToLower(strings.TrimSpace(input))), " ")
+	seen := map[int]bool{}
+	for _, s := range inputs {
+		// 1-3
+		if strings.Contains(s, "-") {
+			continue
+		}
+		// ^4
+		if strings.Contains(s, "^") {
+			continue
+		}
+
+		if num, err := strconv.Atoi(s); err == nil {
+			// Find package from input
+			index := len(*packs) - num
+			// Add to the slice
+			if index < len(*packs) && index >= 0 && !seen[index] {
+				seen[index] = true
+			}
+		}
+	}
+
+	newPacks := *packs
+
+	for i := range *packs {
+		if seen[i] {
+			newPacks = append(newPacks[:i], newPacks[i+1:]...)
+		}
+	}
+
+	*packs = newPacks
+
 }
 
 // Install the pkgBuild
@@ -217,22 +254,31 @@ func (pkg *PkgBuild) Install(silent bool) error {
 			output.Printf("Found uninstalled Dependencies:")
 			fmt.Print("    ")
 			for i, dep := range deps {
-				fmt.Printf("\033[1m%d\033[0m %s  ", i, dep.name)
+				fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
 			}
 			fmt.Print("\n")
-		}
+			output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
+			depRem, _ := scanner.ReadString('\n')
 
-		output.PrintIn("Numbers of packages not to install?")
-		depRem, err := scanner.ReadString('\n')
+			// Parse input
+			ParseNumbers(depRem, &deps)
+		}
 
 		if len(makeDeps) > 0 {
 			output.Printf("Found uninstalled Make Dependencies:")
 			fmt.Print("    ")
-			for _, dep := range makeDeps {
-				fmt.Printf("%s  ", dep.name)
+			for i, dep := range makeDeps {
+				fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
 			}
 			fmt.Print("\n")
 			output.PrintIn("Remove Make Dependencies after install? (y/N)")
+
+			output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
+			depRem, _ := scanner.ReadString('\n')
+
+			// Parse input
+			ParseNumbers(depRem, &makeDeps)
+
 			rem, _ := scanner.ReadString('\n')
 			switch strings.TrimSpace(strings.ToLower(rem[:1])) {
 			case "y":
