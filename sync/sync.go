@@ -28,7 +28,8 @@ type Download struct {
 	count int
 }
 
-type pkgBuild struct {
+// Represents a PkgBuild
+type PkgBuild struct {
 	file        string
 	dir         string
 	name        string
@@ -50,7 +51,7 @@ func Sync(packages []string, isAur bool, silent bool) error {
 	// Create channels for goroutines
 	// Step 1: Check AUR
 	errChannel := make(chan error, len(packages))
-	buildChannel := make(chan *pkgBuild, len(packages))
+	buildChannel := make(chan *PkgBuild, len(packages))
 
 	pacmanArgs := []string{}
 
@@ -112,7 +113,7 @@ func Sync(packages []string, isAur bool, silent bool) error {
 
 // Install the pkgBuild
 // assuming repo is now cloned or fetched
-func (pkg *pkgBuild) Install(silent bool) error {
+func (pkg *PkgBuild) Install(silent bool) error {
 	if !silent {
 		output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
 	}
@@ -215,11 +216,14 @@ func (pkg *pkgBuild) Install(silent bool) error {
 		if len(deps) > 0 {
 			output.Printf("Found uninstalled Dependencies:")
 			fmt.Print("    ")
-			for _, dep := range deps {
-				fmt.Printf("%s  ", dep.name)
+			for i, dep := range deps {
+				fmt.Printf("\033[1m%d\033[0m %s  ", i, dep.name)
 			}
 			fmt.Print("\n")
 		}
+
+		output.PrintIn("Numbers of packages not to install?")
+		depRem, err := scanner.ReadString('\n')
 
 		if len(makeDeps) > 0 {
 			output.Printf("Found uninstalled Make Dependencies:")
@@ -238,7 +242,7 @@ func (pkg *pkgBuild) Install(silent bool) error {
 		}
 
 		// Gather packages
-		aurInstall := []pkgBuild{}
+		aurInstall := []PkgBuild{}
 		pacInstall := []string{}
 
 		if len(deps) > 0 {
@@ -268,7 +272,7 @@ func (pkg *pkgBuild) Install(silent bool) error {
 
 			// At end, remove make packs as necessary
 			if remMakes {
-				defer func(depM []pkgBuild) {
+				defer func(depM []PkgBuild) {
 					output.Printf("Removing Make Dependencies")
 					for _, dep := range depM {
 						rm := exec.Command("sudo", "pacman", "-R", dep.name)
@@ -310,7 +314,7 @@ func (pkg *pkgBuild) Install(silent bool) error {
 }
 
 // Download an AUR package to cache
-func aurDload(url string, errChannel chan error, buildChannel chan *pkgBuild, name string, version string, depends []string, makeDepends []string) {
+func aurDload(url string, errChannel chan error, buildChannel chan *PkgBuild, name string, version string, depends []string, makeDepends []string) {
 	// TODO: Check in cache
 	conf := config.GetConfig()
 	dir := filepath.Join(conf.CacheDir, name)
@@ -334,7 +338,7 @@ func aurDload(url string, errChannel chan error, buildChannel chan *pkgBuild, na
 
 	// At the end, add dir path to buildChannel
 	defer func() {
-		buildChannel <- &pkgBuild{dir, conf.CacheDir, name, version, depends, makeDepends, update, false}
+		buildChannel <- &PkgBuild{dir, conf.CacheDir, name, version, depends, makeDepends, update, false}
 	}()
 
 	errChannel <- nil
@@ -365,7 +369,7 @@ type depBuild struct {
 
 // depCheck for AUR dependencies
 // Downloads PKGBUILD's recursively
-func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
+func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 	// Dependencies
 	deps := []depBuild{}
 	for _, dep := range pkg.depends {
@@ -401,7 +405,7 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 	}
 
 	// Download func
-	dload := func(errChannel chan error, buildChannel chan *pkgBuild, dep string) {
+	dload := func(errChannel chan error, buildChannel chan *PkgBuild, dep string) {
 		repo, err := aur.Info([]string{dep})
 		if err != nil {
 			output.PrintErr("Dependencies error: %s", err)
@@ -411,27 +415,27 @@ func (pkg *pkgBuild) depCheck() ([]pkgBuild, []pkgBuild, error) {
 		} else {
 			// Not on the aur
 			errChannel <- nil
-			buildChannel <- &pkgBuild{name: dep, pacman: true}
+			buildChannel <- &PkgBuild{name: dep, pacman: true}
 		}
 	}
 
 	// Now, get PKGBUILDs
 	// For deps
 	errChannel := make(chan error, len(depNames))
-	buildChannel := make(chan *pkgBuild, len(depNames))
+	buildChannel := make(chan *PkgBuild, len(depNames))
 	for _, dep := range depNames {
 		dload(errChannel, buildChannel, dep)
 	}
 
 	// For makeDeps
 	errChannelM := make(chan error, len(makeDepNames))
-	buildChannelM := make(chan *pkgBuild, len(makeDepNames))
+	buildChannelM := make(chan *PkgBuild, len(makeDepNames))
 	for _, dep := range makeDepNames {
 		dload(errChannelM, buildChannelM, dep)
 	}
 
-	out := []pkgBuild{}
-	outMake := []pkgBuild{}
+	out := []PkgBuild{}
+	outMake := []PkgBuild{}
 	// Collect deps
 	for _i := 0; _i < len(depNames)*2; _i++ {
 		select {

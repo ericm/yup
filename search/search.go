@@ -12,7 +12,9 @@ import (
 
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/sync"
+	"github.com/ericm/yup/utils"
 	"github.com/mikkeloscar/aur"
+	"reflect"
 )
 
 func setColor(repo *string) {
