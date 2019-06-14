@@ -334,7 +334,7 @@ func (pkg *PkgBuild) Install(silent bool) error {
 		output.Printf("Installing Dependencies")
 		// Pacman deps
 		if err := pacmanSync(pacInstall, true); err != nil {
-			output.PrintErr("%s", err)
+			//output.PrintErr("%s", err)
 		}
 		// Aur deps
 		for _, dep := range aurInstall {
@@ -343,13 +343,18 @@ func (pkg *PkgBuild) Install(silent bool) error {
 				output.PrintErr("Dep Install error:")
 				return err
 			}
+			// Set as a dependency
+			setDep := exec.Command("sudo", "pacman", "-D", "-asdeps", pkg.name)
+			if err := setDep.Run(); err != nil {
+				return err
+			}
 		}
 
 	}
 
 	// Now, Install the actual package
 	os.Chdir(pkg.dir)
-	cmdMake := exec.Command("makepkg", "-si")
+	cmdMake := exec.Command("makepkg", "-sic")
 	// Pipe to stdout, etc
 	output.SetStd(cmdMake)
 	if err := cmdMake.Run(); err != nil {
