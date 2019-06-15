@@ -344,7 +344,7 @@ func (pkg *PkgBuild) Install(silent bool) error {
 				return err
 			}
 			// Set as a dependency
-			setDep := exec.Command("sudo", "pacman", "-D", "-asdeps", pkg.name)
+			setDep := exec.Command("sudo", "pacman", "-D", "-asdeps", dep.name)
 			if err := setDep.Run(); err != nil {
 				return err
 			}
