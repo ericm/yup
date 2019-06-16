@@ -10,9 +10,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ericm/goncurses"
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/sync"
 	"github.com/mikkeloscar/aur"
+	"log"
 )
 
 func setColor(repo *string) {
@@ -279,7 +281,8 @@ func SortPacks(queryS string, packs []output.Package) {
 
 	sort.Sort(sortPack(packs))
 
-	output.PrintL()
+	// Prints using ncurses
+	printncurses(packs)
 
 Redo:
 	for i, pack := range packs {
@@ -342,6 +345,67 @@ Redo:
 	for _, pack := range packsToInstall {
 		sync.Sync([]string{pack.Name}, pack.Aur, false)
 	}
+}
+
+// Prints ncurses
+func printncurses(packs []output.Package) {
+	// Setup ncurses
+	stdscr, err := goncurses.Init()
+	if err != nil {
+		output.PrintErr("%s", err)
+	}
+	defer goncurses.End()
+
+	goncurses.Raw(true)
+	goncurses.Echo(false)
+	goncurses.Cursor(0)
+	// Enable keypad
+	stdscr.Keypad(true)
+
+	menu_items := []string{}
+	for i, pack := range packs {
+		item := fmt.Sprintf("\033[37m\033[1m%-5s\033[0m", fmt.Sprintf("(%d)", len(packs)-i))
+
+		// Format output
+		item += output.PrintPackage(pack, "ncurses")
+	}
+
+	items := make([]*goncurses.MenuItem, len(menu_items))
+	for i, val := range menu_items {
+		items[i], _ = goncurses.NewItem(val, "")
+		defer items[i].Free()
+	}
+
+	menu, _ := goncurses.NewMenu(items)
+	defer menu.Free()
+
+	// Get max width/height
+	mx, my := stdscr.MaxYX()
+	x, y := 0, 0
+
+	win, err := goncurses.NewWindow(my, mx, y, x)
+	if err != nil {
+		log.Fatal(err)
+	}
+	win.Keypad(true)
+
+	stdscr.Refresh()
+
+	menu.SetWindow(win)
+	// Now subwindow
+	dwin := win.Derived(my-3, mx, y, x)
+	menu.SubWindow(dwin)
+
+	// TODO: Change
+	menu.Format(5, 1)
+
+	// Makes menu visible
+	menu.Post()
+	defer menu.UnPost()
+
+	win.Refresh()
+
+	stdscr.GetChar()
 }
 
 // ToBytes Turns 1 KiB into 1024
