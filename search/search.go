@@ -364,6 +364,10 @@ func printncurses(packs *[]output.Package) {
 	}
 	defer goncurses.End()
 
+	for i, item := range menu_items {
+		stdscr.MovePrint(i+1, 0, item)
+	}
+
 	stdscr.Refresh()
 	stdscr.GetChar()
 }
