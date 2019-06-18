@@ -271,13 +271,14 @@ func (pkg *PkgBuild) Install(silent bool) error {
 				fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
 			}
 			fmt.Print("\n")
-			output.PrintIn("Remove Make Dependencies after install? (y/N)")
 
+			// Not to install
 			output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
-			depRem, _ := scanner.ReadString('\n')
 
-			// Parse input
-			ParseNumbers(depRem, &makeDeps)
+			depNum, _ := scanner.ReadString('\n')
+			ParseNumbers(depNum, &makeDeps)
+
+			output.PrintIn("Remove Make Dependencies after install? (y/N)")
 
 			rem, _ := scanner.ReadString('\n')
 			switch strings.TrimSpace(strings.ToLower(rem[:1])) {
