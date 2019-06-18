@@ -101,7 +101,7 @@ func Sync(packages []string, isAur bool, silent bool) error {
 
 	// Now check pacman for unresolved args in pacmanArgs
 	if len(pacmanArgs) > 0 {
-		sync := pacmanSync(pacmanArgs, false)
+		sync := pacmanSync(pacmanArgs, false, false)
 		for _, s := range sync {
 			if s != nil {
 				return s
@@ -334,7 +334,7 @@ func (pkg *PkgBuild) Install(silent bool) error {
 
 		output.Printf("Installing Dependencies")
 		// Pacman deps
-		if err := pacmanSync(pacInstall, true); err != nil {
+		if err := pacmanSync(pacInstall, true, true); err != nil {
 			//output.PrintErr("%s", err)
 		}
 		// Aur deps
@@ -397,19 +397,23 @@ func aurDload(url string, errChannel chan error, buildChannel chan *PkgBuild, na
 }
 
 // Passes arg to pacman -S
-func pacmanSync(args []string, silent bool) []error {
+func pacmanSync(args []string, silent bool, deps bool) []error {
 	errOut := []error{}
 	for _, arg := range args {
 		if !silent {
-			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg)
-		}
-		cmd := exec.Command("sudo", "pacman", "-S", arg)
-		output.SetStd(cmd)
-		if err := cmd.Run(); err != nil {
-			errOut = append(errOut, err)
+			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg[0])
 		}
 	}
-
+	args = append([]string{"pacman"}, args...)
+	args = append([]string{"-S"}, args...)
+	if deps {
+		args = append([]string{"--asdeps"}, args...)
+	}
+	cmd := exec.Command("sudo", args...)
+	output.SetStd(cmd)
+	if err := cmd.Run(); err != nil {
+		errOut = append(errOut, err)
+	}
 	return errOut
 }
 
