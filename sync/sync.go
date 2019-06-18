@@ -404,11 +404,13 @@ func pacmanSync(args []string, silent bool, deps bool) []error {
 			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg[0])
 		}
 	}
-	args = append([]string{"pacman"}, args...)
-	args = append([]string{"-S"}, args...)
+
 	if deps {
 		args = append([]string{"--asdeps"}, args...)
 	}
+	args = append([]string{"-S"}, args...)
+	args = append([]string{"pacman"}, args...)
+
 	cmd := exec.Command("sudo", args...)
 	output.SetStd(cmd)
 	if err := cmd.Run(); err != nil {
