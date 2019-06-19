@@ -332,7 +332,9 @@ func (pkg *PkgBuild) Install(silent bool) error {
 			}
 		}
 
-		output.Printf("Installing Dependencies")
+		if len(pacInstall) > 0 || len(aurInstall) > 0 {
+			output.Printf("Installing Dependencies")
+		}
 		// Pacman deps
 		if err := pacmanSync(pacInstall, true, true); err != nil {
 			//output.PrintErr("%s", err)
@@ -398,10 +400,14 @@ func aurDload(url string, errChannel chan error, buildChannel chan *PkgBuild, na
 
 // Passes arg to pacman -S
 func pacmanSync(args []string, silent bool, deps bool) []error {
+	if len(args) == 0 {
+		return nil
+	}
+
 	errOut := []error{}
 	for _, arg := range args {
 		if !silent {
-			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg[0])
+			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg)
 		}
 	}
 
