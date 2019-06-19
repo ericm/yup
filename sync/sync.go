@@ -101,7 +101,7 @@ func Sync(packages []string, isAur bool, silent bool) error {
 
 	// Now check pacman for unresolved args in pacmanArgs
 	if len(pacmanArgs) > 0 {
-		sync := pacmanSync(pacmanArgs, false)
+		sync := pacmanSync(pacmanArgs, false, false)
 		for _, s := range sync {
 			if s != nil {
 				return s
@@ -271,13 +271,14 @@ func (pkg *PkgBuild) Install(silent bool) error {
 				fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
 			}
 			fmt.Print("\n")
-			output.PrintIn("Remove Make Dependencies after install? (y/N)")
 
+			// Not to install
 			output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
-			depRem, _ := scanner.ReadString('\n')
 
-			// Parse input
-			ParseNumbers(depRem, &makeDeps)
+			depNum, _ := scanner.ReadString('\n')
+			ParseNumbers(depNum, &makeDeps)
+
+			output.PrintIn("Remove Make Dependencies after install? (y/N)")
 
 			rem, _ := scanner.ReadString('\n')
 			switch strings.TrimSpace(strings.ToLower(rem[:1])) {
@@ -331,9 +332,11 @@ func (pkg *PkgBuild) Install(silent bool) error {
 			}
 		}
 
-		output.Printf("Installing Dependencies")
+		if len(pacInstall) > 0 || len(aurInstall) > 0 {
+			output.Printf("Installing Dependencies")
+		}
 		// Pacman deps
-		if err := pacmanSync(pacInstall, true); err != nil {
+		if err := pacmanSync(pacInstall, true, true); err != nil {
 			//output.PrintErr("%s", err)
 		}
 		// Aur deps
@@ -396,19 +399,29 @@ func aurDload(url string, errChannel chan error, buildChannel chan *PkgBuild, na
 }
 
 // Passes arg to pacman -S
-func pacmanSync(args []string, silent bool) []error {
+func pacmanSync(args []string, silent bool, deps bool) []error {
+	if len(args) == 0 {
+		return nil
+	}
+
 	errOut := []error{}
 	for _, arg := range args {
 		if !silent {
 			output.Printf("Installing \033[1m\033[32m%s\033[39m\033[0m with \033[1mpacman\033[0m", arg)
 		}
-		cmd := exec.Command("sudo", "pacman", "-S", arg)
-		output.SetStd(cmd)
-		if err := cmd.Run(); err != nil {
-			errOut = append(errOut, err)
-		}
 	}
 
+	if deps {
+		args = append([]string{"--asdeps"}, args...)
+	}
+	args = append([]string{"-S"}, args...)
+	args = append([]string{"pacman"}, args...)
+
+	cmd := exec.Command("sudo", args...)
+	output.SetStd(cmd)
+	if err := cmd.Run(); err != nil {
+		errOut = append(errOut, err)
+	}
 	return errOut
 }
 
