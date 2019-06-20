@@ -372,7 +372,8 @@ func printncurses(packs *[]output.Package) {
 
 func printPacks(stdscr *goncurses.Window, packs *[]output.Package) {
 	for i, item := range *packs {
-		y := 2 * i
+		my, _ := stdscr.MaxYX()
+		y := my - (2 * (len(*packs) - i)) - 3
 
 		// Number
 		stdscr.AttrOn(goncurses.A_BOLD)
@@ -380,34 +381,46 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package) {
 		stdscr.AttrOff(goncurses.A_BOLD)
 
 		cur := 5
+
 		// Repo
 		switch item.Repo {
 		case "\033[91maur\033[0m":
-			cur += 4
+			cur += 3
 			stdscr.ColorOn(1)
 			stdscr.MovePrint(y, 5, "aur")
 			stdscr.ColorOff(1)
 		case "\033[95mcore\033[0m":
-			cur += 5
+			cur += 4
 			stdscr.ColorOn(5)
 			stdscr.MovePrint(y, 5, "core")
 			stdscr.ColorOff(5)
 		case "\033[32mextra\033[0m":
-			cur += 6
+			cur += 5
 			stdscr.ColorOn(4)
 			stdscr.MovePrint(y, 5, "extra")
 			stdscr.ColorOff(4)
 		case "\033[36mcommunity\033[0m":
-			cur += 10
+			cur += 9
 			stdscr.ColorOn(2)
 			stdscr.MovePrint(y, 5, "community")
 			stdscr.ColorOff(2)
 		case "\033[33mmultilib\033[0m":
-			cur += 9
+			cur += 8
 			stdscr.ColorOn(3)
 			stdscr.MovePrint(y, 5, "multilib")
 			stdscr.ColorOff(3)
 		}
+
+		// Slash
+		stdscr.AttrOn(goncurses.A_DIM)
+		stdscr.MovePrint(y, cur, "/")
+		cur += 1
+		stdscr.AttrOff(goncurses.A_DIM)
+
+		// Name
+		stdscr.AttrOn(goncurses.A_BOLD)
+		stdscr.MovePrint(y, cur, item.Name)
+		stdscr.AttrOff(goncurses.A_BOLD)
 	}
 }
 
