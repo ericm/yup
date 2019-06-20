@@ -420,7 +420,35 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package) {
 		// Name
 		stdscr.AttrOn(goncurses.A_BOLD)
 		stdscr.MovePrint(y, cur, item.Name)
+		cur += len(item.Name) + 1
 		stdscr.AttrOff(goncurses.A_BOLD)
+
+		// Version
+		stdscr.MovePrint(y, cur, item.Version)
+		cur += len(item.Version) + 1
+
+		// Installed
+		if item.Installed {
+			stdscr.MovePrint(y, cur, "(")
+			cur += 1
+			stdscr.AttrOn(goncurses.A_BOLD)
+			stdscr.ColorOn(5)
+			stdscr.MovePrint(y, cur, "INSTALLED")
+			cur += 9
+			if item.InstalledVersion != item.Version {
+				// Outdated
+				cur += 1
+				stdscr.MovePrint(y, cur, "OUTDATED")
+				stdscr.ColorOff(5)
+				stdscr.AttrOff(goncurses.A_BOLD)
+				cur += 9
+				stdscr.MovePrint(y, cur, item.InstalledVersion)
+				cur += len(item.InstalledVersion)
+			}
+			stdscr.ColorOff(5)
+			stdscr.AttrOff(goncurses.A_BOLD)
+			stdscr.MovePrint(y, cur, ")")
+		}
 	}
 }
 
