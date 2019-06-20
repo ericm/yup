@@ -348,15 +348,6 @@ Redo:
 
 // Prints ncurses
 func printncurses(packs *[]output.Package) {
-	menu_items := []string{}
-	for i, pack := range *packs {
-		item := fmt.Sprintf("\033[37m\033[1m%-5s\033[0m", fmt.Sprintf("(%d)", len(*packs)-i))
-
-		// Format output
-		item += output.PrintPackage(pack, "ncurses")
-		menu_items = append(menu_items, item)
-	}
-
 	// Setup ncurses
 	stdscr, err := goncurses.Init()
 	if err != nil {
@@ -364,12 +355,60 @@ func printncurses(packs *[]output.Package) {
 	}
 	defer goncurses.End()
 
-	for i, item := range menu_items {
-		stdscr.MovePrint(i+1, 0, item)
-	}
+	// Init the ncurses colours
+	goncurses.StartColor()
+	goncurses.InitPair(1, goncurses.C_RED, goncurses.C_BLACK)
+	goncurses.InitPair(2, goncurses.C_CYAN, goncurses.C_BLACK)
+	goncurses.InitPair(3, goncurses.C_YELLOW, goncurses.C_BLACK)
+	goncurses.InitPair(4, goncurses.C_GREEN, goncurses.C_BLACK)
+	goncurses.InitPair(5, goncurses.C_MAGENTA, goncurses.C_BLACK)
+	goncurses.InitPair(6, goncurses.C_WHITE, goncurses.C_BLACK)
+
+	printPacks(stdscr, packs)
 
 	stdscr.Refresh()
 	stdscr.GetChar()
+}
+
+func printPacks(stdscr *goncurses.Window, packs *[]output.Package) {
+	for i, item := range *packs {
+		y := 2 * i
+
+		// Number
+		stdscr.AttrOn(goncurses.A_BOLD)
+		stdscr.MovePrintf(y, 0, "(%d)", len(*packs)-i)
+		stdscr.AttrOff(goncurses.A_BOLD)
+
+		cur := 5
+		// Repo
+		switch item.Repo {
+		case "\033[91maur\033[0m":
+			cur += 4
+			stdscr.ColorOn(1)
+			stdscr.MovePrint(y, 5, "aur")
+			stdscr.ColorOff(1)
+		case "\033[95mcore\033[0m":
+			cur += 5
+			stdscr.ColorOn(5)
+			stdscr.MovePrint(y, 5, "core")
+			stdscr.ColorOff(5)
+		case "\033[32mextra\033[0m":
+			cur += 6
+			stdscr.ColorOn(4)
+			stdscr.MovePrint(y, 5, "extra")
+			stdscr.ColorOff(4)
+		case "\033[36mcommunity\033[0m":
+			cur += 10
+			stdscr.ColorOn(2)
+			stdscr.MovePrint(y, 5, "community")
+			stdscr.ColorOff(2)
+		case "\033[33mmultilib\033[0m":
+			cur += 9
+			stdscr.ColorOn(3)
+			stdscr.MovePrint(y, 5, "multilib")
+			stdscr.ColorOff(3)
+		}
+	}
 }
 
 // ToBytes Turns 1 KiB into 1024
