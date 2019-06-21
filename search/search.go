@@ -372,7 +372,7 @@ func printncurses(packs *[]output.Package) {
 
 func printPacks(stdscr *goncurses.Window, packs *[]output.Package) {
 	for i, item := range *packs {
-		my, _ := stdscr.MaxYX()
+		my, mx := stdscr.MaxYX()
 		y := my - (2 * (len(*packs) - i)) - 3
 
 		// Number
@@ -448,7 +448,17 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package) {
 			stdscr.ColorOff(5)
 			stdscr.AttrOff(goncurses.A_BOLD)
 			stdscr.MovePrint(y, cur, ")")
+			// Size
+			cur += 2
+			stdscr.MovePrintf(y, cur, "Size: (Dl: %s | Ins: %s)", item.DownloadSize, item.InstalledSize)
 		}
+
+		// Description
+		desc := item.Description
+		if len(desc) > mx-7 {
+			desc = desc[:(mx-9)] + ".."
+		}
+		stdscr.MovePrintf(y+1, 5, "- %s", desc)
 	}
 }
 
