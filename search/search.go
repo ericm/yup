@@ -363,6 +363,8 @@ func printncurses(packs *[]output.Package) {
 	goncurses.InitPair(4, goncurses.C_GREEN, goncurses.C_BLACK)
 	goncurses.InitPair(5, goncurses.C_MAGENTA, goncurses.C_BLACK)
 	goncurses.InitPair(6, goncurses.C_WHITE, goncurses.C_BLACK)
+	// Selected
+	goncurses.InitPair(7, goncurses.C_BLACK, goncurses.C_WHITE)
 
 	printPacks(stdscr, packs)
 
