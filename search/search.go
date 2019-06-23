@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/ericm/goncurses"
+	"github.com/ericm/yup/config"
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/sync"
 	"github.com/mikkeloscar/aur"
@@ -281,69 +282,73 @@ func SortPacks(queryS string, packs []output.Package) {
 	sort.Sort(sortPack(packs))
 
 	// Prints using ncurses
-	printncurses(&packs)
+	if config.GetConfig().UserFile.Ncurses {
+		printncurses(&packs)
+	} else {
 
-Redo:
-	for i, pack := range packs {
-		fmt.Print("\033[37m\033[1m")
-		fmt.Printf("%-5s", fmt.Sprintf("(%d)", len(packs)-i))
-		fmt.Print("\033[0m")
-		output.PrintPackage(pack, "def")
-	}
-
-	packsToInstall := []output.Package{}
-
-	output.PrintL()
-	output.Printf("Click on a package above")
-
-	// Read Stdin
-	output.PrintIn("Or type packages to install (eg: 1 2 3, 1-3 or ^4)")
-	scanner := bufio.NewReader(os.Stdin)
-	input, _ := scanner.ReadString('\n')
-
-	inputs := strings.Split((strings.ToLower(strings.TrimSpace(input))), " ")
-	seen := map[int]bool{}
-	for _, s := range inputs {
-		// 1-3
-		if strings.Contains(s, "-") {
-			continue
-		}
-		// ^4
-		if strings.Contains(s, "^") {
-			continue
+	Redo:
+		for i, pack := range packs {
+			fmt.Print("\033[37m\033[1m")
+			fmt.Printf("%-5s", fmt.Sprintf("(%d)", len(packs)-i))
+			fmt.Print("\033[0m")
+			output.PrintPackage(pack, "def")
 		}
 
-		if num, err := strconv.Atoi(s); err == nil {
-			// Find package from input
-			index := len(packs) - num
-			// Add to the slice
-			if index < len(packs) && index >= 0 && !seen[index] {
-				packsToInstall = append(packsToInstall, packs[index])
-				seen[index] = true
+		packsToInstall := []output.Package{}
+
+		output.PrintL()
+		output.Printf("Click on a package above")
+
+		// Read Stdin
+		output.PrintIn("Or type packages to install (eg: 1 2 3, 1-3 or ^4)")
+		scanner := bufio.NewReader(os.Stdin)
+		input, _ := scanner.ReadString('\n')
+
+		inputs := strings.Split((strings.ToLower(strings.TrimSpace(input))), " ")
+		seen := map[int]bool{}
+		for _, s := range inputs {
+			// 1-3
+			if strings.Contains(s, "-") {
+				continue
+			}
+			// ^4
+			if strings.Contains(s, "^") {
+				continue
+			}
+
+			if num, err := strconv.Atoi(s); err == nil {
+				// Find package from input
+				index := len(packs) - num
+				// Add to the slice
+				if index < len(packs) && index >= 0 && !seen[index] {
+					packsToInstall = append(packsToInstall, packs[index])
+					seen[index] = true
+				}
 			}
 		}
+
+		// Print packs
+		output.Printf("The following packages will be installed:")
+		for i, pack := range packsToInstall {
+			fmt.Printf("    %-2d \033[1m%s\033[0m %s (%s)\n", i+1, pack.Name, pack.Version, pack.Repo)
+		}
+
+		// Ask if they want to redo
+		output.PrintIn("Redo selection? (y/N)")
+		redo, _ := scanner.ReadString('\n')
+		switch strings.ToLower((strings.TrimSpace(redo))) {
+		case "y":
+			goto Redo
+		default:
+			break
+		}
+
+		// Then, install the packages
+		for _, pack := range packsToInstall {
+			sync.Sync([]string{pack.Name}, pack.Aur, false)
+		}
 	}
 
-	// Print packs
-	output.Printf("The following packages will be installed:")
-	for i, pack := range packsToInstall {
-		fmt.Printf("    %-2d \033[1m%s\033[0m %s (%s)\n", i+1, pack.Name, pack.Version, pack.Repo)
-	}
-
-	// Ask if they want to redo
-	output.PrintIn("Redo selection? (y/N)")
-	redo, _ := scanner.ReadString('\n')
-	switch strings.ToLower((strings.TrimSpace(redo))) {
-	case "y":
-		goto Redo
-	default:
-		break
-	}
-
-	// Then, install the packages
-	for _, pack := range packsToInstall {
-		sync.Sync([]string{pack.Name}, pack.Aur, false)
-	}
 }
 
 // Prints ncurses

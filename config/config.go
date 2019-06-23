@@ -6,18 +6,18 @@ import (
 	"os"
 )
 
+// File struct
+type File struct {
+	SortMode string `json:"sort_mode"`
+	Ncurses  bool   `json:"ncurses_mode"`
+}
+
 // Config struct
 type Config struct {
 	CacheDir   string
 	ConfigDir  string
 	ConfigFile string
-	SortMode   string
-}
-
-// File struct
-type File struct {
-	SortMode string `json:"sort_mode"`
-	Ncurses  bool   `json:"ncurses_mode"`
+	UserFile   File
 }
 
 // Files represents the config files / dirs
@@ -45,8 +45,8 @@ func ReadConfigFile() error {
 	}
 
 	data, _ := ioutil.ReadAll(fileOpen)
-	var file File
 
+	var file File
 	errC := json.Unmarshal(data, &file)
 	if errC != nil {
 		// Problem parsing file
@@ -56,6 +56,9 @@ func ReadConfigFile() error {
 			return errInit
 		}
 	}
+
+	// Set config
+	files.UserFile = file
 	return nil
 }
 
