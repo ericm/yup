@@ -17,6 +17,7 @@ type Config struct {
 // File struct
 type File struct {
 	SortMode string `json:"sort_mode"`
+	Ncurses  bool   `json:"ncurses_mode"`
 }
 
 // Files represents the config files / dirs
@@ -62,6 +63,7 @@ func ReadConfigFile() error {
 func InitConfig(file *os.File) error {
 	initFile := &File{
 		SortMode: "closest",
+		Ncurses:  true,
 	}
 	write, err := json.Marshal(initFile)
 	if err != nil {
