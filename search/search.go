@@ -379,7 +379,17 @@ func printncurses(packs *[]output.Package) {
 	printBar(stdscr)
 
 	stdscr.Refresh()
-	fmt.Println(stdscr.GetChar())
+
+	for {
+		goncurses.Update()
+		if ch := stdscr.GetChar(); ch == 'q' {
+			break
+		} else if ch == goncurses.KEY_SF || ch == goncurses.KEY_UP {
+			// Scroll forward
+		} else {
+			stdscr.MoveGetChar(0, 0)
+		}
+	}
 }
 
 func printBar(stdscr *goncurses.Window) {
