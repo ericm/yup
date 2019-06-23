@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"os"
 )
 
@@ -37,7 +38,23 @@ func GetConfig() *Config {
 
 // ReadConfigFile reads the json config
 func ReadConfigFile() error {
+	fileOpen, err := os.Open(files.ConfigFile)
+	if err != nil {
+		return err
+	}
 
+	data, _ := ioutil.ReadAll(fileOpen)
+	var file File
+
+	errC := json.Unmarshal(data, &file)
+	if errC != nil {
+		// Problem parsing file
+		// Write new config
+		errInit := InitConfig(fileOpen)
+		if errInit != nil {
+			return errInit
+		}
+	}
 	return nil
 }
 

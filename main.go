@@ -68,16 +68,24 @@ func paths() error {
 
 // Checks and creates the directories and file required by yup.
 func makePaths() error {
+	// Set config
+	configSet.ConfigDir = configDir
+	configSet.ConfigFile = configFile
 	// Config
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		if err = os.MkdirAll(configDir, 0755); err != nil {
-			fmt.Println(len(configDir))
 			return fmt.Errorf("Failed to create config directory: %s", err)
 		}
+
+	} else if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		// Create file
-		file, err := os.OpenFile(configFile, os.O_CREATE, 0664)
+		file, err := os.OpenFile(configFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
 		if err != nil {
-			return err
+
 		}
 		if err := config.InitConfig(file); err != nil {
 			return err
@@ -88,9 +96,6 @@ func makePaths() error {
 	} else if err != nil {
 		return err
 	}
-	// Set config
-	configSet.ConfigDir = configDir
-	configSet.ConfigFile = configFile
 
 	// Cache
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {

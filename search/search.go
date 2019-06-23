@@ -374,7 +374,7 @@ func printncurses(packs *[]output.Package) {
 	printBar(stdscr)
 
 	stdscr.Refresh()
-	stdscr.GetChar()
+	fmt.Println(stdscr.GetChar())
 }
 
 func printBar(stdscr *goncurses.Window) {
