@@ -366,15 +366,43 @@ func printncurses(packs *[]output.Package) {
 	// Selected
 	goncurses.InitPair(7, goncurses.C_BLACK, goncurses.C_WHITE)
 
+	// Menu
+	goncurses.InitPair(8, goncurses.C_BLUE, goncurses.C_BLACK)
+
+	// Initial print
 	printPacks(stdscr, packs)
+	printBar(stdscr)
 
 	stdscr.Refresh()
 	stdscr.GetChar()
 }
 
+func printBar(stdscr *goncurses.Window) {
+	my, mx := stdscr.MaxYX()
+
+	// Print line
+	stdscr.ColorOn(8)
+	line := ""
+	for _i := 0; _i < mx; _i++ {
+		line += "="
+	}
+	stdscr.MovePrintf(my-3, 0, "%s", line)
+	stdscr.ColorOff(8)
+
+	// Print Input
+	stdscr.ColorOn(5)
+	stdscr.MovePrint(my-2, 0, "==>")
+	stdscr.ColorOff(5)
+	stdscr.MovePrint(my-2, 4, "Click on a package above, use the arrow keys and enter")
+
+	stdscr.ColorOn(4)
+	stdscr.MovePrint(my-1, 0, "==> Or type packages to install (eg: 1 2 3, 1-3 or ^4):")
+	stdscr.ColorOff(4)
+}
+
 func printPacks(stdscr *goncurses.Window, packs *[]output.Package) {
+	my, mx := stdscr.MaxYX()
 	for i, item := range *packs {
-		my, mx := stdscr.MaxYX()
 		y := my - (2 * (len(*packs) - i)) - 3
 
 		// Number
