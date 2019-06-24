@@ -363,6 +363,7 @@ func printncurses(packs *[]output.Package) {
 	goncurses.Cursor(0)
 	goncurses.Echo(false)
 	goncurses.Raw(true)
+	stdscr.Keypad(true)
 
 	// Init the ncurses colours
 	goncurses.StartColor()
@@ -394,16 +395,15 @@ func printncurses(packs *[]output.Package) {
 	// Event loop
 	var ch goncurses.Key
 	for ch != 'q' {
-		ch = stdscr.GetChar()
 		update := false
-		switch ch {
-		case 65, 'w':
+		switch goncurses.Key(ch) {
+		case goncurses.KEY_UP, goncurses.KEY_SF, 'w':
 			// Scroll forward
-			if selected < len(*packs)-1 {
+			if selected < len(*packs) {
 				selected += 1
 				update = true
 			}
-		case 66, 's':
+		case goncurses.KEY_DOWN, goncurses.KEY_SR, 's':
 			// Scroll backward
 			if selected > 1 {
 				selected -= 1
@@ -412,11 +412,11 @@ func printncurses(packs *[]output.Package) {
 		}
 
 		if update {
+			stdscr.Clear()
+			goncurses.Update()
 			printPacks(stdscr, packs, selected)
-			printBar(stdscr)
-			stdscr.ClearToEOL()
-			stdscr.Refresh()
 		}
+		ch = stdscr.GetChar()
 	}
 }
 
@@ -445,10 +445,18 @@ func printBar(stdscr *goncurses.Window) {
 
 func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int) {
 	my, mx := stdscr.MaxYX()
+	// Calculate offset up
+	offset := 0
+	if selected*2 > my-3 {
+		offset = selected*2 - my + 3
+	}
 	for i, item := range *packs {
 		sel := len(*packs)-i == selected
-		y := my - (2 * (len(*packs) - i)) - 3
+		y := my - (2 * (len(*packs) - i)) - 3 + offset
 
+		if y > my-3 || i < offset {
+			continue
+		}
 		// Number
 		if sel {
 			stdscr.ColorOn(7)
