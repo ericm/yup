@@ -360,14 +360,24 @@ func printncurses(packs *[]output.Package) {
 	}
 	defer goncurses.End()
 
+	goncurses.Cursor(0)
+	goncurses.Echo(false)
+	goncurses.Raw(true)
+
 	// Init the ncurses colours
 	goncurses.StartColor()
 	goncurses.InitPair(1, goncurses.C_RED, goncurses.C_BLACK)
+	goncurses.InitPair(11, goncurses.C_RED, goncurses.C_WHITE)
 	goncurses.InitPair(2, goncurses.C_CYAN, goncurses.C_BLACK)
+	goncurses.InitPair(12, goncurses.C_CYAN, goncurses.C_WHITE)
 	goncurses.InitPair(3, goncurses.C_YELLOW, goncurses.C_BLACK)
+	goncurses.InitPair(13, goncurses.C_YELLOW, goncurses.C_WHITE)
 	goncurses.InitPair(4, goncurses.C_GREEN, goncurses.C_BLACK)
+	goncurses.InitPair(14, goncurses.C_GREEN, goncurses.C_WHITE)
 	goncurses.InitPair(5, goncurses.C_MAGENTA, goncurses.C_BLACK)
+	goncurses.InitPair(15, goncurses.C_MAGENTA, goncurses.C_WHITE)
 	goncurses.InitPair(6, goncurses.C_WHITE, goncurses.C_BLACK)
+	goncurses.InitPair(16, goncurses.C_WHITE, goncurses.C_WHITE)
 	// Selected
 	goncurses.InitPair(7, goncurses.C_BLACK, goncurses.C_WHITE)
 
@@ -375,19 +385,37 @@ func printncurses(packs *[]output.Package) {
 	goncurses.InitPair(8, goncurses.C_BLUE, goncurses.C_BLACK)
 
 	// Initial print
-	printPacks(stdscr, packs)
+	selected := 1
+	printPacks(stdscr, packs, selected)
 	printBar(stdscr)
 
 	stdscr.Refresh()
 
-	for {
-		goncurses.Update()
-		if ch := stdscr.GetChar(); ch == 'q' {
-			break
-		} else if ch == goncurses.KEY_SF || ch == goncurses.KEY_UP {
+	// Event loop
+	var ch goncurses.Key
+	for ch != 'q' {
+		ch = stdscr.GetChar()
+		update := false
+		switch ch {
+		case 65, 'w':
 			// Scroll forward
-		} else {
-			stdscr.MoveGetChar(0, 0)
+			if selected < len(*packs)-1 {
+				selected += 1
+				update = true
+			}
+		case 66, 's':
+			// Scroll backward
+			if selected > 1 {
+				selected -= 1
+				update = true
+			}
+		}
+
+		if update {
+			printPacks(stdscr, packs, selected)
+			printBar(stdscr)
+			stdscr.ClearToEOL()
+			stdscr.Refresh()
 		}
 	}
 }
@@ -415,15 +443,22 @@ func printBar(stdscr *goncurses.Window) {
 	stdscr.ColorOff(4)
 }
 
-func printPacks(stdscr *goncurses.Window, packs *[]output.Package) {
+func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int) {
 	my, mx := stdscr.MaxYX()
 	for i, item := range *packs {
+		sel := len(*packs)-i == selected
 		y := my - (2 * (len(*packs) - i)) - 3
 
 		// Number
+		if sel {
+			stdscr.ColorOn(7)
+		}
 		stdscr.AttrOn(goncurses.A_BOLD)
 		stdscr.MovePrintf(y, 0, "(%d)", len(*packs)-i)
 		stdscr.AttrOff(goncurses.A_BOLD)
+		if sel {
+			stdscr.ColorOff(7)
+		}
 
 		cur := 5
 
