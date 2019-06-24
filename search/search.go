@@ -15,6 +15,7 @@ import (
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/sync"
 	"github.com/mikkeloscar/aur"
+	"time"
 )
 
 func setColor(repo *string) {
@@ -394,29 +395,39 @@ func printncurses(packs *[]output.Package) {
 
 	// Event loop
 	var ch goncurses.Key
+	timeout := false
+
 	for ch != 'q' {
 		update := false
-		switch goncurses.Key(ch) {
-		case goncurses.KEY_UP, goncurses.KEY_SF, 'w':
-			// Scroll forward
-			if selected < len(*packs) {
-				selected += 1
-				update = true
-			}
-		case goncurses.KEY_DOWN, goncurses.KEY_SR, 's':
-			// Scroll backward
-			if selected > 1 {
-				selected -= 1
-				update = true
+		if !timeout {
+			switch goncurses.Key(ch) {
+			case goncurses.KEY_UP, goncurses.KEY_SF, 'w':
+				// Scroll forward
+				if selected < len(*packs) {
+					selected += 1
+					update = true
+				}
+			case goncurses.KEY_DOWN, goncurses.KEY_SR, 's':
+				// Scroll backward
+				if selected > 1 {
+					selected -= 1
+					update = true
+				}
 			}
 		}
-
+		// Mouse timeout
+		timeout = true
+		go func(timeout *bool) {
+			time.Sleep(20 * time.Millisecond)
+			*timeout = false
+		}(&timeout)
 		if update {
 			stdscr.Clear()
-			goncurses.Update()
 			printPacks(stdscr, packs, selected)
+			printBar(stdscr)
 		}
 		ch = stdscr.GetChar()
+
 	}
 }
 
@@ -454,7 +465,7 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int)
 		sel := len(*packs)-i == selected
 		y := my - (2 * (len(*packs) - i)) - 3 + offset
 
-		if y > my-3 || i < offset {
+		if y > my-5 {
 			continue
 		}
 		// Number
