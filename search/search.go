@@ -465,7 +465,7 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int)
 		sel := len(*packs)-i == selected
 		y := my - (2 * (len(*packs) - i)) - 3 + offset
 
-		if y > my-5 {
+		if y > my-4 {
 			continue
 		}
 		// Number
