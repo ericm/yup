@@ -459,7 +459,7 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int)
 	// Calculate offset up
 	offset := 0
 	if selected*2 > my-3 {
-		offset = selected*2 - my + 3
+		offset = selected*2 - my + 5
 	}
 	for i, item := range *packs {
 		sel := len(*packs)-i == selected
