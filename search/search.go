@@ -382,13 +382,15 @@ func printncurses(packs *[]output.Package) {
 	goncurses.InitPair(16, goncurses.C_WHITE, goncurses.C_WHITE)
 	// Selected
 	goncurses.InitPair(7, goncurses.C_BLACK, goncurses.C_WHITE)
+	goncurses.InitPair(9, goncurses.C_BLACK, goncurses.C_GREEN)
 
 	// Menu
 	goncurses.InitPair(8, goncurses.C_BLUE, goncurses.C_BLACK)
 
 	// Initial print
 	selected := 1
-	printPacks(stdscr, packs, selected)
+	var checked map[int]bool
+	printPacks(stdscr, packs, selected, checked)
 	printBar(stdscr)
 
 	stdscr.Refresh()
@@ -413,6 +415,10 @@ func printncurses(packs *[]output.Package) {
 					selected -= 1
 					update = true
 				}
+			case goncurses.KEY_ENTER:
+				checked = append(checked)
+				update = true
+
 			}
 		}
 		// Mouse timeout
@@ -423,7 +429,7 @@ func printncurses(packs *[]output.Package) {
 		}(&timeout)
 		if update {
 			stdscr.Clear()
-			printPacks(stdscr, packs, selected)
+			printPacks(stdscr, packs, selected, checked)
 			printBar(stdscr)
 		}
 		ch = stdscr.GetChar()
@@ -454,7 +460,7 @@ func printBar(stdscr *goncurses.Window) {
 	stdscr.ColorOff(4)
 }
 
-func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int) {
+func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int, checked map[int]bool) {
 	my, mx := stdscr.MaxYX()
 	// Calculate offset up
 	offset := 0
@@ -462,7 +468,9 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int)
 		offset = selected*2 - my + 5
 	}
 	for i, item := range *packs {
-		sel := len(*packs)-i == selected
+		ind := len(*packs) - i
+		sel := ind == selected
+		check := checked[ind]
 		y := my - (2 * (len(*packs) - i)) - 3 + offset
 
 		if y > my-4 {
@@ -516,6 +524,9 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int)
 		cur += 1
 		stdscr.AttrOff(goncurses.A_DIM)
 
+		if check {
+			stdscr.ColorOn(9)
+		}
 		// Name
 		stdscr.AttrOn(goncurses.A_BOLD)
 		stdscr.MovePrint(y, cur, item.Name)
@@ -526,6 +537,9 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int)
 		stdscr.MovePrint(y, cur, item.Version)
 		cur += len(item.Version) + 1
 
+		if check {
+			stdscr.ColorOff(9)
+		}
 		// Installed
 		if item.Installed {
 			stdscr.MovePrint(y, cur, "(")
