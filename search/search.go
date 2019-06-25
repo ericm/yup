@@ -549,7 +549,11 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int)
 			stdscr.MovePrint(y, cur, ")")
 			// Size
 			cur += 2
-			stdscr.MovePrintf(y, cur, "Size: (Dl: %s | Ins: %s)", item.DownloadSize, item.InstalledSize)
+			if item.Aur {
+				stdscr.MovePrintf(y, cur, "Install Size: %s", item.InstalledSize)
+			} else {
+				stdscr.MovePrintf(y, cur, "Size: (Dl: %s | Ins: %s)", item.DownloadSize, item.InstalledSize)
+			}
 		}
 
 		// Description
