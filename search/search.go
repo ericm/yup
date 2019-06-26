@@ -389,7 +389,7 @@ func printncurses(packs *[]output.Package) {
 
 	// Initial print
 	selected := 1
-	var checked map[int]bool
+	checked := map[int]bool{}
 	printPacks(stdscr, packs, selected, checked)
 	printBar(stdscr)
 
@@ -415,10 +415,11 @@ func printncurses(packs *[]output.Package) {
 					selected -= 1
 					update = true
 				}
-			case goncurses.KEY_ENTER:
+			case '\n':
 				checked[selected] = !checked[selected]
 				update = true
-
+			case 27:
+				ch = 'q'
 			}
 		}
 		// Mouse timeout
@@ -533,13 +534,14 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 		cur += len(item.Name) + 1
 		stdscr.AttrOff(goncurses.A_BOLD)
 
+		if check {
+			stdscr.ColorOff(9)
+		}
+
 		// Version
 		stdscr.MovePrint(y, cur, item.Version)
 		cur += len(item.Version) + 1
 
-		if check {
-			stdscr.ColorOff(9)
-		}
 		// Installed
 		if item.Installed {
 			stdscr.MovePrint(y, cur, "(")
@@ -576,7 +578,6 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 			desc = desc[:(mx-9)] + ".."
 		}
 		stdscr.MovePrintf(y+1, 5, "- %s", desc)
-		fmt.Println(check)
 	}
 }
 
