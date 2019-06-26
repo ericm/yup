@@ -416,7 +416,7 @@ func printncurses(packs *[]output.Package) {
 					update = true
 				}
 			case goncurses.KEY_ENTER:
-				checked = append(checked)
+				checked[selected] = true
 				update = true
 
 			}
@@ -464,7 +464,7 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 	my, mx := stdscr.MaxYX()
 	// Calculate offset up
 	offset := 0
-	if selected*2 > my-3 {
+	if selected*2 > my-5 {
 		offset = selected*2 - my + 5
 	}
 	for i, item := range *packs {
