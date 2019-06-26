@@ -416,7 +416,7 @@ func printncurses(packs *[]output.Package) {
 					update = true
 				}
 			case goncurses.KEY_ENTER:
-				checked[selected] = true
+				checked[selected] = !checked[selected]
 				update = true
 
 			}
@@ -576,6 +576,7 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 			desc = desc[:(mx-9)] + ".."
 		}
 		stdscr.MovePrintf(y+1, 5, "- %s", desc)
+		fmt.Println(check)
 	}
 }
 
