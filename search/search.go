@@ -420,6 +420,10 @@ func printncurses(packs *[]output.Package) {
 				update = true
 			case 27:
 				ch = 'q'
+			case goncurses.KEY_MOUSE:
+				//if md = goncurses.GetMouse(); md != nil {
+
+				//}
 			}
 		}
 		// Mouse timeout
