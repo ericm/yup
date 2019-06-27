@@ -422,7 +422,8 @@ func printncurses(packs *[]output.Package) {
 			case goncurses.KEY_MOUSE:
 				clicked := 0
 				if ms := goncurses.GetMouse(); ms != nil {
-					clicked = getactive(ms.X, ms.Y, offset, packs)
+					my, _ := stdscr.MaxYX()
+					clicked = getactive(ms.Y, my, offset, selected, packs)
 				}
 				update = true
 				if clicked != -1 {
@@ -446,7 +447,20 @@ func printncurses(packs *[]output.Package) {
 	}
 }
 
-func getactive(x, y, offset int, packs *[]output.Package) int {
+func getactive(y, my, offset, selected int, packs *[]output.Package) int {
+	if y >= my-3 {
+		return -1
+	}
+
+	for i := range *packs {
+		ind := len(*packs) - i - 3
+		iy := my - (2 * (len(*packs) - i)) - 3 + offset
+
+		if y == iy {
+			return ind
+		}
+
+	}
 	return -1
 }
 
