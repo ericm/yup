@@ -434,6 +434,7 @@ func printncurses(packs *[]output.Package) {
 				update = true
 				if clicked != -1 {
 					checked[clicked] = !checked[clicked]
+					selected = clicked
 				}
 			}
 		}
