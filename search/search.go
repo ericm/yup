@@ -397,6 +397,7 @@ func printncurses(packs *[]output.Package) {
 
 	// Event loop
 	var ch goncurses.Key
+	offset := 0
 	timeout := false
 
 	for ch != 'q' && ch != 27 {
@@ -419,9 +420,14 @@ func printncurses(packs *[]output.Package) {
 				checked[selected] = !checked[selected]
 				update = true
 			case goncurses.KEY_MOUSE:
-				//if md = goncurses.GetMouse(); md != nil {
-
-				//}
+				clicked := 0
+				if ms := goncurses.GetMouse(); ms != nil {
+					clicked = getactive(ms.X, ms.Y, offset, packs)
+				}
+				update = true
+				if clicked != -1 {
+					checked[clicked] = !checked[clicked]
+				}
 			}
 		}
 		// Mouse timeout
@@ -432,12 +438,16 @@ func printncurses(packs *[]output.Package) {
 		}(&timeout)
 		if update {
 			stdscr.Clear()
-			printPacks(stdscr, packs, selected, checked)
+			offset = printPacks(stdscr, packs, selected, checked)
 			printBar(stdscr)
 		}
 		ch = stdscr.GetChar()
 
 	}
+}
+
+func getactive(x, y, offset int, packs *[]output.Package) int {
+	return -1
 }
 
 func printBar(stdscr *goncurses.Window) {
@@ -463,7 +473,7 @@ func printBar(stdscr *goncurses.Window) {
 	stdscr.ColorOff(4)
 }
 
-func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int, checked map[int]bool) {
+func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int, checked map[int]bool) int {
 	my, mx := stdscr.MaxYX()
 	// Calculate offset up
 	offset := 0
@@ -581,6 +591,8 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 		}
 		stdscr.MovePrintf(y+1, 5, "- %s", desc)
 	}
+
+	return offset
 }
 
 // ToBytes Turns 1 KiB into 1024
