@@ -366,6 +366,11 @@ func printncurses(packs *[]output.Package) {
 	goncurses.Raw(true)
 	stdscr.Keypad(true)
 
+	var prev goncurses.MouseButton
+	goncurses.MouseMask(goncurses.M_B1_PRESSED, nil) // only detect left mouse clicks
+	goncurses.MouseMask(goncurses.M_ALL, &prev)      // temporarily enable all mouse clicks
+	goncurses.MouseMask(prev, nil)
+
 	// Init the ncurses colours
 	goncurses.StartColor()
 	goncurses.InitPair(1, goncurses.C_RED, goncurses.C_BLACK)
@@ -420,7 +425,8 @@ func printncurses(packs *[]output.Package) {
 				checked[selected] = !checked[selected]
 				update = true
 			case goncurses.KEY_MOUSE:
-				clicked := 0
+				fmt.Print(1)
+				clicked := -1
 				if ms := goncurses.GetMouse(); ms != nil {
 					my, _ := stdscr.MaxYX()
 					clicked = getactive(ms.Y, my, offset, selected, packs)
@@ -454,9 +460,9 @@ func getactive(y, my, offset, selected int, packs *[]output.Package) int {
 
 	for i := range *packs {
 		ind := len(*packs) - i - 3
-		iy := my - (2 * (len(*packs) - i)) - 3 + offset
+		iy := my - (2 * (len(*packs) - i)) + offset + 3
 
-		if y == iy {
+		if y == iy || y == iy+1 {
 			return ind
 		}
 
