@@ -399,7 +399,7 @@ func printncurses(packs *[]output.Package) {
 	var ch goncurses.Key
 	timeout := false
 
-	for ch != 'q' {
+	for ch != 'q' && ch != 27 {
 		update := false
 		if !timeout {
 			switch goncurses.Key(ch) {
@@ -418,8 +418,6 @@ func printncurses(packs *[]output.Package) {
 			case '\n':
 				checked[selected] = !checked[selected]
 				update = true
-			case 27:
-				ch = 'q'
 			case goncurses.KEY_MOUSE:
 				//if md = goncurses.GetMouse(); md != nil {
 
@@ -429,7 +427,7 @@ func printncurses(packs *[]output.Package) {
 		// Mouse timeout
 		timeout = true
 		go func(timeout *bool) {
-			time.Sleep(20 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 			*timeout = false
 		}(&timeout)
 		if update {
