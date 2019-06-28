@@ -366,10 +366,7 @@ func printncurses(packs *[]output.Package) {
 	goncurses.Raw(true)
 	stdscr.Keypad(true)
 
-	var prev goncurses.MouseButton
-	goncurses.MouseMask(goncurses.M_B1_PRESSED, nil) // only detect left mouse clicks
-	goncurses.MouseMask(goncurses.M_ALL, &prev)      // temporarily enable all mouse clicks
-	goncurses.MouseMask(prev, nil)
+	goncurses.MouseMask(goncurses.M_ALL, nil) // temporarily enable all mouse clicks
 
 	// Init the ncurses colours
 	goncurses.StartColor()
