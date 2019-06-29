@@ -392,7 +392,7 @@ func printncurses(packs *[]output.Package) {
 	selected := 1
 	checked := map[int]bool{}
 	printPacks(stdscr, packs, selected, checked)
-	printBar(stdscr, 0)
+	printBar(stdscr, 0, 0)
 
 	stdscr.Refresh()
 
@@ -401,6 +401,7 @@ func printncurses(packs *[]output.Package) {
 	offset := 0
 	timeout := false
 	var newSel int
+	var toSel int
 
 	for ch != 'q' && ch != 27 {
 		update := false
@@ -419,9 +420,6 @@ func printncurses(packs *[]output.Package) {
 					selected -= 1
 					update = true
 				}
-			case '\n':
-				checked[selected] = !checked[selected]
-				update = true
 			case goncurses.KEY_MOUSE:
 				if ms := goncurses.GetMouse(); ms != nil {
 					if ms.State == goncurses.M_B1_CLICKED {
@@ -442,6 +440,45 @@ func printncurses(packs *[]output.Package) {
 					}
 					update = true
 				}
+
+			case '\n', ' ':
+				if newSel != 0 {
+					if toSel != 0 {
+						if toSel > newSel {
+							for i := newSel; i <= toSel; i++ {
+								checked[i] = true
+								update = true
+							}
+							selected = toSel
+						} else if toSel < newSel {
+							for i := toSel; i <= newSel; i++ {
+								checked[i] = true
+								update = true
+							}
+							selected = newSel
+						}
+					} else {
+						num := newSel
+						if num > 0 && num < len(*packs) {
+							checked[num] = !checked[num]
+							selected = num
+							update = true
+						}
+					}
+
+				} else {
+					checked[selected] = !checked[selected]
+					update = true
+				}
+				newSel = 0
+				toSel = 0
+
+			case '-':
+				if newSel != 0 {
+					toSel = newSel
+					newSel = 0
+					update = true
+				}
 			default:
 				if num, err := strconv.Atoi(string(ch)); err == nil {
 					if newSel != 0 {
@@ -450,18 +487,6 @@ func printncurses(packs *[]output.Package) {
 						newSel = num
 					}
 					update = true
-				}
-
-				if ch == ' ' {
-					if newSel != 0 {
-						num := newSel
-						if num > 0 && num < len(*packs) {
-							checked[num] = !checked[num]
-							selected = num
-							update = true
-						}
-					}
-					newSel = 0
 				}
 			}
 
@@ -475,7 +500,7 @@ func printncurses(packs *[]output.Package) {
 		if update {
 			stdscr.Clear()
 			offset = printPacks(stdscr, packs, selected, checked)
-			printBar(stdscr, newSel)
+			printBar(stdscr, newSel, toSel)
 		}
 		ch = stdscr.GetChar()
 
@@ -499,7 +524,7 @@ func getactive(y, my, offset, selected int, packs *[]output.Package) int {
 	return -1
 }
 
-func printBar(stdscr *goncurses.Window, newSel int) int {
+func printBar(stdscr *goncurses.Window, newSel, toSel int) int {
 	my, mx := stdscr.MaxYX()
 
 	// Print line
@@ -521,8 +546,15 @@ func printBar(stdscr *goncurses.Window, newSel int) int {
 	stdscr.MovePrint(my-1, 0, "==> Or type packages to install (eg: 1 2 3, 1-3 or ^4):")
 	stdscr.ColorOff(4)
 
+	// Print user input
+	cur := 56
+	if toSel != 0 {
+		ts := strconv.Itoa(toSel)
+		stdscr.MovePrintf(my-1, cur, ts+"-")
+		cur += len(ts) + 1
+	}
 	if newSel != 0 {
-		stdscr.MovePrint(my-1, 56, newSel)
+		stdscr.MovePrint(my-1, cur, newSel)
 	}
 
 	return my
