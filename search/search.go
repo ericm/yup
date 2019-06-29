@@ -367,7 +367,6 @@ func printncurses(packs *[]output.Package) {
 	stdscr.Keypad(true)
 
 	goncurses.MouseMask(goncurses.M_ALL, nil) // temporarily enable all mouse clicks
-
 	// Init the ncurses colours
 	goncurses.StartColor()
 	goncurses.InitPair(1, goncurses.C_RED, goncurses.C_BLACK)
@@ -422,7 +421,6 @@ func printncurses(packs *[]output.Package) {
 				checked[selected] = !checked[selected]
 				update = true
 			case goncurses.KEY_MOUSE:
-				fmt.Print(1)
 				clicked := -1
 				if ms := goncurses.GetMouse(); ms != nil {
 					my, _ := stdscr.MaxYX()
@@ -431,14 +429,13 @@ func printncurses(packs *[]output.Package) {
 				update = true
 				if clicked != -1 {
 					checked[clicked] = !checked[clicked]
-					selected = clicked
 				}
 			}
 		}
 		// Mouse timeout
 		timeout = true
 		go func(timeout *bool) {
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(30 * time.Millisecond)
 			*timeout = false
 		}(&timeout)
 		if update {
