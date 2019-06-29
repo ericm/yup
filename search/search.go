@@ -383,7 +383,7 @@ func printncurses(packs *[]output.Package) {
 	goncurses.InitPair(16, goncurses.C_WHITE, goncurses.C_WHITE)
 	// Selected
 	goncurses.InitPair(7, goncurses.C_BLACK, goncurses.C_WHITE)
-	goncurses.InitPair(9, goncurses.C_BLACK, goncurses.C_GREEN)
+	goncurses.InitPair(9, goncurses.C_BLACK, goncurses.C_MAGENTA)
 
 	// Menu
 	goncurses.InitPair(8, goncurses.C_BLUE, goncurses.C_BLACK)
@@ -520,12 +520,20 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 		// Number
 		if sel {
 			stdscr.ColorOn(7)
+		} else if check {
+			stdscr.ColorOn(9)
 		}
 		stdscr.AttrOn(goncurses.A_BOLD)
-		stdscr.MovePrintf(y, 0, "(%d)", len(*packs)-i)
+		if check {
+			stdscr.MovePrintf(y, 0, "%-5s", fmt.Sprintf("(%d)", len(*packs)-i))
+		} else {
+			stdscr.MovePrintf(y, 0, "(%d)", len(*packs)-i)
+		}
 		stdscr.AttrOff(goncurses.A_BOLD)
 		if sel {
 			stdscr.ColorOff(7)
+		} else if check {
+			stdscr.ColorOff(9)
 		}
 
 		cur := 5
@@ -534,36 +542,82 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 		switch item.Repo {
 		case "\033[91maur\033[0m":
 			cur += 3
-			stdscr.ColorOn(1)
+			if check {
+				stdscr.ColorOn(9)
+			} else {
+				stdscr.ColorOn(1)
+			}
 			stdscr.MovePrint(y, 5, "aur")
-			stdscr.ColorOff(1)
+			if check {
+				stdscr.ColorOff(9)
+			} else {
+				stdscr.ColorOff(1)
+			}
 		case "\033[95mcore\033[0m":
 			cur += 4
-			stdscr.ColorOn(5)
+			if check {
+				stdscr.ColorOn(9)
+			} else {
+				stdscr.ColorOn(5)
+			}
 			stdscr.MovePrint(y, 5, "core")
-			stdscr.ColorOff(5)
+			if check {
+				stdscr.ColorOff(9)
+			} else {
+				stdscr.ColorOff(5)
+			}
 		case "\033[32mextra\033[0m":
 			cur += 5
-			stdscr.ColorOn(4)
+			if check {
+				stdscr.ColorOn(9)
+			} else {
+				stdscr.ColorOn(4)
+			}
 			stdscr.MovePrint(y, 5, "extra")
-			stdscr.ColorOff(4)
+			if check {
+				stdscr.ColorOff(9)
+			} else {
+				stdscr.ColorOff(4)
+			}
 		case "\033[36mcommunity\033[0m":
 			cur += 9
-			stdscr.ColorOn(2)
+			if check {
+				stdscr.ColorOn(9)
+			} else {
+				stdscr.ColorOn(2)
+			}
 			stdscr.MovePrint(y, 5, "community")
-			stdscr.ColorOff(2)
+			if check {
+				stdscr.ColorOff(9)
+			} else {
+				stdscr.ColorOff(2)
+			}
 		case "\033[33mmultilib\033[0m":
 			cur += 8
-			stdscr.ColorOn(3)
+			if check {
+				stdscr.ColorOn(9)
+			} else {
+				stdscr.ColorOn(3)
+			}
 			stdscr.MovePrint(y, 5, "multilib")
-			stdscr.ColorOff(3)
+			if check {
+				stdscr.ColorOff(9)
+			} else {
+				stdscr.ColorOff(3)
+			}
 		}
 
 		// Slash
+		if check {
+			stdscr.ColorOn(9)
+		}
 		stdscr.AttrOn(goncurses.A_DIM)
 		stdscr.MovePrint(y, cur, "/")
 		cur += 1
 		stdscr.AttrOff(goncurses.A_DIM)
+		if check {
+			stdscr.ColorOff(9)
+		}
 
 		if check {
 			stdscr.ColorOn(9)
