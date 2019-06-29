@@ -282,12 +282,18 @@ func SortPacks(queryS string, packs []output.Package) {
 
 	sort.Sort(sortPack(packs))
 
+	scanner := bufio.NewReader(os.Stdin)
+	packsToInstall := []output.Package{}
+Redo:
 	// Prints using ncurses
 	if config.GetConfig().UserFile.Ncurses {
-		printncurses(&packs)
+		if newPacks, check := printncurses(&packs); check {
+			packsToInstall = newPacks
+		} else {
+			os.Exit(1)
+		}
 	} else {
 
-	Redo:
 		for i, pack := range packs {
 			fmt.Print("\033[37m\033[1m")
 			fmt.Printf("%-5s", fmt.Sprintf("(%d)", len(packs)-i))
@@ -295,14 +301,11 @@ func SortPacks(queryS string, packs []output.Package) {
 			output.PrintPackage(pack, "def")
 		}
 
-		packsToInstall := []output.Package{}
-
 		output.PrintL()
 		output.Printf("Click on a package above")
 
 		// Read Stdin
 		output.PrintIn("Or type packages to install (eg: 1 2 3, 1-3 or ^4)")
-		scanner := bufio.NewReader(os.Stdin)
 		input, _ := scanner.ReadString('\n')
 
 		inputs := strings.Split((strings.ToLower(strings.TrimSpace(input))), " ")
@@ -327,33 +330,34 @@ func SortPacks(queryS string, packs []output.Package) {
 				}
 			}
 		}
+		packs = packsToInstall
 
-		// Print packs
-		output.Printf("The following packages will be installed:")
-		for i, pack := range packsToInstall {
-			fmt.Printf("    %-2d \033[1m%s\033[0m %s (%s)\n", i+1, pack.Name, pack.Version, pack.Repo)
-		}
+	}
+	// Print packs
+	output.Printf("The following packages will be installed:")
+	for i, pack := range packsToInstall {
+		fmt.Printf("    %-2d \033[1m%s\033[0m %s (%s)\n", i+1, pack.Name, pack.Version, pack.Repo)
+	}
 
-		// Ask if they want to redo
-		output.PrintIn("Redo selection? (y/N)")
-		redo, _ := scanner.ReadString('\n')
-		switch strings.ToLower((strings.TrimSpace(redo))) {
-		case "y":
-			goto Redo
-		default:
-			break
-		}
+	// Ask if they want to redo
+	output.PrintIn("Redo selection? (y/N)")
+	redo, _ := scanner.ReadString('\n')
+	switch strings.ToLower((strings.TrimSpace(redo))) {
+	case "y":
+		goto Redo
+	default:
+		break
+	}
 
-		// Then, install the packages
-		for _, pack := range packsToInstall {
-			sync.Sync([]string{pack.Name}, pack.Aur, false)
-		}
+	// Then, install the packages
+	for _, pack := range packsToInstall {
+		sync.Sync([]string{pack.Name}, pack.Aur, false)
 	}
 
 }
 
 // Prints ncurses
-func printncurses(packs *[]output.Package) {
+func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 	// Setup ncurses
 	stdscr, err := goncurses.Init()
 	if err != nil {
@@ -473,6 +477,16 @@ func printncurses(packs *[]output.Package) {
 				newSel = 0
 				toSel = 0
 
+			case 'i':
+				// Filter packs
+				newPack := []output.Package{}
+				for i, pack := range *packs {
+					if checked[len(*packs)-i] {
+						newPack = append(newPack, pack)
+					}
+				}
+				return newPack, true
+
 			case '-':
 				if newSel != 0 {
 					toSel = newSel
@@ -505,6 +519,7 @@ func printncurses(packs *[]output.Package) {
 		ch = stdscr.GetChar()
 
 	}
+	return nil, false
 }
 
 func getactive(y, my, offset, selected int, packs *[]output.Package) int {
