@@ -1,4 +1,6 @@
 github.com/ericm/goncurses v0.0.0-20190615213815-255d9dcc65e7 h1:zHeg6S2AabnuAQ9T0qh5vVWv15kR5q3kviVjptK+BDs=
 github.com/ericm/goncurses v0.0.0-20190615213815-255d9dcc65e7/go.mod h1:DDGv/95q0TCSm9W20tOApbkDVXJdEpleHi5YjNxp8oc=
+github.com/ericm/goncurses v0.0.0-20190629180204-4f42246a7bb5 h1:TNpsJrZRB/5UViNvbgQRSaZLgUCqihD4sAP5X+Qk3q8=
+github.com/ericm/goncurses v0.0.0-20190629180204-4f42246a7bb5/go.mod h1:DDGv/95q0TCSm9W20tOApbkDVXJdEpleHi5YjNxp8oc=
 github.com/mikkeloscar/aur v0.0.0-20190424180024-f956f121b3fa h1:ZP2gNB0Q9e5yGc5/zmEWpcKxzEnJ+dnYsxhtYVQqORI=
 github.com/mikkeloscar/aur v0.0.0-20190424180024-f956f121b3fa/go.mod h1:n1NKHoldRNhIEufSx1PiDYcd2W+wpbz5/5K+p2eNDVk=

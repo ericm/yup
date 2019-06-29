@@ -404,6 +404,7 @@ func printncurses(packs *[]output.Package) {
 	for ch != 'q' && ch != 27 {
 		update := false
 		if !timeout {
+		Sw:
 			switch goncurses.Key(ch) {
 			case goncurses.KEY_UP, goncurses.KEY_SF, 'w':
 				// Scroll forward
@@ -421,15 +422,27 @@ func printncurses(packs *[]output.Package) {
 				checked[selected] = !checked[selected]
 				update = true
 			case goncurses.KEY_MOUSE:
-				clicked := -1
 				if ms := goncurses.GetMouse(); ms != nil {
-					my, _ := stdscr.MaxYX()
-					clicked = getactive(ms.Y, my, offset, selected, packs)
+					if ms.State == goncurses.M_B1_CLICKED {
+						clicked := -1
+						my, _ := stdscr.MaxYX()
+						clicked = getactive(ms.Y, my, offset, selected, packs)
+						if clicked != -1 {
+							checked[clicked] = !checked[clicked]
+						}
+					} else if ms.State == goncurses.M_B4_PRESSED {
+						// Scroll up
+						ch = goncurses.KEY_SF
+						goto Sw
+					} else if ms.State == goncurses.M_B5_PRESSED {
+						// Scroll down
+						ch = goncurses.KEY_SR
+						goto Sw
+					}
+
 				}
 				update = true
-				if clicked != -1 {
-					checked[clicked] = !checked[clicked]
-				}
+
 			}
 		}
 		// Mouse timeout
