@@ -771,7 +771,8 @@ func printhelp(stdscr *goncurses.Window) {
 	stdscr.ColorOn(10)
 	stdscr.MovePrintf(0, mx-15, " %-14s", "Enter: Select")
 	stdscr.MovePrintf(1, mx-15, " %-14s", "I/Z: Install")
-	stdscr.MovePrintf(2, mx-15, " %-14s", "Q: Quit")
+	stdscr.MovePrintf(2, mx-15, " %-14s", "R: Remove")
+	stdscr.MovePrintf(3, mx-15, " %-14s", "Q: Quit")
 	stdscr.ColorOff(10)
 }
 
