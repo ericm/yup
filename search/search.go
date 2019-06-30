@@ -289,6 +289,16 @@ Redo:
 	if config.GetConfig().UserFile.Ncurses {
 		if newPacks, check := printncurses(&packs); check {
 			packsToInstall = newPacks
+		} else if newPacks != nil {
+			// Remove
+			for _, pac := range newPacks {
+				rem := exec.Command("sudo", "pacman", "-R", pac.Name)
+				output.SetStd(rem)
+				if err := rem.Run(); err != nil {
+					output.PrintErr("%s", err)
+				}
+			}
+			os.Exit(1)
 		} else {
 			os.Exit(1)
 		}
@@ -480,7 +490,7 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 				newSel = 0
 				toSel = 0
 
-			case 'i', 'z':
+			case 'i', 'z', 'r':
 				// Filter packs
 				newPack := []output.Package{}
 				for i, pack := range *packs {
@@ -488,7 +498,11 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 						newPack = append(newPack, pack)
 					}
 				}
-				return newPack, true
+				if ch == 'r' {
+					return newPack, false
+				} else {
+					return newPack, true
+				}
 
 			case '-':
 				if newSel != 0 {
