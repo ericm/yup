@@ -480,7 +480,7 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 				newSel = 0
 				toSel = 0
 
-			case 'i':
+			case 'i', 'z':
 				// Filter packs
 				newPack := []output.Package{}
 				for i, pack := range *packs {
@@ -737,11 +737,7 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 			stdscr.MovePrint(y, cur, ")")
 			// Size
 			cur += 2
-			if item.Aur {
-				stdscr.MovePrintf(y, cur, "Install Size: %s", item.InstalledSize)
-			} else {
-				stdscr.MovePrintf(y, cur, "Size: (Dl: %s | Ins: %s)", item.DownloadSize, item.InstalledSize)
-			}
+			stdscr.MovePrintf(y, cur, "Install Size: %s", item.InstalledSize)
 		}
 
 		// Description
@@ -760,7 +756,7 @@ func printhelp(stdscr *goncurses.Window) {
 	_, mx := stdscr.MaxYX()
 	stdscr.ColorOn(10)
 	stdscr.MovePrintf(0, mx-15, " %-14s", "Enter: Select")
-	stdscr.MovePrintf(1, mx-15, " %-14s", "I: Install")
+	stdscr.MovePrintf(1, mx-15, " %-14s", "I/Z: Install")
 	stdscr.MovePrintf(2, mx-15, " %-14s", "Q: Quit")
 	stdscr.ColorOff(10)
 }
