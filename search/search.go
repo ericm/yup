@@ -392,11 +392,14 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 	// Menu
 	goncurses.InitPair(8, goncurses.C_BLUE, goncurses.C_BLACK)
 
+	goncurses.InitPair(10, goncurses.C_BLACK, goncurses.C_WHITE)
+
 	// Initial print
 	selected := 1
 	checked := map[int]bool{}
 	printPacks(stdscr, packs, selected, checked)
 	printBar(stdscr, 0, 0)
+	printhelp(stdscr)
 
 	stdscr.Refresh()
 
@@ -515,6 +518,7 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 			stdscr.Clear()
 			offset = printPacks(stdscr, packs, selected, checked)
 			printBar(stdscr, newSel, toSel)
+			printhelp(stdscr)
 		}
 		ch = stdscr.GetChar()
 
@@ -749,6 +753,16 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 	}
 
 	return offset
+}
+
+// Help
+func printhelp(stdscr *goncurses.Window) {
+	_, mx := stdscr.MaxYX()
+	stdscr.ColorOn(10)
+	stdscr.MovePrintf(0, mx-15, " %-14s", "Enter: Select")
+	stdscr.MovePrintf(1, mx-15, " %-14s", "I: Install")
+	stdscr.MovePrintf(2, mx-15, " %-14s", "Q: Quit")
+	stdscr.ColorOff(10)
 }
 
 // ToBytes Turns 1 KiB into 1024
