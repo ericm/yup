@@ -40,7 +40,7 @@ func Printf(format string, a ...interface{}) {
 
 // PrintIn styles stdout for input from stdin
 func PrintIn(format string, a ...interface{}) {
-	fmt.Printf("%s \033[92m%s:\033[0m", ARROWIN, fmt.Sprintf(format, a...))
+	fmt.Printf("%s \033[92m%s:\033[0m ", ARROWIN, fmt.Sprintf(format, a...))
 }
 
 // Errorf arrow wrapper for fmt

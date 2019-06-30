@@ -1,3 +1,5 @@
+github.com/Morganamilo/go-srcinfo v1.0.0 h1:Wh4nEF+HJWo+29hnxM18Q2hi+DUf0GejS13+Wg+dzmI=
+github.com/Morganamilo/go-srcinfo v1.0.0/go.mod h1:MP6VGY1NNpVUmYIEgoM9acix95KQqIRyqQ0hCLsyYUY=
 github.com/ericm/goncurses v0.0.0-20190615213815-255d9dcc65e7 h1:zHeg6S2AabnuAQ9T0qh5vVWv15kR5q3kviVjptK+BDs=
 github.com/ericm/goncurses v0.0.0-20190615213815-255d9dcc65e7/go.mod h1:DDGv/95q0TCSm9W20tOApbkDVXJdEpleHi5YjNxp8oc=
 github.com/ericm/goncurses v0.0.0-20190629180204-4f42246a7bb5 h1:TNpsJrZRB/5UViNvbgQRSaZLgUCqihD4sAP5X+Qk3q8=

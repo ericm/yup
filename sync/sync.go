@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Morganamilo/go-srcinfo"
 	"github.com/ericm/yup/output"
 	"github.com/mikkeloscar/aur"
 
@@ -355,8 +356,32 @@ func (pkg *PkgBuild) Install(silent bool) error {
 
 	}
 
-	// Now, Install the actual package
 	os.Chdir(pkg.dir)
+
+	// Get PGP Keys
+	info, err := srcinfo.ParseFile(".SRCINFO")
+	if err != nil {
+		return err
+	}
+	for _, key := range info.ValidPGPKeys {
+		checkImp := exec.Command("gpg", "--list-keys", "--fingerprint", key)
+		if errC := checkImp.Run(); errC != nil {
+			// The key isn't imported
+			// Ask to import it
+			output.PrintIn("Import PGP Key %s? (Y/n)", key)
+			check, _ := scanner.ReadString('\n')
+			if len(check) > 0 && (strings.ToLower(check)[0] == 'y' || check[0] == '\n') {
+				// Import key
+				imp := exec.Command("gpg", "--recv-keys", key)
+				output.SetStd(imp)
+				if err := imp.Run(); err != nil {
+					output.PrintErr("%s", err)
+				}
+			}
+		}
+	}
+
+	// Now, Install the actual package
 	cmdMake := exec.Command("makepkg", "-sic")
 	// Pipe to stdout, etc
 	output.SetStd(cmdMake)
