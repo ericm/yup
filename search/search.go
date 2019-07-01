@@ -404,15 +404,6 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 
 	goncurses.InitPair(10, goncurses.C_BLACK, goncurses.C_WHITE)
 
-	// Initial print
-	selected := 1
-	checked := map[int]bool{}
-	printPacks(stdscr, packs, selected, checked)
-	printBar(stdscr, 0, 0)
-	printhelp(stdscr)
-
-	stdscr.Refresh()
-
 	// Event loop
 	var ch goncurses.Key
 	var offset int
@@ -421,6 +412,16 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 	var toSel int
 	var prevMy int
 	var prevMx int
+
+Resize:
+	// Initial print
+	selected := 1
+	checked := map[int]bool{}
+	printPacks(stdscr, packs, selected, checked)
+	printBar(stdscr, 0, 0)
+	printhelp(stdscr)
+
+	stdscr.Refresh()
 
 	for ch != 'q' && ch != 27 {
 		update := false
@@ -513,6 +514,14 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 					update = true
 				}
 			default:
+				// Get prev size
+				if prevMx == 0 {
+					prevMy, prevMx = stdscr.MaxYX()
+				} else {
+					if mmy, mmx := stdscr.MaxYX(); prevMx != mmx || prevMy != mmy {
+						goto Resize
+					}
+				}
 				if num, err := strconv.Atoi(string(ch)); err == nil {
 					if newSel != 0 {
 						newSel = newSel*10 + num
@@ -523,15 +532,6 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 				}
 			}
 
-		}
-
-		// Get prev size
-		if prevMx == 0 {
-			prevMy, prevMx = stdscr.MaxYX()
-		} else {
-			if mmy, mmx := stdscr.MaxYX(); prevMx != mmx || prevMy != mmy {
-
-			}
 		}
 
 		// Mouse timeout
