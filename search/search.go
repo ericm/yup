@@ -415,10 +415,12 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 
 	// Event loop
 	var ch goncurses.Key
-	offset := 0
-	timeout := false
+	var offset int
+	var timeout bool
 	var newSel int
 	var toSel int
+	var prevMy int
+	var prevMx int
 
 	for ch != 'q' && ch != 27 {
 		update := false
@@ -522,6 +524,16 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 			}
 
 		}
+
+		// Get prev size
+		if prevMx == 0 {
+			prevMy, prevMx = stdscr.MaxYX()
+		} else {
+			if mmy, mmx := stdscr.MaxYX(); prevMx != mmx || prevMy != mmy {
+
+			}
+		}
+
 		// Mouse timeout
 		timeout = true
 		go func(timeout *bool) {
