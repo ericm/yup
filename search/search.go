@@ -413,11 +413,11 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 	var prevMy int
 	var prevMx int
 
-Resize:
 	// Initial print
 	selected := 1
 	checked := map[int]bool{}
 	printPacks(stdscr, packs, selected, checked)
+Resize:
 	printBar(stdscr, 0, 0)
 	printhelp(stdscr)
 
@@ -514,14 +514,6 @@ Resize:
 					update = true
 				}
 			default:
-				// Get prev size
-				if prevMx == 0 {
-					prevMy, prevMx = stdscr.MaxYX()
-				} else {
-					if mmy, mmx := stdscr.MaxYX(); prevMx != mmx || prevMy != mmy {
-						goto Resize
-					}
-				}
 				if num, err := strconv.Atoi(string(ch)); err == nil {
 					if newSel != 0 {
 						newSel = newSel*10 + num
@@ -534,6 +526,14 @@ Resize:
 
 		}
 
+		if prevMx == 0 {
+			prevMy, prevMx = stdscr.MaxYX()
+		} // Get prev size
+		if mmy, mmx := stdscr.MaxYX(); prevMx != mmx || prevMy != mmy {
+			prevMx = 0
+			prevMy = 0
+			goto Resize
+		}
 		// Mouse timeout
 		timeout = true
 		go func(timeout *bool) {
