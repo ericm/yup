@@ -10,6 +10,7 @@ import (
 	"github.com/ericm/yup/search"
 
 	"github.com/ericm/yup/sync"
+	"github.com/ericm/yup/update"
 )
 
 // Arguments represent the args passed
@@ -107,6 +108,7 @@ func (args *Arguments) getActions() error {
 	if args.sync {
 		if len(args.args) == 0 {
 			// Update
+			return update.Update()
 		} else {
 			// Call search
 			output.Printf("Searching and sorting your query...")
