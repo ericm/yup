@@ -501,6 +501,12 @@ Resize:
 						newPack = append(newPack, pack)
 					}
 				}
+
+				// Check if none selected
+				if len(newPack) == 0 {
+					newPack = append(newPack, (*packs)[len(*packs)-selected])
+				}
+
 				if ch == 'r' {
 					return newPack, false
 				} else {
