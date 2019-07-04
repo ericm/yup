@@ -108,7 +108,7 @@ func (args *Arguments) getActions() error {
 	if args.sync {
 		if len(args.args) == 0 {
 			// Update
-			return update.Update()
+			return update.AurUpdate()
 		} else {
 			// Call search
 			output.Printf("Searching and sorting your query...")
