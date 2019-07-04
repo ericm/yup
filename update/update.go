@@ -11,7 +11,8 @@ import (
 // Installed Packages representation
 type installedPack struct {
 	name,
-	version string
+	version,
+	newVersion string
 }
 
 // Update runs system update from repos
@@ -43,16 +44,24 @@ func AurUpdate() error {
 	packStr := strings.Split(string(inp), "\n")
 	for _, pack := range packStr {
 		p := strings.Split(pack, " ")
-		pack := installedPack{p[0], p[1]}
+		if len(p) < 2 {
+			continue
+		}
+		pack := installedPack{name: p[0], version: p[1]}
 		aurPack, errAur := aur.Info([]string{pack.name})
 		if errAur != nil {
 			output.PrintErr("%s", errAur)
 		}
 		if len(aurPack) > 0 && aurPack[0].Version != pack.version {
-			fmt.Println(pack.name)
+			pack.newVersion = aurPack[0].Version
+			updates = append(updates, pack)
 		}
 	}
-	fmt.Print(updates)
+
+	output.Printf("Found %d AUR package(s) to update:", len(updates))
+	for i, pack := range updates {
+		fmt.Printf("    \033[1m%d %s\033[0m \033[91m%s\033[0m -> \033[92m%s\033[0m\n", i+1, pack.name, pack.version, pack.newVersion)
+	}
 
 	return nil
 }
