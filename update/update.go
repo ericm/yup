@@ -2,6 +2,7 @@ package update
 
 import (
 	"github.com/ericm/yup/output"
+	"github.com/mikkeloscar/aur"
 	"os/exec"
 	"strings"
 )
@@ -28,7 +29,6 @@ func Update() error {
 // AurUpdate checks for update in the AUR
 func AurUpdate() error {
 	// Filter installed packages
-	packs := []installedPack{}
 
 	// Get output of pacman -Q
 	cmd := exec.Command("pacman", "-Q")
@@ -40,7 +40,15 @@ func AurUpdate() error {
 	packStr := strings.Split(string(inp), "\n")
 	for _, pack := range packStr {
 		p := strings.Split(pack, " ")
-		packs = append(packs, installedPack{p[0], p[1]})
+		pack := installedPack{p[0], p[1]}
+		pkg, _ := aur.Info([]string{pack.name})
+		if len(pkg) > 0 {
+			// Aur pack found
+			if pkg[0].Version != pack.version {
+				// Version changed
+				// Update
+			}
+		}
 	}
 
 	return nil
