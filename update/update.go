@@ -1,10 +1,13 @@
 package update
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/ericm/yup/output"
 	"github.com/mikkeloscar/aur"
+	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -13,6 +16,7 @@ type installedPack struct {
 	name,
 	version,
 	newVersion string
+	noInstall bool
 }
 
 // Update runs system update from repos
@@ -60,7 +64,29 @@ func AurUpdate() error {
 
 	output.Printf("Found %d AUR package(s) to update:", len(updates))
 	for i, pack := range updates {
-		fmt.Printf("    \033[1m%d %s\033[0m \033[91m%s\033[0m -> \033[92m%s\033[0m\n", i+1, pack.name, pack.version, pack.newVersion)
+		fmt.Printf("    %d \033[1m%s\033[0m \033[91m%s\033[0m -> \033[92m%s\033[0m\n", i+1, pack.name, pack.version, pack.newVersion)
+	}
+
+	output.PrintIn("Packages not to install? (eg: 1 2 3, 1-3 or ^4)")
+
+	scanner := bufio.NewReader(os.Stdin)
+	not, _ := scanner.ReadString('\n')
+
+	seen := map[int]bool{}
+	for _, s := range strings.Split(strings.TrimSpace(not), " ") {
+		// 1-3
+		if strings.Contains(s, "-") {
+			continue
+		}
+		// ^4
+		if strings.Contains(s, "^") {
+			continue
+		}
+
+		if num, err := strconv.Atoi(s); err == nil && !seen[num] {
+			seen[num] = true
+			updates[num].noInstall = true
+		}
 	}
 
 	return nil
