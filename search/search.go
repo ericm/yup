@@ -332,14 +332,8 @@ Redo:
 						first := len(packs) - firstT
 						second := len(packs) - secondT
 						// Filter
-						if second > first {
-							for i := first; i < second; i++ {
-								packsToInstall = append(packsToInstall, packs[i])
-							}
-						} else if first > second {
-							for i := second; i < first; i++ {
-								packsToInstall = append(packsToInstall, packs[i])
-							}
+						for i := second; i <= first; i++ {
+							packsToInstall = append(packsToInstall, packs[i])
 						}
 					}
 				}
