@@ -341,6 +341,16 @@ Redo:
 			}
 			// ^4
 			if strings.Contains(s, "^") {
+				if num, err := strconv.Atoi(s[1:]); err == nil {
+					// Filter for the number
+					for i, pack := range packs {
+						ind := len(packs) - i
+						if ind == num {
+							continue
+						}
+						packsToInstall = append(packsToInstall, pack)
+					}
+				}
 				continue
 			}
 
