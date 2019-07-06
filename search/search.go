@@ -323,6 +323,26 @@ Redo:
 		for _, s := range inputs {
 			// 1-3
 			if strings.Contains(s, "-") {
+				if spl := strings.Split(s, "-"); len(spl) == 2 {
+					// Get int vals for range
+					firstT, errF := strconv.Atoi(spl[0])
+					secondT, errS := strconv.Atoi(spl[1])
+					if errF == nil && errS == nil {
+						// Convert range from visual representation
+						first := len(packs) - firstT
+						second := len(packs) - secondT
+						// Filter
+						if second > first {
+							for i := first; i < second; i++ {
+								packsToInstall = append(packsToInstall, packs[i])
+							}
+						} else if first > second {
+							for i := second; i < first; i++ {
+								packsToInstall = append(packsToInstall, packs[i])
+							}
+						}
+					}
+				}
 				continue
 			}
 			// ^4
