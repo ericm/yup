@@ -409,6 +409,7 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 	var offset int
 	var timeout bool
 	var newSel int
+	var notSel bool
 	var toSel int
 	var prevMy int
 	var prevMx int
@@ -418,7 +419,7 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 	checked := map[int]bool{}
 	printPacks(stdscr, packs, selected, checked)
 Resize:
-	printBar(stdscr, 0, 0)
+	printBar(stdscr, 0, 0, false)
 	printhelp(stdscr)
 
 	stdscr.Refresh()
@@ -462,6 +463,20 @@ Resize:
 				}
 
 			case '\n', ' ':
+				if notSel {
+					for i := 0; i <= len(*packs); i++ {
+						if i == newSel {
+							continue
+						}
+						checked[i] = true
+					}
+					update = true
+					notSel = false
+					toSel = 0
+					newSel = 0
+					break
+				}
+
 				if newSel != 0 {
 					if toSel != 0 {
 						if toSel > newSel {
@@ -514,11 +529,18 @@ Resize:
 				}
 
 			case '-':
-				if newSel != 0 {
+				if newSel != 0 && !notSel {
 					toSel = newSel
 					newSel = 0
 					update = true
 				}
+
+			case '^':
+				if !notSel {
+					notSel = true
+					update = true
+				}
+
 			default:
 				if num, err := strconv.Atoi(string(ch)); err == nil {
 					if newSel != 0 {
@@ -549,7 +571,7 @@ Resize:
 		if update {
 			stdscr.Clear()
 			offset = printPacks(stdscr, packs, selected, checked)
-			printBar(stdscr, newSel, toSel)
+			printBar(stdscr, newSel, toSel, notSel)
 			printhelp(stdscr)
 		}
 		ch = stdscr.GetChar()
@@ -575,7 +597,7 @@ func getactive(y, my, offset, selected int, packs *[]output.Package) int {
 	return -1
 }
 
-func printBar(stdscr *goncurses.Window, newSel, toSel int) int {
+func printBar(stdscr *goncurses.Window, newSel, toSel int, notSel bool) int {
 	my, mx := stdscr.MaxYX()
 
 	// Print line
@@ -599,6 +621,10 @@ func printBar(stdscr *goncurses.Window, newSel, toSel int) int {
 
 	// Print user input
 	cur := 56
+	if notSel {
+		stdscr.MovePrint(my-1, cur, "^")
+		cur++
+	}
 	if toSel != 0 {
 		ts := strconv.Itoa(toSel)
 		stdscr.MovePrintf(my-1, cur, ts+"-")
