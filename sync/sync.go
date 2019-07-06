@@ -120,10 +120,34 @@ func ParseNumbers(input string, packs *[]PkgBuild) {
 	for _, s := range inputs {
 		// 1-3
 		if strings.Contains(s, "-") {
+			if spl := strings.Split(s, "-"); len(spl) == 2 {
+				// Get int vals for range
+				firstT, errF := strconv.Atoi(spl[0])
+				secondT, errS := strconv.Atoi(spl[1])
+				if errF == nil && errS == nil {
+					// Convert range from visual representation
+					first := len(*packs) - firstT
+					second := len(*packs) - secondT
+					// Filter
+					for i := second; i <= first; i++ {
+						seen[i] = true
+					}
+				}
+			}
 			continue
 		}
 		// ^4
 		if strings.Contains(s, "^") {
+			if num, err := strconv.Atoi(s[1:]); err == nil {
+				// Filter for the number
+				for i := range *packs {
+					ind := len(*packs) - i
+					if ind == num {
+						continue
+					}
+					seen[ind] = true
+				}
+			}
 			continue
 		}
 
