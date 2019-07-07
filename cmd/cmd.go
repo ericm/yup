@@ -29,9 +29,24 @@ type pair struct {
 	a, b string
 }
 
+// Version of yup
+const Version = "0.1.0-beta"
+
 // Constants for output
 const help = `Usage:
-  yup
+    yup                  Updates AUR and pacman packages (Like -Syyu)
+    yup <package(s)>     Searches for that packages and provides an install dialogue
+
+Operations:
+    yup {-h --help}             
+    yup {-V --version}          
+    yup {-D --database} <options> <package(s)>
+    yup {-F --files}    <options> <package(s)>
+    yup {-Q --query}    <options> <package(s)>
+    yup {-R --remove}   <options> <package(s)>
+    yup {-S --sync}     <options> <package(s)>
+    yup {-T --deptest}  <options> <package(s)>
+    yup {-U --upgrade}  <options> <file(s)>
 `
 
 // Custom commands not to be passed to pacman
@@ -67,17 +82,22 @@ func Execute() error {
 	arguments.isPacman()
 	if arguments.sendToPacman {
 		// send to pacman
-		sendToPacman()
+		sendToPacman(true)
 	} else {
 		return arguments.getActions()
 	}
 	return nil
 }
 
-func sendToPacman() {
+func sendToPacman(sudo bool) {
 	allArgs := append([]string{"pacman"}, arguments.args...)
 
-	pacman := exec.Command("sudo", allArgs...)
+	var pacman *exec.Cmd
+	if sudo {
+		pacman = exec.Command("sudo", allArgs...)
+	} else {
+		pacman = exec.Command(allArgs[0], allArgs[1:]...)
+	}
 	output.SetStd(pacman)
 	pacman.Run()
 }
@@ -187,6 +207,7 @@ func (args *Arguments) getActions() error {
 
 		if args.argExist("V", "version") {
 			// Version
+			fmt.Println(Version)
 			return nil
 		}
 
@@ -208,7 +229,7 @@ func (args *Arguments) getActions() error {
 			}
 
 			// Default case
-			sendToPacman()
+			sendToPacman(false)
 			return nil
 		}
 	}
