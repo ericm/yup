@@ -9,6 +9,7 @@ import (
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/search"
 
+	"github.com/ericm/yup/clean"
 	"github.com/ericm/yup/sync"
 	"github.com/ericm/yup/update"
 )
@@ -47,6 +48,7 @@ func init() {
 		pair{"V", "version"},
 		pair{"S", "sync"},
 		pair{"Q", "query"},
+		pair{"c", "clean"},
 	}
 
 	for _, arg := range commands {
@@ -164,6 +166,10 @@ func (args *Arguments) getActions() error {
 			return nil
 		}
 
+		if args.argExist("c", "clean") {
+			return clean.Clean()
+		}
+
 		if args.argExist("S", "sync") {
 			return args.syncCheck()
 		}
@@ -176,7 +182,7 @@ func (args *Arguments) getActions() error {
 		if args.argExist("Q", "query") {
 			// Check for custom flag; -Qos
 			// This sorts by Install size
-			if args.argExist("o", "order-by-size") && args.argExist("s") {
+			if args.argExist("o", "order-by") && args.argExist("s", "size") {
 				output.Printf("Sorting your query by install size")
 				pacman, err := search.PacmanQi()
 				sort.Sort(bySize(pacman))
