@@ -80,10 +80,33 @@ func AurUpdate() error {
 	for _, s := range strings.Split(strings.TrimSpace(not), " ") {
 		// 1-3
 		if strings.Contains(s, "-") {
+			if spl := strings.Split(s, "-"); len(spl) == 2 {
+				// Get int vals for range
+				firstT, errF := strconv.Atoi(spl[0])
+				secondT, errS := strconv.Atoi(spl[1])
+				if errF == nil && errS == nil {
+					// Convert range from visual representation
+					first := len(updates) - firstT
+					second := len(updates) - secondT
+					// Filter
+					for i := second; i <= first; i++ {
+						seen[i] = true
+					}
+				}
+			}
 			continue
 		}
 		// ^4
 		if strings.Contains(s, "^") {
+			if num, err := strconv.Atoi(s[1:]); err == nil {
+				// Filter for the number
+				for i := range updates {
+					if i == num {
+						seen[i] = true
+						continue
+					}
+				}
+			}
 			continue
 		}
 
