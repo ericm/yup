@@ -68,7 +68,7 @@ func InitConfig(file *os.File) error {
 		SortMode: "closest",
 		Ncurses:  true,
 	}
-	write, err := json.Marshal(initFile)
+	write, err := json.MarshalIndent(initFile, "", "  ")
 	if err != nil {
 		return err
 	}
