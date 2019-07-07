@@ -10,6 +10,7 @@ import (
 type File struct {
 	SortMode string `json:"sort_mode"`
 	Ncurses  bool   `json:"ncurses_mode"`
+	Update   bool   `json:"always_update_repos"`
 }
 
 // Config struct
@@ -67,6 +68,7 @@ func InitConfig(file *os.File) error {
 	initFile := &File{
 		SortMode: "closest",
 		Ncurses:  true,
+		Update:   false,
 	}
 	write, err := json.MarshalIndent(initFile, "", "  ")
 	if err != nil {

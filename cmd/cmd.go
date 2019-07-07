@@ -10,6 +10,7 @@ import (
 	"github.com/ericm/yup/search"
 
 	"github.com/ericm/yup/clean"
+	"github.com/ericm/yup/config"
 	"github.com/ericm/yup/sync"
 	"github.com/ericm/yup/update"
 )
@@ -110,8 +111,18 @@ func (args *Arguments) getActions() error {
 	if args.sync {
 		if len(args.args) == 0 {
 			// Update
-			return update.AurUpdate()
+			return update.Update()
 		} else {
+			// Update if wanted
+			if config.GetConfig().UserFile.Update {
+				// Refresh
+				output.Printf("Refreshing local repositories")
+				refresh := exec.Command("sudo", "pacman", "-Sy")
+				output.SetStd(refresh)
+				if err := refresh.Run(); err != nil {
+					return err
+				}
+			}
 			// Call search
 			output.Printf("Searching and sorting your query...")
 
@@ -232,6 +243,10 @@ func (s bySize) Less(i, j int) bool { return s[i].InstalledSizeInt < s[j].Instal
 // syncCheck checks -S argument options
 func (args *Arguments) syncCheck() error {
 	if args.argExist("y", "refresh") {
+		if args.argExist("u", "upgrade") {
+			// Upgrade
+			return update.Update()
+		}
 		// Refresh
 		output.Printf("Refreshing local repositories")
 		refresh := exec.Command("sudo", "pacman", "-Sy")
@@ -262,21 +277,6 @@ func (args *Arguments) syncCheck() error {
 
 		_, err := search.Pacman(args.target, true, false)
 		return err
-	}
-	if args.argExist("u", "upgrade") {
-
-	}
-	if args.argExist("p", "print") {
-
-	}
-	if args.argExist("c", "clean") {
-
-	}
-	if args.argExist("l", "list") {
-
-	}
-	if args.argExist("i", "info") {
-
 	}
 
 	// Default case
