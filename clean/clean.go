@@ -5,7 +5,9 @@ import (
 	"github.com/ericm/yup/output"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // Clean unused packages and delete cache
@@ -44,5 +46,26 @@ func Clean() error {
 		}
 		os.Chdir(cache)
 	}
+
+	// Clear unused packs
+	output.Printf("Finding unused dependencies")
+	pac := exec.Command("pacman", "-Qttdq")
+	var packs []string
+	if out, err := pac.Output(); err == nil {
+		for _, pack := range strings.Split(string(out), "\n") {
+			if len(pack) > 1 {
+				packs = append(packs, pack)
+			}
+		}
+	}
+
+	// Remove
+	packs = append([]string{"pacman", "-Rns"}, packs...)
+	rem := exec.Command("sudo", packs...)
+	output.SetStd(rem)
+	if err := rem.Run(); err != nil {
+		return err
+	}
+
 	return nil
 }
