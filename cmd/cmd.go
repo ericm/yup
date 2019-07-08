@@ -72,6 +72,7 @@ func init() {
 		pair{"S", "sync"},
 		pair{"Q", "query"},
 		pair{"c", "clean"},
+		pair{"C", "cache"},
 	}
 
 	for _, arg := range commands {
@@ -216,6 +217,10 @@ func (args *Arguments) getActions() error {
 			// Help
 			fmt.Print(help)
 			return nil
+		}
+
+		if args.argExist("C", "cache") {
+			return clean.Aur()
 		}
 
 		if args.argExist("c", "clean") {
