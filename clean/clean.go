@@ -47,9 +47,16 @@ func Clean() error {
 		os.Chdir(cache)
 	}
 
+	output.Printf("Clearing pacman cache")
+	pc := exec.Command("sudo", "pacman", "-Sc")
+	output.SetStd(pc)
+	if err := pc.Run(); err != nil {
+		return err
+	}
+
 	// Clear unused packs
 	output.Printf("Finding unused dependencies")
-	pac := exec.Command("pacman", "-Qttdq")
+	pac := exec.Command("pacman", "-Qtdq")
 	var packs []string
 	if out, err := pac.Output(); err == nil {
 		for _, pack := range strings.Split(string(out), "\n") {
