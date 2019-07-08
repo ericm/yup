@@ -34,8 +34,8 @@ const Version = "0.1.0-beta"
 
 // Constants for output
 const help = `Usage:
-    yup                  Updates AUR and pacman packages (Like -Syyu)
-    yup <package(s)>     Searches for that packages and provides an install dialogue
+    yup                 Updates AUR and pacman packages (Like -Syyu)
+    yup <package(s)>    Searches for that packages and provides an install dialogue
 
 Operations:
     yup {-h --help}             
@@ -47,6 +47,11 @@ Operations:
     yup {-S --sync}     <options> <package(s)>
     yup {-T --deptest}  <options> <package(s)>
     yup {-U --upgrade}  <options> <file(s)>
+
+Custom operations:
+    yup -a [package(s)] Operates on the AUR exclusively
+    yup -n [package(s)] Runs in non-ncurses mode
+    yup -Qos            Orders installed packages by install size
 `
 
 // Custom commands not to be passed to pacman
@@ -129,8 +134,11 @@ func (args *Arguments) genOptions() {
 // getActions routes the actions
 func (args *Arguments) getActions() error {
 	if args.sync {
-		if len(args.args) == 0 {
+		if len(args.args) == 0 || (len(args.target) == 0 && args.argExist("a", "aur")) {
 			// Update
+			if args.argExist("a", "aur") {
+				return update.AurUpdate()
+			}
 			return update.Update()
 		} else {
 			// Update if wanted
@@ -160,14 +168,20 @@ func (args *Arguments) getActions() error {
 			// Get pacman packs in a gorroutine
 			pacChan := make(chan []output.Package)
 			var pacErr error
-			go func(ch chan []output.Package) {
-				// Get pacman packs
-				pacman, errPac := search.Pacman(args.target, false, false)
-				if errPac != nil {
-					pacErr = errPac
-				}
-				ch <- pacman
-			}(pacChan)
+			if !args.argExist("a", "aur") {
+				go func(ch chan []output.Package) {
+					// Get pacman packs
+					pacman, errPac := search.Pacman(args.target, false, false)
+					if errPac != nil {
+						pacErr = errPac
+					}
+					ch <- pacman
+				}(pacChan)
+			} else {
+				go func(ch chan []output.Package) {
+					pacChan <- []output.Package{}
+				}(pacChan)
+			}
 
 			// Combine into one slice
 			var packs []output.Package
@@ -239,6 +253,13 @@ func (args *Arguments) getActions() error {
 
 // isPacman checks if the commands are custom yup commands
 func (args *Arguments) isPacman() {
+	if args.argExist("a", "aur", "n", "non-ncurses") {
+		// Custom args
+		args.sync = true
+		args.sendToPacman = false
+		return
+	}
+
 	for _, arg := range args.args {
 		if len(arg) > 2 && arg[:2] == "--" {
 			args.sendToPacman = !customLong(arg[2:])
