@@ -8,3 +8,10 @@ build:
 
 install:
 	install -Dm755 ${BINAME} $(SRCDIR)$(PREFIX)/bin/${BINAME}
+
+uninstall:
+	rm -f $(SRCDIR)$(PREFIX)/bin/${BINAME}
+
+test:
+	go vet
+	go test -v
