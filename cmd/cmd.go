@@ -50,7 +50,7 @@ Operations:
 
 Custom operations:
     yup -c              Cleans cache and unused dependencies
-	yup -C              Cleans AUR cache only
+    yup -C              Cleans AUR cache only
     yup -a [package(s)] Operates on the AUR exclusively
     yup -n [package(s)] Runs in non-ncurses mode
     yup -Qos            Orders installed packages by install size
