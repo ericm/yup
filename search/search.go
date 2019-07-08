@@ -286,7 +286,8 @@ func SortPacks(queryS string, packs []output.Package) {
 	packsToInstall := []output.Package{}
 Redo:
 	// Prints using ncurses
-	if config.GetConfig().UserFile.Ncurses {
+	conf := config.GetConfig()
+	if !conf.Ncurses || (conf.UserFile.Ncurses && !conf.Ncurses) {
 		if newPacks, check := printncurses(&packs); check {
 			packsToInstall = newPacks
 		} else if newPacks != nil {

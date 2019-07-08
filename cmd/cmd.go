@@ -141,8 +141,10 @@ func (args *Arguments) getActions() error {
 			}
 			return update.Update()
 		} else {
+			conFile := config.GetConfig()
+			conFile.Ncurses = args.argExist("n", "non-ncurses")
 			// Update if wanted
-			if config.GetConfig().UserFile.Update {
+			if conFile.UserFile.Update {
 				// Refresh
 				output.Printf("Refreshing local repositories")
 				refresh := exec.Command("sudo", "pacman", "-Sy")

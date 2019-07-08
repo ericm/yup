@@ -18,6 +18,7 @@ type Config struct {
 	CacheDir   string
 	ConfigDir  string
 	ConfigFile string
+	Ncurses    bool
 	UserFile   File
 }
 
