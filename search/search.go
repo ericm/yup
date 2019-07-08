@@ -140,6 +140,10 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 	installedRe := regexp.MustCompile("\\[(.+)\\]")
 	siRe := regexp.MustCompile("(?:\\:)(.+)")
 
+	// Sii regex
+	sizeRe := regexp.MustCompile("Installed Size\\s*?:\\s*?(\\d*.\\d*\\s\\w+)")
+	insVerRe := regexp.MustCompile("Version\\s*?:\\s*(\\s\\S+)")
+
 	packs := []output.Package{}
 	for _, pac := range pacOut {
 		pack := output.Package{
@@ -167,8 +171,11 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 
 			// Sets the other vals
 			info := siRe.FindAllString(string(siOut), -1)
-			pack.InstalledVersion = info[2][2:]
-			pack.InstalledSize = info[16][2:]
+			size := sizeRe.FindAllString(string(siOut), -1)
+			insVer := insVerRe.FindAllString(string(siOut), -1)
+
+			pack.InstalledVersion = insVer[0][18:]
+			pack.InstalledSize = size[0][18:]
 			pack.DownloadSize = info[15][2:]
 
 			// Checks if index is off and fixes it using a search
@@ -217,6 +224,7 @@ func PacmanQi(arg ...string) ([]output.Package, error) {
 	}
 
 	siRe := regexp.MustCompile("(?:\\:)(.+)")
+	sizeRe := regexp.MustCompile("Installed Size\\s*?:\\s*?(\\d*.\\d*\\s\\w+)")
 
 	// Get each pack
 	packs := strings.Split(string(siOut), "\n\n")
@@ -229,7 +237,7 @@ func PacmanQi(arg ...string) ([]output.Package, error) {
 				Version:          parts[1][2:],
 				InstalledVersion: parts[1][2:],
 				Description:      parts[2][2:],
-				InstalledSize:    parts[len(parts)-7][2:],
+				InstalledSize:    sizeRe.FindAllString(string(pack), -1)[0][18:],
 				Installed:        true,
 			}
 

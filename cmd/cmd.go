@@ -199,6 +199,9 @@ func (args *Arguments) getActions() error {
 					if pacErr != nil {
 						return pacErr
 					}
+					if len(pacPacks) > 500 {
+						pacPacks = pacPacks[:500]
+					}
 					packs = append(packs, pacPacks...)
 				}
 			}
