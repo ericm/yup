@@ -1,0 +1,11 @@
+language: go
+
+go:
+ - 1.12.x
+
+install:
+ - make
+ - make install
+
+script:
+ - make test
