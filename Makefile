@@ -16,4 +16,4 @@ uninstall:
 
 test:
 	go vet
-	go test -v
+	go test -v ./...
