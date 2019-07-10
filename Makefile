@@ -5,6 +5,7 @@ BINAME := yup
 PKGBUILD := yup
 
 build:
+	go mod download
 	go build -v -o ${BINAME}
 
 install:
