@@ -5,7 +5,7 @@ BINAME := yup
 PKGBUILD := yup
 
 build:
-	go install
+	go get
 	go build -v -o ${BINAME}
 
 install:
