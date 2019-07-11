@@ -22,6 +22,12 @@
 - Want to see which packages are cluttering up your system? Run `yup -Qos` to get a list ordered package size.
 
 ## Installing
+### From the AUR
+1. `git clone https://aur.archlinux.org/yup.git`
+2. `cd yup`
+3. `makepkg -si`
+
+### From source
 Make sure you have `go>=1.12`, `ncurses` and `make`.
 1. Clone the repo
 2. Run `make`
