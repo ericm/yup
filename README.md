@@ -3,6 +3,10 @@
     <p>An <b>AUR</b> helper and more</p>
 </div>
 
+[![AUR version](https://img.shields.io/aur/version/yup.svg)](https://aur.archlinux.org/packages/yup/)
+![GitHub](https://img.shields.io/github/license/ericm/yup.svg)
+![GitHub contributors](https://img.shields.io/github/contributors/ericm/yup.svg)
+
 **Yup** helps you install packages with ease on Arch Linux
 
 ## Features
