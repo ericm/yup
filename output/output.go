@@ -98,19 +98,13 @@ func PrintPackage(pack Package, mode ...string) string {
 	}
 
 	if pack.Installed {
-		if pack.DownloadSize == "" {
-			if pack.InstalledSize == "" {
-				out = fmt.Sprintf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m)%s\n    %s\n",
-					pack.Repo, pack.Name, pack.Version, outdated, pack.Description)
-			} else {
-				out = fmt.Sprintf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), (Installed Size: %s)%s\n    %s\n",
-					pack.Repo, pack.Name, pack.Version, pack.InstalledSize, outdated, pack.Description)
-			}
+		if pack.InstalledSize == "" {
+			out = fmt.Sprintf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m)%s\n    %s\n",
+				pack.Repo, pack.Name, pack.Version, outdated, pack.Description)
 		} else {
-			out = fmt.Sprintf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), Size: (D: %s | I: %s)%s\n    %s\n",
-				pack.Repo, pack.Name, pack.Version, pack.DownloadSize, pack.InstalledSize, outdated, pack.Description)
+			out = fmt.Sprintf("%s\033[2m/\033[0m\033[1m%s\033[0m %s (\033[1m\033[95mINSTALLED\033[0m), (Installed Size: %s)%s\n    %s\n",
+				pack.Repo, pack.Name, pack.Version, pack.InstalledSize, outdated, pack.Description)
 		}
-
 	} else {
 		out = fmt.Sprintf("%s\033[2m/\033[0m\033[1m%s\033[0m %s\n    %s\n", pack.Repo, pack.Name, pack.Version, pack.Description)
 	}
