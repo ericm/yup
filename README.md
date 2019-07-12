@@ -21,6 +21,23 @@
 
 - Want to see which packages are cluttering up your system? Run `yup -Qos` to get a list ordered package size.
 
+## Differences between yay or trizen
+- Yup gives you the **most accurate results** first. As seen in the example above, yup sorts the results to bring the most accurate to the start.
+
+- Yup uses *ncurses*. This allows users to both scroll while not displacing the bottom bar and easily navigate to certain results using more natural forms of user input.
+
+- Yup has an easy config file seperate to that of pacman's. This allows it to be more customisable from the get go.
+
+- Yup has both `yup -c` (for clearing all package cache) and yup `yup -C` (for clearing yup's cache only).
+
+- Yup allows you to disable ncurses mode (to normal terminal output) using `yup -n` temporarily or permanently by changing a value in the config file.
+
+- In the search menu, yup allows you to remove an installed package instantly using the `R` hotkey.
+
+- After selecting packages to install, you can revise your decision if you made a mistake.
+
+- Yup will *soon* allow you to disable any of the dialogue during install using the config menu.
+
 ## Installing
 ### From the AUR
 1. `git clone https://aur.archlinux.org/yup.git`
