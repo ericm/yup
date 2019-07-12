@@ -31,6 +31,7 @@ type Package struct {
 	DownloadSize     string
 	InstalledSizeInt int
 	SortValue        float64
+	OutOfDate        int
 }
 
 // Printf arrow wrapper for fmt

@@ -85,6 +85,7 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 			Repo:        "\033[91maur\033[0m",
 			Description: pack.Description,
 			Version:     pack.Version,
+			OutOfDate:   pack.OutOfDate,
 		}
 
 		// Check if its installed
@@ -829,6 +830,17 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 			// Size
 			cur += 2
 			stdscr.MovePrintf(y, cur, "Install Size: %s", item.InstalledSize)
+			cur += 14 + len(item.InstalledSize)
+		}
+
+		// Out of date
+		if item.OutOfDate != 0 {
+			stdscr.AttrOn(goncurses.A_BOLD)
+			stdscr.ColorOn(1)
+			stdscr.MovePrintf(y, cur, "(OUT OF DATE)")
+			stdscr.ColorOff(1)
+			stdscr.AttrOff(goncurses.A_BOLD)
+			cur += 13
 		}
 
 		// Description
