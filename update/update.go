@@ -64,6 +64,10 @@ func AurUpdate() error {
 		}
 	}
 
+	if len(updates) == 0 {
+		output.Printf("Found no AUR packages to update")
+		return nil
+	}
 	output.Printf("Found %d AUR package(s) to update:", len(updates))
 	for i, pack := range updates {
 		fmt.Printf("    %-3d \033[1m%s\033[0m \033[91m%s\033[0m -> \033[92m%s\033[0m\n", i+1, pack.name, pack.version, pack.newVersion)
