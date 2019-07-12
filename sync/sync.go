@@ -185,6 +185,13 @@ func (pkg *PkgBuild) Install(silent bool) error {
 
 	scanner := bufio.NewReader(os.Stdin)
 	if !silent {
+		// Print PkgBuild by default
+		if config.GetConfig().UserFile.PrintPkg {
+			output.Printf("PKGBUILD:")
+			catPkg := exec.Command("cat", "PKGBUILD")
+			output.SetStd(catPkg)
+			catPkg.Run()
+		}
 		i := 0
 		output.PrintIn("\033[1m\033[4mV\033[0m\033[92miew, see \033[1m\033[4mD\033[0m\033[92miffs or \033[1m\033[4mE\033[0m\033[92mdit the PKGBUILD? (\033[1m\033[4mA\033[0m\033[92mll or \033[1m\033[4mN\033[0m\033[92mone)")
 		out, _ := scanner.ReadString('\n')
