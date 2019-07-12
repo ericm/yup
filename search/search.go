@@ -60,6 +60,7 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 		aurPacksB = append(aurPacksB, aurPack...)
 	}
 
+	seen := map[string]bool{}
 	// Filter aurPacksB (before) to aurPacks
 	for _, pack := range aurPacksB {
 		matched := true
@@ -71,7 +72,10 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 		}
 
 		if matched && sort.Search(len(aurPacks), func(i int) bool { return aurPacks[i].Name == pack.Name }) >= len(aurPacks) {
-			aurPacks = append(aurPacks, pack)
+			if !seen[pack.Name] {
+				seen[pack.Name] = true
+				aurPacks = append(aurPacks, pack)
+			}
 		}
 
 	}
