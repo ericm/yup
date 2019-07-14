@@ -12,7 +12,7 @@ import (
 	"github.com/ericm/yup/output"
 )
 
-const configFileName = "yup.conf"
+const configFileName = "config.json"
 
 // Global variables
 var (
@@ -36,7 +36,7 @@ func main() {
 
 	exitError(paths())
 	exitError(makePaths())
-	exitError(config.ReadConfigFile())
+	exitError(config.ReadConfigFile(cmd.Version))
 	exitError(cmd.Execute())
 }
 
@@ -87,7 +87,7 @@ func makePaths() error {
 		if err != nil {
 
 		}
-		if err := config.InitConfig(file); err != nil {
+		if err := config.InitConfig(file, cmd.Version); err != nil {
 			return err
 		}
 		if err != nil {
