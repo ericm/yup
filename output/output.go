@@ -10,11 +10,11 @@ import (
 
 const (
 	// ARROW (purple) for printing
-	ARROW string = "\033[95m==>\033[0m"
+	ARROW string = "\033[1m\033[95m==>\033[0m"
 	// ARROWIN (green) for printing
-	ARROWIN string = "\033[92m==>\033[0m"
+	ARROWIN string = "\033[1m\033[92m==>\033[0m"
 	// ARROWERROR for error
-	ARROWERROR string = "\033[31m==>\033[0m"
+	ARROWERROR string = "\033[1m\033[31m==>\033[0m"
 )
 
 // Package represents a package in pacman or the AUR
