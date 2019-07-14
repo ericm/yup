@@ -213,12 +213,6 @@ func (args *Arguments) getActions() error {
 			return nil
 		}
 	} else {
-		if args.argExist("h", "help") {
-			// Help
-			fmt.Print(help)
-			return nil
-		}
-
 		if args.argExist("C", "cache") {
 			return clean.Aur()
 		}
@@ -256,6 +250,12 @@ func (args *Arguments) getActions() error {
 
 			// Default case
 			sendToPacman(false)
+			return nil
+		}
+
+		if args.argExist("h", "help") {
+			// Help
+			fmt.Print(help)
 			return nil
 		}
 	}
@@ -296,6 +296,11 @@ func (s bySize) Less(i, j int) bool { return s[i].InstalledSizeInt < s[j].Instal
 
 // syncCheck checks -S argument options
 func (args *Arguments) syncCheck() error {
+	if args.argExist("h", "help") {
+		sendToPacman(false)
+		return nil
+	}
+
 	if args.argExist("y", "refresh") {
 		if args.argExist("u", "upgrade") {
 			// Upgrade
