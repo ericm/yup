@@ -187,6 +187,11 @@ func (pkg *PkgBuild) Install(silent bool) error {
 	if !silent {
 		// Print PkgBuild by default
 		conf := config.GetConfig().UserFile
+		// Then merge if update
+		if pkg.update {
+			merge := exec.Command("git", "merge", "origin/master")
+			merge.Run()
+		}
 		if conf.PrintPkg {
 			output.Printf("PKGBUILD:")
 			catPkg := exec.Command("cat", "PKGBUILD")
@@ -217,13 +222,7 @@ func (pkg *PkgBuild) Install(silent bool) error {
 
 				case "d":
 					// Diffs
-					var diff *exec.Cmd
-					if pkg.update {
-						diff = exec.Command("git", "diff", "master", "origin/master")
-					} else {
-						diff = exec.Command("git", "diff", "@~..@")
-					}
-
+					diff := exec.Command("git", "diff", "@~..@")
 					cmds = append(cmds, diff)
 
 					i++
@@ -264,12 +263,6 @@ func (pkg *PkgBuild) Install(silent bool) error {
 				}
 			}
 		}
-	}
-
-	// Then merge if update
-	if pkg.update {
-		merge := exec.Command("git", "merge", "origin/master")
-		merge.Run()
 	}
 
 	// Make / Install the package
