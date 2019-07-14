@@ -186,82 +186,84 @@ func (pkg *PkgBuild) Install(silent bool) error {
 	scanner := bufio.NewReader(os.Stdin)
 	if !silent {
 		// Print PkgBuild by default
-		if config.GetConfig().UserFile.PrintPkg {
+		conf := config.GetConfig().UserFile
+		if conf.PrintPkg {
 			output.Printf("PKGBUILD:")
 			catPkg := exec.Command("cat", "PKGBUILD")
 			output.SetStd(catPkg)
 			catPkg.Run()
 		}
-		i := 0
-		output.PrintIn("\033[1m\033[4mV\033[0m\033[92miew, see \033[1m\033[4mD\033[0m\033[92miffs or \033[1m\033[4mE\033[0m\033[92mdit the PKGBUILD? (\033[1m\033[4mA\033[0m\033[92mll or \033[1m\033[4mN\033[0m\033[92mone)")
-		out, _ := scanner.ReadString('\n')
+		if conf.AskPkg {
+			i := 0
+			output.PrintIn("\033[1m\033[4mV\033[0m\033[92miew, see \033[1m\033[4mD\033[0m\033[92miffs or \033[1m\033[4mE\033[0m\033[92mdit the PKGBUILD? (\033[1m\033[4mA\033[0m\033[92mll or \033[1m\033[4mN\033[0m\033[92mone)")
+			out, _ := scanner.ReadString('\n')
 
-		cmds := []*exec.Cmd{}
+			cmds := []*exec.Cmd{}
 
-		// Handle 'a'
-		out = strings.TrimSpace(strings.ToLower(out))
-		if strings.Contains(out, "a") {
-			out = "vde"
-		}
+			// Handle 'a'
+			out = strings.TrimSpace(strings.ToLower(out))
+			if strings.Contains(out, "a") {
+				out = "vde"
+			}
 
-	Pkgbuild:
-		if i < len(out) {
-			switch out[i : i+1] {
-			case "v":
-				// View
-				cmds = append(cmds, exec.Command("cat", "PKGBUILD"))
-				i++
-				goto Pkgbuild
+		Pkgbuild:
+			if i < len(out) {
+				switch out[i : i+1] {
+				case "v":
+					// View
+					cmds = append(cmds, exec.Command("cat", "PKGBUILD"))
+					i++
+					goto Pkgbuild
 
-			case "d":
-				// Diffs
-				var diff *exec.Cmd
-				if pkg.update {
-					diff = exec.Command("git", "diff", "master", "origin/master")
-				} else {
-					diff = exec.Command("git", "diff", "@~..@")
+				case "d":
+					// Diffs
+					var diff *exec.Cmd
+					if pkg.update {
+						diff = exec.Command("git", "diff", "master", "origin/master")
+					} else {
+						diff = exec.Command("git", "diff", "@~..@")
+					}
+
+					cmds = append(cmds, diff)
+
+					i++
+					goto Pkgbuild
+
+				case "e":
+					// Check for EDITOR
+					editor := os.Getenv("EDITOR")
+					if len(editor) == 0 {
+						// Ask for editor
+						output.PrintIn("No EDITOR environment variable set. Enter editor")
+						newEditor, _ := scanner.ReadString('\n')
+						editor = newEditor[:len(newEditor)-1]
+					}
+
+					cmds = append(cmds, exec.Command(editor, "PKGBUILD"))
+					i++
+					goto Pkgbuild
+
+				case "n":
+				case "\n":
+					break
+
+				default:
+					i++
+					goto Pkgbuild
 				}
+			}
 
-				cmds = append(cmds, diff)
-
-				i++
-				goto Pkgbuild
-
-			case "e":
-				// Check for EDITOR
-				editor := os.Getenv("EDITOR")
-				if len(editor) == 0 {
-					// Ask for editor
-					output.PrintIn("No EDITOR environment variable set. Enter editor")
-					newEditor, _ := scanner.ReadString('\n')
-					editor = newEditor[:len(newEditor)-1]
+			// Exectue commands
+			for _, cmd := range cmds {
+				output.SetStd(cmd)
+				cmd.Run()
+				output.PrintIn("Continue?")
+				n, _ := scanner.ReadString('\n')
+				if strings.ToLower(n[:1]) == "n" {
+					return nil
 				}
-
-				cmds = append(cmds, exec.Command(editor, "PKGBUILD"))
-				i++
-				goto Pkgbuild
-
-			case "n":
-			case "\n":
-				break
-
-			default:
-				i++
-				goto Pkgbuild
 			}
 		}
-
-		// Exectue commands
-		for _, cmd := range cmds {
-			output.SetStd(cmd)
-			cmd.Run()
-			output.PrintIn("Continue?")
-			n, _ := scanner.ReadString('\n')
-			if strings.ToLower(n[:1]) == "n" {
-				return nil
-			}
-		}
-
 	}
 
 	// Then merge if update

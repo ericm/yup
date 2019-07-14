@@ -387,14 +387,16 @@ Redo:
 		fmt.Printf("    %-2d \033[1m%s\033[0m %s (%s)\n", i+1, pack.Name, pack.Version, pack.Repo)
 	}
 
-	// Ask if they want to redo
-	output.PrintIn("Redo selection? (y/N)")
-	redo, _ := scanner.ReadString('\n')
-	switch strings.ToLower((strings.TrimSpace(redo))) {
-	case "y":
-		goto Redo
-	default:
-		break
+	if conf.UserFile.AskRedo {
+		// Ask if they want to redo
+		output.PrintIn("Redo selection? (y/N)")
+		redo, _ := scanner.ReadString('\n')
+		switch strings.ToLower((strings.TrimSpace(redo))) {
+		case "y":
+			goto Redo
+		default:
+			break
+		}
 	}
 
 	// Then, install the packages

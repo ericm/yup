@@ -12,6 +12,8 @@ type File struct {
 	Ncurses  bool   `json:"ncurses_mode"`
 	Update   bool   `json:"always_update_repos"`
 	PrintPkg bool   `json:"print_pkgbuild"`
+	AskPkg   bool   `json:"ask_pkgbuild"`
+	AskRedo  bool   `json:"ask_redo"`
 }
 
 // Config struct
@@ -72,6 +74,8 @@ func InitConfig(file *os.File) error {
 		Ncurses:  true,
 		Update:   false,
 		PrintPkg: true,
+		AskPkg:   true,
+		AskRedo:  true,
 	}
 	write, err := json.MarshalIndent(initFile, "", "  ")
 	if err != nil {
