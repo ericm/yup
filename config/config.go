@@ -18,6 +18,7 @@ type File struct {
 	AskPkg        bool   `json:"ask_pkgbuild"`
 	AskRedo       bool   `json:"ask_redo"`
 	ConfigVersion string `json:"version"`
+	SilentUpdate  bool   `json:"silent_update"`
 }
 
 // Config struct
@@ -110,6 +111,7 @@ func InitConfig(file *os.File, version string) error {
 		AskPkg:        true,
 		AskRedo:       true,
 		ConfigVersion: version,
+		SilentUpdate:  false,
 	}
 	write, err := json.MarshalIndent(initFile, "", "  ")
 	if err != nil {

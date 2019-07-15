@@ -3,6 +3,7 @@ package update
 import (
 	"bufio"
 	"fmt"
+	"github.com/ericm/yup/config"
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/sync"
 	"github.com/mikkeloscar/aur"
@@ -128,5 +129,9 @@ func AurUpdate() error {
 		}
 	}
 
-	return sync.Sync(syncUp, true, false)
+	if config.GetConfig().UserFile.SilentUpdate {
+		return sync.Sync(syncUp, true, true)
+	} else {
+		return sync.Sync(syncUp, true, false)
+	}
 }
