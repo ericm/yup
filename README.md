@@ -21,7 +21,7 @@
 
 - Like *yay*, type `yup` to run a system upgrade.
 
-- An easy to use config file located at `~/.config/yup/yup.conf` in JSON format.
+- An easy to use config file located at `~/.config/yup/config.json` in JSON format.
 
 - Want to see which packages are cluttering up your system? Run `yup -Qos` to get a list ordered package size.
 
