@@ -32,6 +32,7 @@ type Package struct {
 	InstalledSizeInt int
 	SortValue        float64
 	OutOfDate        int
+	Upstream         string
 }
 
 // Printf arrow wrapper for fmt

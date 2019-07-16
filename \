@@ -148,7 +148,7 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 
 	// Sii regex
 	sizeRe := regexp.MustCompile("Installed Size\\s*?:\\s*?(\\d*.\\d*\\s\\w+)")
-	urlRe := regexp.MustCompile("URL\\s*?:\\s*?(\\s\\S+)")
+	urlRe := regexp.MustCompile("URL")
 	insVerRe := regexp.MustCompile("Version\\s*?:\\s*(\\s\\S+)")
 
 	packs := []output.Package{}
@@ -159,6 +159,7 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 			Version:     strings.Split(versionRe.FindString(pac), " ")[1],
 			Installed:   len(installedRe.FindString(pac)) != 0,
 			Description: strings.Split(pac, "\n")[1][4:],
+			Upstream:    urlRe.FindAllString(pac, -1)[0][18:],
 		}
 
 		setColor(&pack.Repo)
@@ -184,8 +185,6 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 			pack.InstalledVersion = insVer[0][18:]
 			pack.InstalledSize = size[0][18:]
 			pack.DownloadSize = info[15][2:]
-			pack.Upstream = urlRe.FindStringSubmatch(string(siOut))[0][18:]
-			fmt.Println(pack.Upstream)
 
 			// Checks if index is off and fixes it using a search
 			if pack.InstalledSize == "None" {
