@@ -13,6 +13,7 @@ import (
 	"github.com/ericm/yup/config"
 	"github.com/ericm/yup/sync"
 	"github.com/ericm/yup/update"
+	"github.com/ericm/yup/yupfile"
 )
 
 // Arguments represent the args passed
@@ -57,9 +58,11 @@ Custom operations:
 `
 
 // Custom commands not to be passed to pacman
-var commands []pair
-var commandShort map[string]bool
-var commandLong map[string]bool
+var (
+	commands     []pair
+	commandShort map[string]bool
+	commandLong  map[string]bool
+)
 
 func init() {
 	commandShort = make(map[string]bool)
@@ -73,6 +76,7 @@ func init() {
 		pair{"Q", "query"},
 		pair{"c", "clean"},
 		pair{"C", "cache"},
+		pair{"Y", "yupfile"},
 	}
 
 	for _, arg := range commands {
@@ -219,6 +223,10 @@ func (args *Arguments) getActions() error {
 
 		if args.argExist("c", "clean") {
 			return clean.Clean()
+		}
+
+		if args.argExist("Y", "yupfile") {
+			return yupfile.Parse(args.target)
 		}
 
 		if args.argExist("S", "sync") {
