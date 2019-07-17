@@ -2,11 +2,20 @@ package yupfile
 
 import (
 	"fmt"
+	"github.com/ericm/yup/output"
+	"github.com/ericm/yup/sync"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+// Pack represents a yupack
+type Pack struct {
+	name,
+	version string
+	aur bool
+}
 
 func Parse(argc string) error {
 	args := strings.Split(argc, " ")
@@ -35,10 +44,27 @@ func Parse(argc string) error {
 			return err
 		}
 		data := string(b)
-		fmt.Print(data)
+		packsS := strings.Split(data, "\n")
+		var packs []Pack
+		for _, pack := range packsS {
+			if strs := strings.Split(pack, " "); len(strs) > 2 && strs[0][:2] != "//" {
+				packs = append(packs, Pack{strs[0], strs[1], strs[2] == "aur"})
+			}
+		}
 
-		return nil
+		return Install(packs)
 	}
 
 	return fmt.Errorf("Error parsing yupfile path")
+}
+
+func Install(packs []Pack) error {
+	output.Printf("Installing packages from yupfile")
+	for _, pack := range packs {
+		err := sync.Sync([]string{pack.name}, pack.aur, false)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
