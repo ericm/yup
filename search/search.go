@@ -185,7 +185,6 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 			pack.InstalledSize = size[0][18:]
 			pack.DownloadSize = info[15][2:]
 			pack.Upstream = urlRe.FindStringSubmatch(string(siOut))[0][18:]
-			fmt.Println(pack.Upstream)
 
 			// Checks if index is off and fixes it using a search
 			if pack.InstalledSize == "None" {

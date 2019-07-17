@@ -190,6 +190,7 @@ func (pkg *PkgBuild) Install(silent bool) error {
 			catPkg := exec.Command("cat", "PKGBUILD")
 			output.SetStd(catPkg)
 			catPkg.Run()
+			fmt.Print("\n")
 		}
 		if conf.AskPkg {
 			i := 0
@@ -470,7 +471,7 @@ func pacmanSync(args []string, silent bool, deps bool) []error {
 	if deps {
 		args = append([]string{"--asdeps"}, args...)
 	}
-	args = append([]string{"-S"}, args...)
+	args = append([]string{"-S", "--noconfirm"}, args...)
 	args = append([]string{"pacman"}, args...)
 
 	cmd := exec.Command("sudo", args...)
