@@ -176,7 +176,7 @@ func ParseNumbers(input string, packs *[]PkgBuild) {
 // Install the pkgBuild
 // assuming repo is now cloned or fetched
 func (pkg *PkgBuild) Install(silent bool) error {
-	output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m v%s\033[0m from the AUR", pkg.name, pkg.version)
+	output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m %s\033[0m from the AUR", pkg.name, pkg.version)
 
 	// Install from the AUR
 	os.Chdir(filepath.Join(pkg.dir, pkg.name))
