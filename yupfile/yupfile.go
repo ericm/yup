@@ -6,6 +6,7 @@ import (
 	"github.com/ericm/yup/sync"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -60,8 +61,13 @@ func Parse(argc string) error {
 
 func Install(packs []Pack) error {
 	output.Printf("Installing packages from yupfile")
+	refresh := exec.Command("sudo", "pacman", "-Sy")
+	output.SetStd(refresh)
+	if err := refresh.Run(); err != nil {
+		return err
+	}
 	for _, pack := range packs {
-		err := sync.Sync([]string{pack.name}, pack.aur, false)
+		err := sync.Sync([]string{pack.name}, pack.aur, true)
 		if err != nil {
 			return err
 		}
