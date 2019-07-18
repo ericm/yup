@@ -54,6 +54,7 @@ Custom operations:
     yup -C              Cleans AUR cache only
     yup -a [package(s)] Operates on the AUR exclusively
     yup -n [package(s)] Runs in non-ncurses mode
+    yup -Y <Yupfile>    Install packages from a Yupfile
     yup -Qos            Orders installed packages by install size
 `
 
