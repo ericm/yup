@@ -28,6 +28,8 @@
 ## Differences between yay or trizen
 - Yup gives you the **most accurate results** first. As seen in the example above, yup sorts the results to bring the most accurate to the start.
 
+- `Yupfiles` are small files that allow you to batch install packages with a single command. [Here's an example Yupfile](test.Yupfile)
+
 - Yup uses *ncurses*. This allows users to both scroll while not displacing the bottom bar and easily navigate to certain results using more natural forms of user input.
 
 - Yup has an easy config file seperate to that of pacman's. This allows it to be more customisable from the get go.
