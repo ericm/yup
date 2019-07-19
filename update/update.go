@@ -59,9 +59,13 @@ func AurUpdate() error {
 		if errAur != nil {
 			output.PrintErr("%s", errAur)
 		}
-		if len(aurPack) > 0 && aurPack[0].Version != pack.version {
-			pack.newVersion = aurPack[0].Version
-			updates = append(updates, pack)
+		if len(aurPack) > 0 {
+			if aurPack[0].Version > pack.version {
+				pack.newVersion = aurPack[0].Version
+				updates = append(updates, pack)
+			} else {
+
+			}
 		}
 	}
 
@@ -134,4 +138,8 @@ func AurUpdate() error {
 	} else {
 		return sync.Sync(syncUp, true, false)
 	}
+}
+
+func newerVersion(oldVersion, newVersion string) bool {
+	return false
 }
