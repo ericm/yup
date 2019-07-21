@@ -47,6 +47,7 @@ func AurUpdate() error {
 	}
 
 	var updates []installedPack
+	var outdated []installedPack
 
 	packStr := strings.Split(string(inp), "\n")
 	for _, pack := range packStr {
@@ -60,11 +61,13 @@ func AurUpdate() error {
 			output.PrintErr("%s", errAur)
 		}
 		if len(aurPack) > 0 {
-			if aurPack[0].Version > pack.version {
+			if newerVersion(pack.version, aurPack[0].Version) {
 				pack.newVersion = aurPack[0].Version
 				updates = append(updates, pack)
-			} else {
-
+			} else if pack.version != aurPack[0].Version {
+				// Package must be newer than AUR
+				pack.newVersion = aurPack[0].Version
+				outdated = append(outdated, pack)
 			}
 		}
 	}
@@ -141,5 +144,43 @@ func AurUpdate() error {
 }
 
 func newerVersion(oldVersion, newVersion string) bool {
+	oldVer := strings.Split(oldVersion, "-")
+	newVer := strings.Split(newVersion, "-")
+	if len(oldVer) > 1 && len(newVer) > 1 {
+		// Get rel
+		if oldVer[0] == newVer[0] {
+			relOld, _ := strconv.Atoi(oldVer[1])
+			relNew, _ := strconv.Atoi(newVer[1])
+			if relOld < relNew {
+				return true
+			} else {
+				return false
+			}
+		}
+		// Get version diff
+		dotOld := strings.Split(oldVer[0], ".")
+		dotNew := strings.Split(newVer[0], ".")
+		var m int
+		if len(dotOld) > len(dotNew) {
+			m = len(dotNew)
+		} else {
+			m = len(dotOld)
+		}
+		for i := 0; i < m; i++ {
+			// Get ints
+			oldNum, errOld := strconv.Atoi(dotOld[i])
+			newNum, errNew := strconv.Atoi(dotNew[i])
+			if errOld == nil && errNew == nil {
+				if newNum > oldNum {
+					return true
+				}
+			} else {
+				if dotNew[i] > dotOld[i] {
+					return true
+				}
+			}
+		}
+	}
+
 	return false
 }
