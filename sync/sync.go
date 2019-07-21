@@ -182,6 +182,10 @@ func (pkg *PkgBuild) Install(silent bool) error {
 	os.Chdir(filepath.Join(pkg.dir, pkg.name))
 
 	scanner := bufio.NewReader(os.Stdin)
+	if pkg.update {
+		merge := exec.Command("git", "merge", "origin/master")
+		merge.Run()
+	}
 	if !silent {
 		// Print PkgBuild by default
 		conf := config.GetConfig().UserFile
@@ -217,11 +221,7 @@ func (pkg *PkgBuild) Install(silent bool) error {
 				case "d":
 					// Diffs
 					var diff *exec.Cmd
-					if pkg.update {
-						diff = exec.Command("git", "diff", "master", "origin/master")
-					} else {
-						diff = exec.Command("git", "diff", "@~..@")
-					}
+					diff = exec.Command("git", "diff", "@~..@")
 
 					cmds = append(cmds, diff)
 
@@ -263,12 +263,6 @@ func (pkg *PkgBuild) Install(silent bool) error {
 				}
 			}
 		}
-	}
-
-	// Then merge if update
-	if pkg.update {
-		merge := exec.Command("git", "merge", "origin/master")
-		merge.Run()
 	}
 
 	// Make / Install the package
