@@ -72,6 +72,15 @@ func AurUpdate() error {
 		}
 	}
 
+	scanner := bufio.NewReader(os.Stdin)
+	if len(outdated) > 0 {
+		fmt.Print("\n")
+		output.Printf("Found %d local package(s) that are newer than their AUR package", len(outdated))
+		for _, pack := range outdated {
+			fmt.Printf("    \033[1m%s\033[0m  \033[95m%s\033[0m has AUR version \033[95m%s\033[0m\n", pack.name, pack.version, pack.newVersion)
+		}
+	}
+	fmt.Print("\n")
 	if len(updates) == 0 {
 		output.Printf("Found no AUR packages to update")
 		return nil
@@ -83,7 +92,6 @@ func AurUpdate() error {
 
 	output.PrintIn("Packages not to install? (eg: 1 2 3, 1-3 or ^4)")
 
-	scanner := bufio.NewReader(os.Stdin)
 	not, _ := scanner.ReadString('\n')
 
 	syncUp := []string{}
