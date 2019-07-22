@@ -305,8 +305,13 @@ func (s bySize) Less(i, j int) bool { return s[i].InstalledSizeInt < s[j].Instal
 
 // syncCheck checks -S argument options
 func (args *Arguments) syncCheck() error {
-	if args.argExist("h", "help") {
+	if args.argExist("h", "help", "i", "info", "l", "list", "g", "groups") {
 		sendToPacman(false)
+		return nil
+	}
+
+	if args.argExist("c", "clean", "d", "nodeps", "r", "root") {
+		sendToPacman(true)
 		return nil
 	}
 
@@ -330,7 +335,7 @@ func (args *Arguments) syncCheck() error {
 	if args.argExist("s", "search") {
 		// Search
 		// Check for q
-		if args.argExist("q") {
+		if args.argExist("q", "quiet") {
 			return nil
 		}
 
