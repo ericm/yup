@@ -605,6 +605,8 @@ func parseDep(dep string) depBuild {
 		dep = strings.Split(dep, "=<")[0]
 	} else if strings.Contains(dep, "==") {
 		dep = strings.Split(dep, "==")[0]
+	} else if strings.Contains(dep, "=") {
+		dep = strings.Split(dep, "=")[0]
 	} else if strings.Contains(dep, "=>") {
 		dep = strings.Split(dep, "=>")[0]
 	} else if strings.Contains(dep, ">") {
