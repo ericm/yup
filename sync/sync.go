@@ -220,10 +220,16 @@ func (pkg *PkgBuild) Install(silent bool) error {
 
 				case "d":
 					// Diffs
-					var diff *exec.Cmd
-					diff = exec.Command("git", "diff", "@~..@")
+					// Get number of commits
+					numc := exec.Command("git", "rev-list", "--count", "master")
+					nn, _ := numc.Output()
+					if string(nn) != strconv.Itoa(1) {
+						// If number isnt 1
+						var diff *exec.Cmd
+						diff = exec.Command("git", "diff", "@~..@")
 
-					cmds = append(cmds, diff)
+						cmds = append(cmds, diff)
+					}
 
 					i++
 					goto Pkgbuild
