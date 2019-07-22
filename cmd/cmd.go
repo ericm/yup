@@ -35,7 +35,7 @@ const Version = "0.1.7-beta"
 
 // Constants for output
 const help = `Usage:
-    yup                 Updates AUR and pacman packages (Like -Syyu)
+    yup                 Updates AUR and pacman packages (Like -Syu)
     yup <package(s)>    Searches for that packages and provides an install dialogue
 
 Operations:

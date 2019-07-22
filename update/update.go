@@ -23,7 +23,7 @@ type installedPack struct {
 // Update runs system update from repos
 func Update() error {
 	output.Printf("Updating from local repositories")
-	cmd := exec.Command("sudo", "pacman", "-Syyu")
+	cmd := exec.Command("sudo", "pacman", "-Syu")
 	output.SetStd(cmd)
 	if err := cmd.Run(); err != nil {
 		return err
