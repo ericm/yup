@@ -4,8 +4,8 @@
 </div>
 
 [![AUR version](https://img.shields.io/aur/version/yup.svg)](https://aur.archlinux.org/packages/yup/)
-![GitHub](https://img.shields.io/github/license/ericm/yup.svg)
-![GitHub contributors](https://img.shields.io/github/contributors/ericm/yup.svg)
+[![GitHub](https://img.shields.io/github/license/ericm/yup.svg)](https://github.com/ericm/yup/blob/master/LICENSE)
+[![GitHub contributors](https://img.shields.io/github/contributors/ericm/yup.svg)](https://github.com/ericm/yup/graphs/contributors)
 
 **Yup** helps you install packages with ease on Arch Linux
 
