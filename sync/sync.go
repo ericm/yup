@@ -71,7 +71,7 @@ func Sync(packages []string, isAur bool, silent bool) error {
 				errChannel <- err
 			} else {
 				if len(repo) > 0 {
-					aurDload("https://aur.archlinux.org/"+repo[0].Name+".git", errChannel, buildChannel, repo[0].Name, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
+					aurDload("https://aur.archlinux.org/"+repo[0].PackageBase+".git", errChannel, buildChannel, repo[0].PackageBase, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
 				} else {
 					errChannel <- output.Errorf("Didn't find an \033[1mAUR\033[0m package for \033[1m\033[32m%s\033[39m\033[0m, searching other repos\n", p)
 					buildChannel <- nil
@@ -532,7 +532,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 			output.PrintErr("Dependencies error: %s", err)
 		}
 		if len(repo) > 0 {
-			go aurDload("https://aur.archlinux.org/"+repo[0].Name+".git", errChannel, buildChannel, repo[0].Name, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
+			go aurDload("https://aur.archlinux.org/"+repo[0].PackageBase+".git", errChannel, buildChannel, repo[0].PackageBase, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
 		} else {
 			// Not on the aur
 			errChannel <- nil

@@ -60,15 +60,13 @@ func Aur() error {
 		if dir.IsDir() {
 			os.Chdir(dir.Name())
 			// Delete big bad files
-			tarGz, _ := filepath.Glob("*.tar.gz")
+			tarGz, _ := filepath.Glob("*")
 			for _, tar := range tarGz {
-				if err := os.Remove(tar); err != nil {
-					output.PrintErr("%s", err)
+				switch tar {
+				case ".git", "PKGBUILD", ".SRCINFO":
+					continue
 				}
-			}
-			tarXz, _ := filepath.Glob("*.pkg.tar.xz")
-			for _, tar := range tarXz {
-				if err := os.Remove(tar); err != nil {
+				if err := os.RemoveAll(tar); err != nil {
 					output.PrintErr("%s", err)
 				}
 			}
