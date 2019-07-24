@@ -532,7 +532,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 			output.PrintErr("Dependencies error: %s", err)
 		}
 		if len(repo) > 0 {
-			go aurDload("https://aur.archlinux.org/"+repo[0].Name+".git", errChannel, buildChannel, repo[0].Name, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
+			go aurDload("https://aur.archlinux.org/"+repo[0].PackageBase+".git", errChannel, buildChannel, repo[0].PackageBase, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
 		} else {
 			// Not on the aur
 			errChannel <- nil
