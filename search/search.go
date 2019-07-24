@@ -170,7 +170,7 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 			// Add extra install info
 			// Get info from pacman -Sii package
 			// Add extra install info
-			pacmanSi := exec.Command("pacman", "-Sii", pack.Name)
+			pacmanSi := exec.Command("pacman", "-Qi", pack.Name)
 			siOut, err := pacmanSi.Output()
 			if err != nil {
 				return []output.Package{}, err
@@ -180,12 +180,17 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 			info := siRe.FindAllString(string(siOut), -1)
 			size := sizeRe.FindAllString(string(siOut), -1)
 			insVer := insVerRe.FindAllString(string(siOut), -1)
+			upstream := urlRe.FindStringSubmatch(string(siOut))
 
-			pack.InstalledVersion = insVer[0][18:]
-			pack.InstalledSize = size[0][18:]
-			pack.DownloadSize = info[15][2:]
-			pack.Upstream = urlRe.FindStringSubmatch(string(siOut))[0][18:]
-
+			if len(insVer) > 0 && len(insVer[0]) > 18 {
+				pack.InstalledVersion = insVer[0][18:]
+			}
+			if len(size) > 0 && len(size[0]) > 18 {
+				pack.InstalledSize = size[0][18:]
+			}
+			if len(upstream) > 0 && len(upstream[0]) > 18 {
+				pack.Upstream = urlRe.FindStringSubmatch(string(siOut))[0][18:]
+			}
 			// Checks if index is off and fixes it using a search
 			if pack.InstalledSize == "None" {
 				index := -1
