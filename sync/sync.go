@@ -565,8 +565,8 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 			// Map dependency tree
 			if !pkg.pacman {
 				newDeps, newMakeDeps, _ := pkg.depCheck()
-				out = append(out, newDeps...)
-				outMake = append(outMake, newMakeDeps...)
+				out = append(newDeps, out...)
+				outMake = append(newMakeDeps, outMake...)
 			}
 		case err := <-errChannel:
 			if err != nil {
@@ -603,17 +603,16 @@ func parseDep(dep string) depBuild {
 
 	if strings.Contains(dep, "=<") {
 		dep = strings.Split(dep, "=<")[0]
-	} else if strings.Contains(dep, "==") {
-		dep = strings.Split(dep, "==")[0]
-	} else if strings.Contains(dep, "=") {
-		dep = strings.Split(dep, "=")[0]
 	} else if strings.Contains(dep, "=>") {
 		dep = strings.Split(dep, "=>")[0]
 	} else if strings.Contains(dep, ">") {
 		dep = strings.Split(dep, ">")[0]
 	} else if strings.Contains(dep, "<") {
 		dep = strings.Split(dep, "<")[0]
+	} else if strings.Contains(dep, "==") {
+		dep = strings.Split(dep, "==")[0]
+	} else if strings.Contains(dep, "=") {
+		dep = strings.Split(dep, "=")[0]
 	}
-
 	return depBuild{name: dep}
 }
