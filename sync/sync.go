@@ -594,6 +594,25 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 		}
 	}
 
+	// Filter deps for repition
+	seen := map[string]bool{}
+	seenMake := map[string]bool{}
+	outF := []PkgBuild{}
+	outMakeF := []PkgBuild{}
+	for _, pack := range out {
+		if !seen[pack.name] {
+			seen[pack.name] = true
+			outF = append(outF, pack)
+		}
+	}
+
+	for _, pack := range outMake {
+		if !seenMake[pack.name] {
+			seenMake[pack.name] = true
+			outMakeF = append(outMakeF, pack)
+		}
+	}
+
 	return out, outMake, nil
 }
 
