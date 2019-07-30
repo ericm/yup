@@ -274,6 +274,25 @@ func (pkg *PkgBuild) Install(silent bool) error {
 	// Make / Install the package
 	pkg.dir = filepath.Join(pkg.dir, pkg.name)
 
+	os.Chdir(pkg.dir)
+
+	info, err := srcinfo.ParseFile(".SRCINFO")
+	if err != nil {
+		return err
+	}
+
+	t_deps := []string{}
+	for _, d := range info.Depends {
+		t_deps = append(t_deps, d.Value)
+	}
+	t_makeDeps := []string{}
+	for _, d := range info.MakeDepends {
+		t_makeDeps = append(t_makeDeps, d.Value)
+	}
+
+	// Redefine deps
+	pkg.depends, pkg.makeDepends = t_deps, t_makeDeps
+
 	remMakes := false
 	if !silent {
 		// Check for dependencies
@@ -388,13 +407,7 @@ func (pkg *PkgBuild) Install(silent bool) error {
 
 	}
 
-	os.Chdir(pkg.dir)
-
 	// Get PGP Keys
-	info, err := srcinfo.ParseFile(".SRCINFO")
-	if err != nil {
-		return err
-	}
 	for _, key := range info.ValidPGPKeys {
 		checkImp := exec.Command("gpg", "--list-keys", "--fingerprint", key)
 		if errC := checkImp.Run(); errC != nil {
