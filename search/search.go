@@ -224,6 +224,24 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 
 }
 
+func PacmanGroups(term string) ([]output.Package, error) {
+	pac := exec.Command("pacman", "-Sg")
+	out, err := pac.Output()
+	if err != nil {
+		return nil, err
+	}
+	outS := string(out)
+	packs := []output.Package{}
+	for _, s := range strings.Split(outS, "\n") {
+		packs = append(packs, output.Package{
+			Name: s,
+			Repo: "\033[94mgroup\033[0m",
+		})
+	}
+
+	return packs, nil
+}
+
 // PacmanQi parses Installed only from pacman -Qi
 func PacmanQi(arg ...string) ([]output.Package, error) {
 	out := []output.Package{}
