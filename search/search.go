@@ -798,6 +798,15 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 			} else {
 				stdscr.ColorOff(3)
 			}
+		default:
+			cur += len(item.Repo)
+			if check {
+				stdscr.ColorOn(9)
+			}
+			stdscr.MovePrint(y, 5, item.Repo)
+			if check {
+				stdscr.ColorOff(9)
+			}
 		}
 
 		// Slash
