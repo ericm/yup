@@ -301,6 +301,11 @@ func SortPacks(queryS string, packs []output.Package) {
 		}
 	}
 
+	if len(packs) == 0 {
+		output.PrintErr("No results found")
+		return
+	}
+
 	sort.Sort(sortPack(packs))
 
 	scanner := bufio.NewReader(os.Stdin)
