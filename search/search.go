@@ -10,12 +10,13 @@ import (
 	"strconv"
 	"strings"
 
+	"time"
+
 	"github.com/ericm/goncurses"
 	"github.com/ericm/yup/config"
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/sync"
 	"github.com/mikkeloscar/aur"
-	"time"
 )
 
 func setColor(repo *string) {
@@ -157,7 +158,7 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 			Name:        nameRe.FindString(pac)[1:],
 			Repo:        repoRe.FindString(pac),
 			Version:     strings.Split(versionRe.FindString(pac), " ")[1],
-			Installed:   len(installedRe.FindString(pac)) != 0,
+			Installed:   len(installedRe.FindString(strings.Split(pac, "\n")[0])) != 0,
 			Description: strings.Split(pac, "\n")[1][4:],
 		}
 
