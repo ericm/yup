@@ -4,3 +4,4 @@ debug
 
 # Go vendor
 vendor
+.vscode
