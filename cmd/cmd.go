@@ -214,6 +214,12 @@ func (args *Arguments) getActions() error {
 				}
 			}
 
+			groups, err := search.PacmanGroups(args.target)
+			if err != nil {
+				return err
+			}
+			packs = append(packs, groups...)
+
 			search.SortPacks(args.target, packs)
 			return nil
 		}

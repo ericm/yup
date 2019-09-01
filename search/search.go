@@ -226,6 +226,7 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 }
 
 func PacmanGroups(term string) ([]output.Package, error) {
+	term = strings.ToLower(term)
 	pac := exec.Command("pacman", "-Sg")
 	out, err := pac.Output()
 	if err != nil {
@@ -240,7 +241,17 @@ func PacmanGroups(term string) ([]output.Package, error) {
 		})
 	}
 
-	return packs, nil
+	outPacks := []output.Package{}
+
+	for _, pack := range packs {
+		if strings.Contains(pack.Name, term) {
+			outPacks = append(outPacks, pack)
+		}
+	}
+
+	fmt.Println(outPacks)
+
+	return outPacks, nil
 }
 
 // PacmanQi parses Installed only from pacman -Qi
