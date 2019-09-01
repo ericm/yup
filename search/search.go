@@ -236,8 +236,9 @@ func PacmanGroups(term string) ([]output.Package, error) {
 	packs := []output.Package{}
 	for _, s := range strings.Split(outS, "\n") {
 		packs = append(packs, output.Package{
-			Name: s,
-			Repo: "\033[94mgroup\033[0m",
+			Name:        s,
+			Repo:        "\033[94mgroup\033[0m",
+			Description: fmt.Sprintf("%s package group", s),
 		})
 	}
 
@@ -248,8 +249,6 @@ func PacmanGroups(term string) ([]output.Package, error) {
 			outPacks = append(outPacks, pack)
 		}
 	}
-
-	fmt.Println(outPacks)
 
 	return outPacks, nil
 }
@@ -827,6 +826,19 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 				stdscr.ColorOff(9)
 			} else {
 				stdscr.ColorOff(3)
+			}
+		case "\033[94mgroup\033[0m":
+			cur += 5
+			if check {
+				stdscr.ColorOn(9)
+			} else {
+				stdscr.ColorOn(8)
+			}
+			stdscr.MovePrint(y, 5, "group")
+			if check {
+				stdscr.ColorOff(9)
+			} else {
+				stdscr.ColorOff(8)
 			}
 		default:
 			cur += len(item.Repo)
