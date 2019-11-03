@@ -59,8 +59,8 @@ func Aur() error {
 	for _, dir := range dirs {
 		if dir.IsDir() {
 			os.Chdir(dir.Name())
-			// Delete big bad files. git clean -f will only rm source files
-			gitrm := exec.Command("git", "clean", "-f")
+			// Delete big bad files. git clean -fx will only rm source files
+			gitrm := exec.Command("git", "clean", "-fx")
 			if err := gitrm.Run(); err != nil {
 				return err
 			}
