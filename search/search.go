@@ -44,7 +44,7 @@ func setColor(repo *string) {
 // Aur returns []Package parsed from the AUR
 func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 	// Hardcoded query limit
-	limit := 100
+	limit := 50
 	i := 0
 
 	// Generate query
