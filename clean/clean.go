@@ -1,13 +1,13 @@
 package clean
 
 import (
-	"github.com/ericm/yup/config"
-	"github.com/ericm/yup/output"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
+
+	"github.com/ericm/yup/config"
+	"github.com/ericm/yup/output"
 )
 
 // Clean unused packages and delete cache
@@ -59,23 +59,10 @@ func Aur() error {
 	for _, dir := range dirs {
 		if dir.IsDir() {
 			os.Chdir(dir.Name())
-			// Delete big bad files
-			tarGz, _ := filepath.Glob("*")
-			for _, tar := range tarGz {
-				switch tar {
-				case ".git", "PKGBUILD", ".SRCINFO":
-					continue
-				}
-				if err := os.RemoveAll(tar); err != nil {
-					output.PrintErr("%s", err)
-				}
-			}
-
-			if err := os.RemoveAll("pkg"); err != nil {
-				output.PrintErr("%s", err)
-			}
-			if err := os.RemoveAll("src"); err != nil {
-				output.PrintErr("%s", err)
+			// Delete big bad files. git clean -f will only rm source files
+			gitrm := exec.Command("git", "clean", "-f")
+			if err := gitrm.Run(); err != nil {
+				return err
 			}
 		}
 		os.Chdir(cache)
