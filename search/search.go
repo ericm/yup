@@ -448,19 +448,37 @@ Redo:
 
 }
 
+func getDims() (string, string) {
+	var (
+		prevMy string
+		prevMx string
+	)
+	if prevMyB, err := exec.Command("tput", "lines").Output(); err == nil {
+		prevMy = string(prevMyB)
+	}
+	if prevMxB, err := exec.Command("tput", "cols").Output(); err == nil {
+		prevMx = string(prevMxB)
+	}
+
+	return prevMx, prevMy
+}
+
 // Prints ncurses
 func printncurses(packs *[]output.Package) ([]output.Package, bool) {
-	// Setup ncurses
+	selected := 1
+	checked := map[int]bool{}
+
+Resize:
 	stdscr, err := goncurses.Init()
 	if err != nil {
 		output.PrintErr("%s", err)
 	}
+	stdscr.Keypad(true)
 	defer goncurses.End()
 
 	goncurses.Cursor(0)
 	goncurses.Echo(false)
 	goncurses.Raw(true)
-	stdscr.Keypad(true)
 
 	goncurses.MouseMask(goncurses.M_ALL, nil) // temporarily enable all mouse clicks
 	// Init the ncurses colours
@@ -487,20 +505,18 @@ func printncurses(packs *[]output.Package) ([]output.Package, bool) {
 	goncurses.InitPair(10, goncurses.C_BLACK, goncurses.C_WHITE)
 
 	// Event loop
+	// Setup ncurses
 	var ch goncurses.Key
 	var offset int
 	var timeout bool
 	var newSel int
 	var notSel bool
 	var toSel int
-	var prevMy int
-	var prevMx int
+	prevMy := ""
+	prevMx := ""
 
 	// Initial print
-	selected := 1
-	checked := map[int]bool{}
 	printPacks(stdscr, packs, selected, checked)
-Resize:
 	printBar(stdscr, 0, 0, false)
 	printhelp(stdscr)
 
@@ -626,6 +642,9 @@ Resize:
 					notSel = true
 					update = true
 				}
+			case 'f':
+				goncurses.End()
+				goto Resize
 
 			default:
 				if num, err := strconv.Atoi(string(ch)); err == nil {
@@ -640,12 +659,11 @@ Resize:
 
 		}
 
-		if prevMx == 0 {
-			prevMy, prevMx = stdscr.MaxYX()
-		} // Get prev size
-		if mmy, mmx := stdscr.MaxYX(); prevMx != mmx || prevMy != mmy {
-			prevMx = 0
-			prevMy = 0
+		// Get prev size
+		if prevMx == "" || prevMy == "" {
+			prevMx, prevMy = getDims()
+		} else if mmx, mmy := getDims(); prevMx != mmx || prevMy != mmy {
+			goncurses.End()
 			goto Resize
 		}
 		// Mouse timeout
