@@ -3,14 +3,15 @@ package update
 import (
 	"bufio"
 	"fmt"
-	"github.com/ericm/yup/config"
-	"github.com/ericm/yup/output"
-	"github.com/ericm/yup/sync"
-	"github.com/mikkeloscar/aur"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/ericm/yup/config"
+	"github.com/ericm/yup/output"
+	"github.com/ericm/yup/sync"
+	"github.com/mikkeloscar/aur"
 )
 
 // Installed Packages representation
@@ -155,6 +156,13 @@ func newerVersion(oldVersion, newVersion string) bool {
 	oldVer := strings.Split(oldVersion, "-")
 	newVer := strings.Split(newVersion, "-")
 	if len(oldVer) > 1 && len(newVer) > 1 {
+		// For rXX
+		rSplitO := strings.SplitAfter(oldVer[0], "r")
+		rSplitN := strings.SplitAfter(newVer[0], "r")
+		if len(rSplitO) > 0 && len(rSplitN) > 0 {
+			oldVer[0] = rSplitO[0]
+			newVer[0] = rSplitN[0]
+		}
 		// Get rel
 		if oldVer[0] == newVer[0] {
 			relOld, _ := strconv.Atoi(oldVer[1])
