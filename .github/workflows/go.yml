@@ -15,4 +15,7 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Build
-        run: make
+        run: |
+          apt-get update
+          apt-get install libncurses-dev
+          make
