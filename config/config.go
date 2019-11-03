@@ -3,10 +3,11 @@ package config
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/ericm/yup/output"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/ericm/yup/output"
 )
 
 // File struct
@@ -49,7 +50,7 @@ func GetConfig() *Config {
 
 // ReadConfigFile reads the json config
 func ReadConfigFile(version string) error {
-	fileOpen, err := os.OpenFile(files.ConfigFile, os.O_RDWR, os.ModePerm)
+	fileOpen, err := os.OpenFile(files.ConfigFile, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -65,6 +66,9 @@ func ReadConfigFile(version string) error {
 		if errInit != nil {
 			return errInit
 		}
+		// Return as config verson should match up
+		files.UserFile = file
+		return nil
 	}
 
 	if file.ConfigVersion != version {
@@ -118,7 +122,7 @@ func InitConfig(file *os.File, version string) error {
 		return err
 	}
 	if _, errF := file.WriteAt(write, 0); errF != nil {
-		return errF
+		ReadConfigFile(version)
 	}
 	return nil
 }
