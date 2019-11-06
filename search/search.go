@@ -43,9 +43,8 @@ func setColor(repo *string) {
 
 // Aur returns []Package parsed from the AUR
 func Aur(query string, print bool, installed bool) ([]output.Package, error) {
-	// Hardcoded query limit
-	limit := 50
-	i := 0
+	// Query limit
+	limit := config.GetConfig().UserFile.AurLimit
 
 	// Generate query
 	queryS := strings.Split(query, " ")
@@ -83,7 +82,7 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 
 	packs := []output.Package{}
 
-	for _, pack := range aurPacks {
+	for i, pack := range aurPacks {
 		newPack := output.Package{
 			Aur:         true,
 			Name:        pack.Name,
@@ -113,7 +112,6 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 		} else {
 			return packs, nil
 		}
-		i++
 
 	}
 	return packs, nil
@@ -153,7 +151,11 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 	insVerRe := regexp.MustCompile("Version\\s*?:\\s*(\\s\\S+)")
 
 	packs := []output.Package{}
-	for _, pac := range pacOut {
+	for i, pac := range pacOut {
+		if i > config.GetConfig().UserFile.PacmanLimit-1 {
+			// Query limit
+			break
+		}
 		pack := output.Package{
 			Name:        nameRe.FindString(pac)[1:],
 			Repo:        repoRe.FindString(pac),

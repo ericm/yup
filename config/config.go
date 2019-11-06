@@ -20,6 +20,8 @@ type File struct {
 	AskRedo       bool   `json:"ask_redo"`
 	ConfigVersion string `json:"version"`
 	SilentUpdate  bool   `json:"silent_update"`
+	PacmanLimit   int    `json:"pacman_limit"`
+	AurLimit      int    `json:"aur_limit"`
 }
 
 // Config struct
@@ -67,7 +69,6 @@ func ReadConfigFile(version string) error {
 			return errInit
 		}
 		// Return as config verson should match up
-		files.UserFile = file
 		return nil
 	}
 
@@ -116,13 +117,17 @@ func InitConfig(file *os.File, version string) error {
 		AskRedo:       true,
 		ConfigVersion: version,
 		SilentUpdate:  false,
+		PacmanLimit:   100,
+		AurLimit:      100,
 	}
 	write, err := json.MarshalIndent(initFile, "", "  ")
 	if err != nil {
 		return err
 	}
 	if _, errF := file.WriteAt(write, 0); errF != nil {
+		// Read file if error
 		ReadConfigFile(version)
 	}
+	files.UserFile = *initFile
 	return nil
 }
