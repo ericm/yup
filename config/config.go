@@ -117,8 +117,8 @@ func InitConfig(file *os.File, version string) error {
 		AskRedo:       true,
 		ConfigVersion: version,
 		SilentUpdate:  false,
-		PacmanLimit:   100,
-		AurLimit:      100,
+		PacmanLimit:   20,
+		AurLimit:      30,
 	}
 	write, err := json.MarshalIndent(initFile, "", "  ")
 	if err != nil {
