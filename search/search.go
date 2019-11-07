@@ -306,30 +306,34 @@ func SortPacks(queryS string, packs []output.Package) {
 	query := strings.ReplaceAll(queryS, " ", "-")
 	querySpl := strings.Split(query, "-")[0]
 
-	// Set sort weighting
-	for i, pack := range packs {
-		// See how close the package name is to the query
+	if mode := config.GetConfig().UserFile.SortMode; mode == "closest" {
+		// Set sort weighting
+		for i, pack := range packs {
+			// See how close the package name is to the query
 
-		// Check for exact match
-		if packs[i].Name == query {
-			packs[i].SortValue = 1
-			continue
+			// Check for exact match
+			if packs[i].Name == query {
+				packs[i].SortValue = 1
+				continue
+			}
+
+			name := float64(len(pack.Name))
+			q := float64(len(query))
+
+			// Check for partial match
+			if strings.Contains(pack.Name, query) {
+				packs[i].SortValue = 1 / (name / q)
+				continue
+			}
+
+			// Else one part of the query
+			if strings.Contains(pack.Name, querySpl) {
+				packs[i].SortValue = 1 / (name / q) / 2
+				continue
+			}
 		}
+	} else if mode == "exact" {
 
-		name := float64(len(pack.Name))
-		q := float64(len(query))
-
-		// Check for partial match
-		if strings.Contains(pack.Name, query) {
-			packs[i].SortValue = 1 / (name / q)
-			continue
-		}
-
-		// Else one part of the query
-		if strings.Contains(pack.Name, querySpl) {
-			packs[i].SortValue = 1 / (name / q) / 2
-			continue
-		}
 	}
 
 	if len(packs) == 0 {
