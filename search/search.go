@@ -332,8 +332,6 @@ func SortPacks(queryS string, packs []output.Package) {
 				continue
 			}
 		}
-	} else if mode == "exact" {
-
 	}
 
 	if len(packs) == 0 {
@@ -341,7 +339,9 @@ func SortPacks(queryS string, packs []output.Package) {
 		return
 	}
 
-	sort.Sort(sortPack(packs))
+	if config.GetConfig().UserFile.SortMode != "none" {
+		sort.Sort(sortPack(packs))
+	}
 
 	scanner := bufio.NewReader(os.Stdin)
 	packsToInstall := []output.Package{}
