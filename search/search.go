@@ -48,21 +48,20 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 
 	// Generate query
 	queryS := strings.Split(query, " ")
-	aurPacksB := []aur.Pkg{}
 	aurPacks := []aur.Pkg{}
 
 	// Search the AUR
-	for _, q := range queryS {
-		aurPack, err := aur.Search(q)
-		if err != nil {
-			return []output.Package{}, err
-		}
-		aurPacksB = append(aurPacksB, aurPack...)
+	aurPackIn, err := aur.Search(query)
+	if err != nil {
+		return []output.Package{}, err
 	}
+
+	secondaryAur, err := aur.Search(strings.ReplaceAll(query, " ", "-"))
+	aurPackIn = append(aurPackIn, secondaryAur...)
 
 	seen := map[string]bool{}
 	// Filter aurPacksB (before) to aurPacks
-	for _, pack := range aurPacksB {
+	for _, pack := range aurPackIn {
 		matched := true
 
 		for _, q := range queryS {
