@@ -59,6 +59,11 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 	// Query limit
 	limit := config.GetConfig().UserFile.AurLimit
 
+	db, err := handle.LocalDB()
+	if err != nil {
+		return []output.Package{}, err
+	}
+
 	// Generate query
 	queryS := strings.Split(query, " ")
 	aurPacks := []aur.Pkg{}
@@ -106,13 +111,14 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 		}
 
 		// Check if its installed
-		ins, errCheck := PacmanQi(newPack.Name)
-		if len(ins) > 0 && errCheck == nil {
+		in := db.Pkg(pack.Name)
+		if in != nil {
+			// Is installed
 			newPack.Installed = true
-			newPack.InstalledVersion = ins[0].Version
-			newPack.InstalledSize = ins[0].InstalledSize
-			newPack.InstalledSizeInt = ins[0].InstalledSizeInt
-			newPack.DownloadSize = ins[0].DownloadSize
+			newPack.InstalledVersion = in.Version()
+			newPack.InstalledSize = ToString(in.ISize())
+			newPack.InstalledSizeInt = int(in.Size())
+			newPack.DownloadSize = ToString(in.Size())
 		}
 
 		if print {
@@ -992,5 +998,25 @@ func ToBytes(data string) int {
 		return val * 1000000000
 	default:
 		return -1
+	}
+}
+
+// ToString Turns 1024 into 1.00 KiB
+func ToString(data int64) string {
+	b := int64(1024)
+	i := 0
+	for data < 1024 {
+		data /= b
+		i++
+	}
+	switch i {
+	case 1:
+		return fmt.Sprintf("%.2f %s", float32(data/int64(1024)), "KiB")
+	case 2:
+		return fmt.Sprintf("%.2f %s", float32(data/int64(1048576)), "MiB")
+	case 3:
+		return fmt.Sprintf("%.2f %s", float32(data/int64(1073741824)), "GiB")
+	default:
+		return ""
 	}
 }
