@@ -12,12 +12,25 @@ import (
 
 	"time"
 
+	"github.com/Jguer/go-alpm"
 	"github.com/ericm/goncurses"
 	"github.com/ericm/yup/config"
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/sync"
 	"github.com/mikkeloscar/aur"
 )
+
+var handle *alpm.Handle
+
+// Initialize alpm
+func Init() error {
+	var err error
+	handle, err = alpm.Initialize("/", "/var/lib/pacman")
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func setColor(repo *string) {
 	// Set colour for repo

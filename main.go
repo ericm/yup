@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/ericm/yup/config"
+	"github.com/ericm/yup/search"
 
 	"github.com/ericm/yup/cmd"
 	"github.com/ericm/yup/output"
@@ -34,6 +35,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	exitError(search.Init())
 	exitError(paths())
 	exitError(makePaths())
 	exitError(config.ReadConfigFile(cmd.Version))

@@ -1,6 +1,7 @@
 module github.com/ericm/yup
 
 require (
+	github.com/Jguer/go-alpm v0.0.0-20191122171459-5cffc6e8fc69
 	github.com/Morganamilo/go-srcinfo v1.0.0
 	github.com/ericm/goncurses v0.0.0-20190629180204-4f42246a7bb5
 	github.com/google/pprof v0.0.0-20190515194954-54271f7e092f // indirect
