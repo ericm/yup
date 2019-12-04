@@ -116,7 +116,7 @@ func InitConfig(file *os.File, version string) error {
 		AskPkg:        true,
 		AskRedo:       true,
 		ConfigVersion: version,
-		SilentUpdate:  false,
+		SilentUpdate:  true,
 		PacmanLimit:   70,
 		AurLimit:      70,
 	}
