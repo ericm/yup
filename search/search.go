@@ -117,8 +117,8 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 			newPack.Installed = true
 			newPack.InstalledVersion = in.Version()
 			newPack.InstalledSize = ToString(in.ISize())
-			newPack.InstalledSizeInt = int(in.Size())
-			newPack.DownloadSize = ToString(in.Size())
+			newPack.InstalledSizeInt = int(in.ISize())
+			newPack.DownloadSize = ToString(in.ISize())
 		}
 
 		if print {
@@ -1002,21 +1002,22 @@ func ToBytes(data string) int {
 }
 
 // ToString Turns 1024 into 1.00 KiB
-func ToString(data int64) string {
-	b := int64(1024)
+func ToString(data_i int64) string {
+	b := float32(1024)
+	data := float32(data_i)
 	i := 0
-	for data < 1024 {
+	for data != 0 && data > 1024 {
 		data /= b
 		i++
 	}
 	switch i {
 	case 1:
-		return fmt.Sprintf("%.2f %s", float32(data/int64(1024)), "KiB")
+		return fmt.Sprintf("%.2f %s", data, "KiB")
 	case 2:
-		return fmt.Sprintf("%.2f %s", float32(data/int64(1048576)), "MiB")
+		return fmt.Sprintf("%.2f %s", data, "MiB")
 	case 3:
-		return fmt.Sprintf("%.2f %s", float32(data/int64(1073741824)), "GiB")
+		return fmt.Sprintf("%.2f %s", data, "GiB")
 	default:
-		return ""
+		return fmt.Sprintf("%.2f B", data)
 	}
 }
