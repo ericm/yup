@@ -41,6 +41,28 @@
 		AurLimit:      int, # The number of packages parsed from the AUR to be sorted and searched
 	}
     ```
+## Usage
+```
+    yup                 Updates AUR and pacman packages (Like -Syu)
+    yup <package(s)>    Searches for that packages and provides an install dialogue
+Operations:
+    yup {-h --help}             
+    yup {-V --version}          
+    yup {-D --database} <options> <package(s)>
+    yup {-F --files}    <options> <package(s)>
+    yup {-Q --query}    <options> <package(s)>
+    yup {-R --remove}   <options> <package(s)>
+    yup {-S --sync}     <options> <package(s)>
+    yup {-T --deptest}  <options> <package(s)>
+    yup {-U --upgrade}  <options> <file(s)>
+Custom operations:
+    yup -c              Cleans cache and unused dependencies
+    yup -C              Cleans AUR cache only
+    yup -a [package(s)] Operates on the AUR exclusively
+    yup -n [package(s)] Runs in non-ncurses mode
+    yup -Y <Yupfile>    Install packages from a Yupfile
+    yup -Qos            Orders installed packages by install size
+```
 
 ## Differences between yay or trizen
 - Yup gives you the **most accurate results** first. As seen in the example above, yup sorts the results to bring the most accurate to the start.
