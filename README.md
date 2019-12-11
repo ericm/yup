@@ -22,8 +22,25 @@
 - Like *yay*, type `yup` to run a system upgrade.
 
 - An easy to use config file located at `~/.config/yup/config.json` in JSON format.
+    
 
 - Want to see which packages are cluttering up your system? Run `yup -Qos` to get a list ordered package size.
+## Configuration
+- Config file found at `~/.config/yup/config.json`.
+- The config file has the following options:
+    ```
+    {
+		SortMode:      "closest"|"none", // changes how results are sorted (more to come)
+		Ncurses:       bool, # Whether to default to ncurses or not (override by -n)
+		Update:        bool, # Whether to update the pacman repos before every sync command
+		PrintPkg:      bool, # Whether to print the PKGBUILD before install (for AUR)
+		AskPkg:        bool, # Whether to ask to edit PKGBUILD before install (only if PrintPkg is true)
+		AskRedo:       bool, # Whether to ask if you want to reselect packages before install
+		SilentUpdate:  bool, # Whether you want to be asked to edit PKGBUILD during system update (overrides PrintPkg)
+		PacmanLimit:   int, # The number of packages parsed from pacman to be sorted and searched
+		AurLimit:      int, # The number of packages parsed from the AUR to be sorted and searched
+	}
+    ```
 
 ## Differences between yay or trizen
 - Yup gives you the **most accurate results** first. As seen in the example above, yup sorts the results to bring the most accurate to the start.
