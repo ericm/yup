@@ -22,8 +22,47 @@
 - Like *yay*, type `yup` to run a system upgrade.
 
 - An easy to use config file located at `~/.config/yup/config.json` in JSON format.
+    
 
 - Want to see which packages are cluttering up your system? Run `yup -Qos` to get a list ordered package size.
+## Configuration
+- Config file found at `~/.config/yup/config.json`.
+- The config file has the following options:
+    ```
+    {
+		SortMode:      "closest"|"none", // changes how results are sorted (more to come)
+		Ncurses:       bool, # Whether to default to ncurses or not (override by -n)
+		Update:        bool, # Whether to update the pacman repos before every sync command
+		PrintPkg:      bool, # Whether to print the PKGBUILD before install (for AUR)
+		AskPkg:        bool, # Whether to ask to edit PKGBUILD before install (only if PrintPkg is true)
+		AskRedo:       bool, # Whether to ask if you want to reselect packages before install
+		SilentUpdate:  bool, # Whether you want to be asked to edit PKGBUILD during system update (overrides PrintPkg)
+		PacmanLimit:   int, # The number of packages parsed from pacman to be sorted and searched
+		AurLimit:      int, # The number of packages parsed from the AUR to be sorted and searched
+	}
+    ```
+## Usage
+```
+    yup                 Updates AUR and pacman packages (Like -Syu)
+    yup <package(s)>    Searches for that packages and provides an install dialogue
+Operations:
+    yup {-h --help}             
+    yup {-V --version}          
+    yup {-D --database} <options> <package(s)>
+    yup {-F --files}    <options> <package(s)>
+    yup {-Q --query}    <options> <package(s)>
+    yup {-R --remove}   <options> <package(s)>
+    yup {-S --sync}     <options> <package(s)>
+    yup {-T --deptest}  <options> <package(s)>
+    yup {-U --upgrade}  <options> <file(s)>
+Custom operations:
+    yup -c              Cleans cache and unused dependencies
+    yup -C              Cleans AUR cache only
+    yup -a [package(s)] Operates on the AUR exclusively
+    yup -n [package(s)] Runs in non-ncurses mode
+    yup -Y <Yupfile>    Install packages from a Yupfile
+    yup -Qos            Orders installed packages by install size
+```
 
 ## Differences between yay or trizen
 - Yup gives you the **most accurate results** first. As seen in the example above, yup sorts the results to bring the most accurate to the start.
