@@ -294,36 +294,38 @@ func (pkg *PkgBuild) Install(silent bool) error {
 	pkg.depends, pkg.makeDepends = t_deps, t_makeDeps
 
 	remMakes := false
-	if !silent {
-		// Check for dependencies
-		output.Printf("Checking for dependencies")
-		deps, makeDeps, err := pkg.depCheck()
-		if err != nil {
-			return err
-		}
+	// Check for dependencies
+	output.Printf("Checking for dependencies")
+	deps, makeDeps, err := pkg.depCheck()
+	if err != nil {
+		return err
+	}
 
-		if len(deps) > 0 {
-			output.Printf("Found uninstalled Dependencies:")
-			fmt.Print("    ")
-			for i, dep := range deps {
-				fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
-			}
-			fmt.Print("\n")
+	if len(deps) > 0 {
+		output.Printf("Found uninstalled Dependencies:")
+		fmt.Print("    ")
+		for i, dep := range deps {
+			fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
+		}
+		fmt.Print("\n")
+		if !silent {
 			output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
 			depRem, _ := scanner.ReadString('\n')
 
 			// Parse input
 			ParseNumbers(depRem, &deps)
 		}
+	}
 
-		if len(makeDeps) > 0 {
-			output.Printf("Found uninstalled Make Dependencies:")
-			fmt.Print("    ")
-			for i, dep := range makeDeps {
-				fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
-			}
-			fmt.Print("\n")
+	if len(makeDeps) > 0 {
+		output.Printf("Found uninstalled Make Dependencies:")
+		fmt.Print("    ")
+		for i, dep := range makeDeps {
+			fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
+		}
+		fmt.Print("\n")
 
+		if !silent {
 			// Not to install
 			output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
 
@@ -339,72 +341,71 @@ func (pkg *PkgBuild) Install(silent bool) error {
 				break
 			}
 		}
+	}
 
-		// Gather packages
-		aurInstall := []PkgBuild{}
-		pacInstall := []string{}
+	// Gather packages
+	aurInstall := []PkgBuild{}
+	pacInstall := []string{}
 
-		if len(deps) > 0 {
-			// Install deps packages
-			for _, dep := range deps {
-				if dep.pacman {
-					// Install from pacman
-					pacInstall = append(pacInstall, dep.name)
-				} else {
-					// Install using Install in silent mode
-					aurInstall = append(aurInstall, dep)
-				}
+	if len(deps) > 0 {
+		// Install deps packages
+		for _, dep := range deps {
+			if dep.pacman {
+				// Install from pacman
+				pacInstall = append(pacInstall, dep.name)
+			} else {
+				// Install using Install in silent mode
+				aurInstall = append(aurInstall, dep)
+			}
+		}
+	}
+
+	if len(makeDeps) > 0 {
+		// Install makeDeps packages
+		for _, dep := range makeDeps {
+			if dep.pacman {
+				// Install from pacman
+				pacInstall = append(pacInstall, dep.name)
+			} else {
+				// Install using Install in silent mode
+				aurInstall = append(aurInstall, dep)
 			}
 		}
 
-		if len(makeDeps) > 0 {
-			// Install makeDeps packages
-			for _, dep := range makeDeps {
-				if dep.pacman {
-					// Install from pacman
-					pacInstall = append(pacInstall, dep.name)
-				} else {
-					// Install using Install in silent mode
-					aurInstall = append(aurInstall, dep)
-				}
-			}
-
-			// At end, remove make packs as necessary
-			if remMakes {
-				defer func(depM []PkgBuild) {
-					output.Printf("Removing Make Dependencies")
-					for _, dep := range depM {
-						rm := exec.Command("sudo", "pacman", "-R", dep.name)
-						output.SetStd(rm)
-						if err := rm.Run(); err != nil {
-							output.PrintErr("Dep Remove Error: %s", err)
-						}
+		// At end, remove make packs as necessary
+		if remMakes {
+			defer func(depM []PkgBuild) {
+				output.Printf("Removing Make Dependencies")
+				for _, dep := range depM {
+					rm := exec.Command("sudo", "pacman", "-R", dep.name)
+					output.SetStd(rm)
+					if err := rm.Run(); err != nil {
+						output.PrintErr("Dep Remove Error: %s", err)
 					}
-				}(makeDeps)
-			}
+				}
+			}(makeDeps)
 		}
+	}
 
-		if len(pacInstall) > 0 || len(aurInstall) > 0 {
-			output.Printf("Installing Dependencies")
+	if len(pacInstall) > 0 || len(aurInstall) > 0 {
+		output.Printf("Installing Dependencies")
+	}
+	// Pacman deps
+	if err := pacmanSync(pacInstall, true, true); err != nil {
+		//output.PrintErr("%s", err)
+	}
+	// Aur deps
+	for _, dep := range aurInstall {
+		err := dep.Install(true)
+		if err != nil {
+			output.PrintErr("Dep Install error:")
+			return err
 		}
-		// Pacman deps
-		if err := pacmanSync(pacInstall, true, true); err != nil {
-			//output.PrintErr("%s", err)
+		// Set as a dependency
+		setDep := exec.Command("sudo", "pacman", "-D", "--asdeps", dep.name)
+		if err := setDep.Run(); err != nil {
+			return err
 		}
-		// Aur deps
-		for _, dep := range aurInstall {
-			err := dep.Install(true)
-			if err != nil {
-				output.PrintErr("Dep Install error:")
-				return err
-			}
-			// Set as a dependency
-			setDep := exec.Command("sudo", "pacman", "-D", "--asdeps", dep.name)
-			if err := setDep.Run(); err != nil {
-				return err
-			}
-		}
-
 	}
 
 	// Get PGP Keys
