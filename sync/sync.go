@@ -92,7 +92,7 @@ func Sync(packages []string, isAur bool, silent bool) error {
 		case pkg := <-buildChannel:
 			if pkg != nil {
 				// Install the package
-				if err := pkg.Install(silent); err != nil {
+				if err := pkg.Install(silent, false); err != nil {
 					return err
 				}
 			}
@@ -175,7 +175,7 @@ func ParseNumbers(input string, packs *[]PkgBuild) {
 
 // Install the pkgBuild
 // assuming repo is now cloned or fetched
-func (pkg *PkgBuild) Install(silent bool) error {
+func (pkg *PkgBuild) Install(silent, dep bool) error {
 	output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m %s\033[0m from the AUR", pkg.name, pkg.version)
 
 	// Install from the AUR
@@ -186,7 +186,7 @@ func (pkg *PkgBuild) Install(silent bool) error {
 		merge := exec.Command("git", "merge", "origin/master")
 		merge.Run()
 	}
-	if !silent {
+	if !silent || !dep {
 		// Print PkgBuild by default
 		conf := config.GetConfig().UserFile
 		if conf.PrintPkg {
@@ -281,130 +281,132 @@ func (pkg *PkgBuild) Install(silent bool) error {
 		return err
 	}
 
-	t_deps := []string{}
-	for _, d := range info.Depends {
-		t_deps = append(t_deps, d.Value)
-	}
-	t_makeDeps := []string{}
-	for _, d := range info.MakeDepends {
-		t_makeDeps = append(t_makeDeps, d.Value)
-	}
-
-	// Redefine deps
-	pkg.depends, pkg.makeDepends = t_deps, t_makeDeps
-
-	remMakes := false
-	// Check for dependencies
-	output.Printf("Checking for dependencies")
-	deps, makeDeps, err := pkg.depCheck()
-	if err != nil {
-		return err
-	}
-
-	if len(deps) > 0 {
-		output.Printf("Found uninstalled Dependencies:")
-		fmt.Print("    ")
-		for i, dep := range deps {
-			fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
+	if !dep {
+		t_deps := []string{}
+		for _, d := range info.Depends {
+			t_deps = append(t_deps, d.Value)
 		}
-		fmt.Print("\n")
-		if !silent {
-			output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
-			depRem, _ := scanner.ReadString('\n')
-
-			// Parse input
-			ParseNumbers(depRem, &deps)
-		}
-	}
-
-	if len(makeDeps) > 0 {
-		output.Printf("Found uninstalled Make Dependencies:")
-		fmt.Print("    ")
-		for i, dep := range makeDeps {
-			fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
-		}
-		fmt.Print("\n")
-
-		if !silent {
-			// Not to install
-			output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
-
-			depNum, _ := scanner.ReadString('\n')
-			ParseNumbers(depNum, &makeDeps)
-
-			output.PrintIn("Remove Make Dependencies after install? (y/N)")
-
-			rem, _ := scanner.ReadString('\n')
-			switch strings.TrimSpace(strings.ToLower(rem[:1])) {
-			case "y":
-				remMakes = true
-				break
-			}
-		}
-	}
-
-	// Gather packages
-	aurInstall := []PkgBuild{}
-	pacInstall := []string{}
-
-	if len(deps) > 0 {
-		// Install deps packages
-		for _, dep := range deps {
-			if dep.pacman {
-				// Install from pacman
-				pacInstall = append(pacInstall, dep.name)
-			} else {
-				// Install using Install in silent mode
-				aurInstall = append(aurInstall, dep)
-			}
-		}
-	}
-
-	if len(makeDeps) > 0 {
-		// Install makeDeps packages
-		for _, dep := range makeDeps {
-			if dep.pacman {
-				// Install from pacman
-				pacInstall = append(pacInstall, dep.name)
-			} else {
-				// Install using Install in silent mode
-				aurInstall = append(aurInstall, dep)
-			}
+		t_makeDeps := []string{}
+		for _, d := range info.MakeDepends {
+			t_makeDeps = append(t_makeDeps, d.Value)
 		}
 
-		// At end, remove make packs as necessary
-		if remMakes {
-			defer func(depM []PkgBuild) {
-				output.Printf("Removing Make Dependencies")
-				for _, dep := range depM {
-					rm := exec.Command("sudo", "pacman", "-R", dep.name)
-					output.SetStd(rm)
-					if err := rm.Run(); err != nil {
-						output.PrintErr("Dep Remove Error: %s", err)
-					}
-				}
-			}(makeDeps)
-		}
-	}
+		// Redefine deps
+		pkg.depends, pkg.makeDepends = t_deps, t_makeDeps
 
-	if len(pacInstall) > 0 || len(aurInstall) > 0 {
-		output.Printf("Installing Dependencies")
-	}
-	// Pacman deps
-	if err := pacmanSync(pacInstall, true, true); err != nil {
-		//output.PrintErr("%s", err)
-	}
-	// Aur deps
-	for _, dep := range aurInstall {
-		err := dep.Install(true)
+		remMakes := false
+		// Check for dependencies
+		output.Printf("Checking for dependencies")
+		deps, makeDeps, err := pkg.depCheck()
 		if err != nil {
-			output.PrintErr("Dep Install error:")
 			return err
 		}
-		// Set as a dependency
-		setDep := exec.Command("sudo", "pacman", "-D", "--asdeps", dep.name)
-		if err := setDep.Run(); err != nil {
-			return err
+
+		if len(deps) > 0 {
+			output.Printf("Found uninstalled Dependencies:")
+			fmt.Print("    ")
+			for i, dep := range deps {
+				fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
+			}
+			fmt.Print("\n")
+			if !silent {
+				output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
+				depRem, _ := scanner.ReadString('\n')
+
+				// Parse input
+				ParseNumbers(depRem, &deps)
+			}
+		}
+
+		if len(makeDeps) > 0 {
+			output.Printf("Found uninstalled Make Dependencies:")
+			fmt.Print("    ")
+			for i, dep := range makeDeps {
+				fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
+			}
+			fmt.Print("\n")
+
+			if !silent {
+				// Not to install
+				output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
+
+				depNum, _ := scanner.ReadString('\n')
+				ParseNumbers(depNum, &makeDeps)
+
+				output.PrintIn("Remove Make Dependencies after install? (y/N)")
+
+				rem, _ := scanner.ReadString('\n')
+				switch strings.TrimSpace(strings.ToLower(rem[:1])) {
+				case "y":
+					remMakes = true
+					break
+				}
+			}
+		}
+
+		// Gather packages
+		aurInstall := []PkgBuild{}
+		pacInstall := []string{}
+
+		if len(deps) > 0 {
+			// Install deps packages
+			for _, dep := range deps {
+				if dep.pacman {
+					// Install from pacman
+					pacInstall = append(pacInstall, dep.name)
+				} else {
+					// Install using Install in silent mode
+					aurInstall = append(aurInstall, dep)
+				}
+			}
+		}
+
+		if len(makeDeps) > 0 {
+			// Install makeDeps packages
+			for _, dep := range makeDeps {
+				if dep.pacman {
+					// Install from pacman
+					pacInstall = append(pacInstall, dep.name)
+				} else {
+					// Install using Install in silent mode
+					aurInstall = append(aurInstall, dep)
+				}
+			}
+
+			// At end, remove make packs as necessary
+			if remMakes {
+				defer func(depM []PkgBuild) {
+					output.Printf("Removing Make Dependencies")
+					for _, dep := range depM {
+						rm := exec.Command("sudo", "pacman", "-R", dep.name)
+						output.SetStd(rm)
+						if err := rm.Run(); err != nil {
+							output.PrintErr("Dep Remove Error: %s", err)
+						}
+					}
+				}(makeDeps)
+			}
+		}
+
+		if len(pacInstall) > 0 || len(aurInstall) > 0 {
+			output.Printf("Installing Dependencies")
+		}
+		// Pacman deps
+		if err := pacmanSync(pacInstall, true, true); err != nil {
+			//output.PrintErr("%s", err)
+		}
+		// Aur deps
+		for _, dep := range aurInstall {
+			err := dep.Install(true, true)
+			if err != nil {
+				output.PrintErr("Dep Install error:")
+				return err
+			}
+			// Set as a dependency
+			setDep := exec.Command("sudo", "pacman", "-D", "--asdeps", dep.name)
+			if err := setDep.Run(); err != nil {
+				return err
+			}
 		}
 	}
 
