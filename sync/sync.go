@@ -175,7 +175,7 @@ func ParseNumbers(input string, packs *[]PkgBuild) {
 
 // Install the pkgBuild
 // assuming repo is now cloned or fetched
-func (pkg *PkgBuild) Install(silent, dep bool) error {
+func (pkg *PkgBuild) Install(silent, is_dep bool) error {
 	output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m %s\033[0m from the AUR", pkg.name, pkg.version)
 
 	// Install from the AUR
@@ -186,7 +186,7 @@ func (pkg *PkgBuild) Install(silent, dep bool) error {
 		merge := exec.Command("git", "merge", "origin/master")
 		merge.Run()
 	}
-	if !silent || !dep {
+	if !silent || !is_dep {
 		// Print PkgBuild by default
 		conf := config.GetConfig().UserFile
 		if conf.PrintPkg {
@@ -281,7 +281,7 @@ func (pkg *PkgBuild) Install(silent, dep bool) error {
 		return err
 	}
 
-	if !dep {
+	if !is_dep {
 		t_deps := []string{}
 		for _, d := range info.Depends {
 			t_deps = append(t_deps, d.Value)
@@ -409,6 +409,9 @@ func (pkg *PkgBuild) Install(silent, dep bool) error {
 			}
 		}
 	}
+
+	// Change dir back after dep resolution
+	os.Chdir(pkg.dir)
 
 	// Get PGP Keys
 	for _, key := range info.ValidPGPKeys {
@@ -629,7 +632,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 		}
 	}
 
-	return out, outMake, nil
+	return outF, outMakeF, nil
 }
 
 // Get dependency syntax
