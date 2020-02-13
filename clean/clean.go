@@ -33,6 +33,9 @@ func Clean() error {
 				packs = append(packs, pack)
 			}
 		}
+	} else {
+		output.Printf("No unused dependencies found")
+		return nil
 	}
 
 	// Remove
