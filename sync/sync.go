@@ -14,8 +14,9 @@ import (
 
 	"fmt"
 
-	"github.com/ericm/yup/config"
 	"strconv"
+
+	"github.com/ericm/yup/config"
 )
 
 // func Search(terms ...string) error {
@@ -427,6 +428,26 @@ func (pkg *PkgBuild) Install(silent, is_dep bool) error {
 				output.SetStd(imp)
 				if err := imp.Run(); err != nil {
 					output.PrintErr("%s", err)
+				}
+			}
+		}
+	}
+	for _, c := range info.Conflicts {
+		if err := exec.Command("pacman", "-T", c.Value).Run(); err == nil {
+			// This means that the conflict is installed and we should uninstall
+			scan, _ := scanner.ReadString('\n')
+			output.PrintIn(
+				"%s and %s are in conflict. Uninstall %s? (y/N)",
+				pkg.name,
+				c.Value,
+				c.Value,
+			)
+			switch strings.TrimSpace(strings.ToLower(scan[:1])) {
+			case "y":
+				rem := exec.Command("sudo", "pacman", "-R", c.Value)
+				output.SetStd(rem)
+				if err := rem.Run(); err != nil {
+					return err
 				}
 			}
 		}
