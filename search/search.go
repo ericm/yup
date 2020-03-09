@@ -551,6 +551,18 @@ Resize:
 		if !timeout {
 		Sw:
 			switch goncurses.Key(ch) {
+			case 'k':
+				if config.GetConfig().UserFile.VimKeybindings && selected < len(*packs) {
+					// Scroll forward
+					selected += 1
+					update = true
+				}
+			case 'j':
+				if config.GetConfig().UserFile.VimKeybindings && selected > 1 {
+					// Scroll backward
+					selected -= 1
+					update = true
+				}
 			case goncurses.KEY_UP, goncurses.KEY_SF, 'w':
 				// Scroll forward
 				if selected < len(*packs) {
