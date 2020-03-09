@@ -4,6 +4,8 @@ SRCDIR :=
 BINAME := yup
 PKGBUILD := yup
 
+export CGO_LDFLAGS_ALLOW = -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now
+
 build:
 	go get
 	go install
