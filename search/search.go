@@ -22,7 +22,7 @@ import (
 
 var handle *alpm.Handle
 
-// Initialize alpm
+// Init alpm
 func Init() error {
 	var err error
 	handle, err = alpm.Initialize("/", "/var/lib/pacman")
@@ -245,6 +245,7 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 
 }
 
+// PacmanGroups outputs packages for groups matching the term
 func PacmanGroups(term string) ([]output.Package, error) {
 	term = strings.ToLower(term)
 	pac := exec.Command("pacman", "-Sg")
@@ -1013,9 +1014,9 @@ func ToBytes(data string) int {
 }
 
 // ToString Turns 1024 into 1.00 KiB
-func ToString(data_i int64) string {
+func ToString(dataI int64) string {
 	b := float32(1024)
-	data := float32(data_i)
+	data := float32(dataI)
 	i := 0
 	for data != 0 && data > 1024 {
 		data /= b
