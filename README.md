@@ -4,6 +4,7 @@
 </div>
 
 [![AUR version](https://img.shields.io/aur/version/yup.svg)](https://aur.archlinux.org/packages/yup/)
+[![AUR bin version](https://img.shields.io/aur/version/yup-bin?color=%230084ff&label=bin)](https://aur.archlinux.org/packages/yup-bin/)
 [![GitHub](https://img.shields.io/github/license/ericm/yup.svg)](https://github.com/ericm/yup/blob/master/LICENSE)
 [![GitHub contributors](https://img.shields.io/github/contributors/ericm/yup.svg)](https://github.com/ericm/yup/graphs/contributors)
 
