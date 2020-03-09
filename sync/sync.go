@@ -31,7 +31,7 @@ type Download struct {
 	count int
 }
 
-// Represents a PkgBuild
+// PkgBuild represents a package that has been read from the AUR
 type PkgBuild struct {
 	file        string
 	dir         string
@@ -176,7 +176,7 @@ func ParseNumbers(input string, packs *[]PkgBuild) {
 
 // Install the pkgBuild
 // assuming repo is now cloned or fetched
-func (pkg *PkgBuild) Install(silent, is_dep bool) error {
+func (pkg *PkgBuild) Install(silent, isDep bool) error {
 	output.Printf("Installing \033[1m\033[32m%s\033[39m\033[2m %s\033[0m from the AUR", pkg.name, pkg.version)
 
 	// Install from the AUR
@@ -187,7 +187,7 @@ func (pkg *PkgBuild) Install(silent, is_dep bool) error {
 		merge := exec.Command("git", "merge", "origin/master")
 		merge.Run()
 	}
-	if !silent || !is_dep {
+	if !silent || !isDep {
 		// Print PkgBuild by default
 		conf := config.GetConfig().UserFile
 		if conf.PrintPkg {
@@ -282,18 +282,18 @@ func (pkg *PkgBuild) Install(silent, is_dep bool) error {
 		return err
 	}
 
-	if !is_dep {
-		t_deps := []string{}
+	if !isDep {
+		tempDeps := []string{}
 		for _, d := range info.Depends {
-			t_deps = append(t_deps, d.Value)
+			tempDeps = append(tempDeps, d.Value)
 		}
-		t_makeDeps := []string{}
+		tempMakeDeps := []string{}
 		for _, d := range info.MakeDepends {
-			t_makeDeps = append(t_makeDeps, d.Value)
+			tempMakeDeps = append(tempMakeDeps, d.Value)
 		}
 
 		// Redefine deps
-		pkg.depends, pkg.makeDepends = t_deps, t_makeDeps
+		pkg.depends, pkg.makeDepends = tempDeps, tempMakeDeps
 
 		remMakes := false
 		// Check for dependencies
