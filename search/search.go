@@ -554,25 +554,25 @@ Resize:
 			case 'k':
 				if config.GetConfig().UserFile.VimKeybindings && selected < len(*packs) {
 					// Scroll forward
-					selected += 1
+					selected++
 					update = true
 				}
 			case 'j':
 				if config.GetConfig().UserFile.VimKeybindings && selected > 1 {
 					// Scroll backward
-					selected -= 1
+					selected--
 					update = true
 				}
 			case goncurses.KEY_UP, goncurses.KEY_SF, 'w':
 				// Scroll forward
 				if selected < len(*packs) {
-					selected += 1
+					selected++
 					update = true
 				}
 			case goncurses.KEY_DOWN, goncurses.KEY_SR, 's':
 				// Scroll backward
 				if selected > 1 {
-					selected -= 1
+					selected--
 					update = true
 				}
 			case goncurses.KEY_MOUSE:
@@ -662,9 +662,8 @@ Resize:
 
 				if ch == 'r' {
 					return newPack, false
-				} else {
-					return newPack, true
 				}
+				return newPack, true
 
 			case '-':
 				if newSel != 0 && !notSel {
@@ -911,7 +910,7 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 		}
 		stdscr.AttrOn(goncurses.A_DIM)
 		stdscr.MovePrint(y, cur, "/")
-		cur += 1
+		cur++
 		stdscr.AttrOff(goncurses.A_DIM)
 		if check {
 			stdscr.ColorOff(9)
@@ -937,14 +936,14 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 		// Installed
 		if item.Installed {
 			stdscr.MovePrint(y, cur, "(")
-			cur += 1
+			cur++
 			stdscr.AttrOn(goncurses.A_BOLD)
 			stdscr.ColorOn(5)
 			stdscr.MovePrint(y, cur, "INSTALLED")
 			cur += 9
 			if item.InstalledVersion != item.Version {
 				// Outdated
-				cur += 1
+				cur++
 				stdscr.MovePrint(y, cur, "OUTDATED")
 				stdscr.ColorOff(5)
 				stdscr.AttrOff(goncurses.A_BOLD)
