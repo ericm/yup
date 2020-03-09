@@ -114,9 +114,8 @@ func PrintPackage(pack Package, mode ...string) string {
 	// Handle ncurses
 	if len(mode) > 0 && mode[0] == "ncurses" {
 		return out
-	} else {
-		fmt.Print(out)
 	}
+	fmt.Print(out)
 
 	return ""
 }
