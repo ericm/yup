@@ -30,15 +30,16 @@
 - The config file has the following options:
     ```
     {
-		SortMode:      "closest"|"none", // changes how results are sorted (more to come)
-		Ncurses:       bool, # Whether to default to ncurses or not (override by -n)
-		Update:        bool, # Whether to update the pacman repos before every sync command
-		PrintPkg:      bool, # Whether to print the PKGBUILD before install (for AUR)
-		AskPkg:        bool, # Whether to ask to edit PKGBUILD before install (only if PrintPkg is true)
-		AskRedo:       bool, # Whether to ask if you want to reselect packages before install
-		SilentUpdate:  bool, # Whether you want to be asked to edit PKGBUILD during system update (overrides PrintPkg)
-		PacmanLimit:   int, # The number of packages parsed from pacman to be sorted and searched
-		AurLimit:      int, # The number of packages parsed from the AUR to be sorted and searched
+		SortMode:         "closest"|"none", # changes how results are sorted (more to come)
+		Ncurses:          bool, # Whether to default to ncurses or not (override by -n)
+		Update:           bool, # Whether to update the pacman repos before every sync command
+		PrintPkg:         bool, # Whether to print the PKGBUILD before install (for AUR)
+		AskPkg:           bool, # Whether to ask to edit PKGBUILD before install (only if PrintPkg is true)
+		AskRedo:          bool, # Whether to ask if you want to reselect packages before install
+		SilentUpdate:     bool, # Whether you want to be asked to edit PKGBUILD during system update (overrides PrintPkg)
+		PacmanLimit:      int,  # The number of packages parsed from pacman to be sorted and searched
+		AurLimit:         int,  # The number of packages parsed from the AUR to be sorted and searched
+		VimKeybindings:   bool, # Enabling Vim keybindings (j and k keys to go up and down)
 	}
     ```
 ## Usage

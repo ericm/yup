@@ -12,16 +12,17 @@ import (
 
 // File struct
 type File struct {
-	SortMode      string `json:"sort_mode"`
-	Ncurses       bool   `json:"ncurses_mode"`
-	Update        bool   `json:"always_update_repos"`
-	PrintPkg      bool   `json:"print_pkgbuild"`
-	AskPkg        bool   `json:"ask_pkgbuild"`
-	AskRedo       bool   `json:"ask_redo"`
-	ConfigVersion string `json:"version"`
-	SilentUpdate  bool   `json:"silent_update"`
-	PacmanLimit   int    `json:"pacman_limit"`
-	AurLimit      int    `json:"aur_limit"`
+	SortMode       string `json:"sort_mode"`
+	Ncurses        bool   `json:"ncurses_mode"`
+	Update         bool   `json:"always_update_repos"`
+	PrintPkg       bool   `json:"print_pkgbuild"`
+	AskPkg         bool   `json:"ask_pkgbuild"`
+	AskRedo        bool   `json:"ask_redo"`
+	ConfigVersion  string `json:"version"`
+	SilentUpdate   bool   `json:"silent_update"`
+	PacmanLimit    int    `json:"pacman_limit"`
+	AurLimit       int    `json:"aur_limit"`
+	VimKeybindings bool   `json:"vim_keybindings"`
 }
 
 // Config struct
@@ -109,16 +110,17 @@ func ReadConfigFile(version string) error {
 // InitConfig writes the initial JSON to the file
 func InitConfig(file *os.File, version string) error {
 	initFile := &File{
-		SortMode:      "closest",
-		Ncurses:       true,
-		Update:        false,
-		PrintPkg:      true,
-		AskPkg:        true,
-		AskRedo:       true,
-		ConfigVersion: version,
-		SilentUpdate:  true,
-		PacmanLimit:   200,
-		AurLimit:      200,
+		SortMode:       "closest",
+		Ncurses:        true,
+		Update:         false,
+		PrintPkg:       true,
+		AskPkg:         true,
+		AskRedo:        true,
+		ConfigVersion:  version,
+		SilentUpdate:   true,
+		PacmanLimit:    200,
+		AurLimit:       200,
+		VimKeybindings: false,
 	}
 	write, err := json.MarshalIndent(initFile, "", "  ")
 	if err != nil {
