@@ -91,6 +91,11 @@ Custom operations:
 2. `cd yup`
 3. `makepkg -si`
 
+### From the AUR (binary)
+1. `git clone https://aur.archlinux.org/yup-bin.git`
+2. `cd yup`
+3. `makepkg -si`
+
 ### From source
 Make sure you have `go>=1.12`, `ncurses` and `make`.
 1. Clone the repo
