@@ -93,7 +93,7 @@ Custom operations:
 
 ### From the AUR (binary)
 1. `git clone https://aur.archlinux.org/yup-bin.git`
-2. `cd yup`
+2. `cd yup-bin`
 3. `makepkg -si`
 
 ### From source
