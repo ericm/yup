@@ -15,7 +15,8 @@
 ![](assets/scr1.png?raw=true)
 
 - Uses *ncurses* to display search results. This allows for mouse interaction in the terminal and easier navigation.
-![](assets/scr2.gif?raw=true)
+[![asciicast](https://asciinema.org/a/VGzR3JYAjGqT91SfiKjBUfFkh.svg)](https://asciinema.org/a/VGzR3JYAjGqT91SfiKjBUfFkh)
+
 - Don't want to use ncurses? Use `yup -n` to use non-ncurses mode
 
 - Want to search the AUR exclusively? Use `yup -a`
