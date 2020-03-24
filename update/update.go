@@ -147,9 +147,8 @@ func AurUpdate() error {
 
 	if config.GetConfig().UserFile.SilentUpdate {
 		return sync.Sync(syncUp, true, true)
-	} else {
-		return sync.Sync(syncUp, true, false)
 	}
+	return sync.Sync(syncUp, true, false)
 }
 
 func newerVersion(oldVersion, newVersion string) bool {
@@ -169,9 +168,8 @@ func newerVersion(oldVersion, newVersion string) bool {
 			relNew, _ := strconv.Atoi(newVer[1])
 			if relOld < relNew {
 				return true
-			} else {
-				return false
 			}
+			return false
 		}
 		// Get version diff
 		dotOld := strings.Split(oldVer[0], ".")
