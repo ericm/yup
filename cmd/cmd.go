@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strings"
 
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/search"
@@ -354,7 +355,7 @@ func (args *Arguments) syncCheck() error {
 	}
 
 	// Default case
-	return sync.Sync([]string{args.target}, true, false)
+	return sync.Sync(strings.Split(args.target, " "), true, false)
 }
 
 // Returns whether or not an arg exists
