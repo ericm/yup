@@ -3,15 +3,15 @@
 _arguments -s \
 	'(-V --version)'{-v,--version}'[Show the version number and quit]' \
 	'(-h --help)'{-h,--help}'[Show help message and quit]' \
-	'(-D --database)'{-D --database}'[]' \
-	'(-F --Files)'{-F --Files}'[]' \
-	'(-Q --query)'{-Q --query}'[]' \
-	'(-R --remove)'{-R --remove}'[]' \
-	'(-S --sync)'{-S --sync}'[]' \
-	'(-T --deptest)'{-T --deptest}'[]' \
-	'(-c)'{-c}'[Cleans cache and unused dependencies]' \
-	'(-C)'{-C}'[Cleans AUR cache only]' \
-	'(-a)'{-a}'[Operates on the AUR exclusively]' \
-	'(-n)'{-n}'[Runs in non-ncurses mode]' \
-	'(-Y)'{-Y}'[Install packages from a Yupfile]' \
-	'(-Qos)'{-Qos}'[Orders installed packages by install size]'
+	'(-D --database)'{-D,--database}'[]' \
+	'(-F --Files)'{-F,--Files}'[]' \
+	'(-Q --query)'{-Q,--query}'[]' \
+	'(-R --remove)'{-R,--remove}'[]' \
+	'(-S --sync)'{-S,--sync}'[]' \
+	'(-T --deptest)'{-T,--deptest}'[]' \
+	'(-c)'-c'[Cleans cache and unused dependencies]' \
+	'(-C)'-C'[Cleans AUR cache only]' \
+	'(-a)'-a'[Operates on the AUR exclusively]' \
+	'(-n)'-n'[Runs in non-ncurses mode]' \
+	'(-Y)'-Y'[Install packages from a Yupfile]' \
+	'(-Qos)'-Qos'[Orders installed packages by install size]'
