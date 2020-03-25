@@ -65,7 +65,7 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 	}
 
 	// Generate query
-	queryS := strings.Split(query, " ")
+	queryS := strings.Split(strings.ToLower(query), " ")
 	aurPacks := []aur.Pkg{}
 
 	// Search the AUR
@@ -83,12 +83,18 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 		matched := true
 
 		for _, q := range queryS {
-			if !((strings.Contains(pack.Name, q) || strings.Contains(pack.Description, q)) && matched) {
+			if !((strings.Contains(strings.ToLower(pack.Name), q) ||
+				strings.Contains(strings.ToLower(pack.Description), q)) &&
+				matched) {
 				matched = false
 			}
 		}
 
-		if matched && sort.Search(len(aurPacks), func(i int) bool { return aurPacks[i].Name == pack.Name }) >= len(aurPacks) {
+		if matched &&
+			sort.Search(len(aurPacks),
+				func(i int) bool {
+					return strings.ToLower(aurPacks[i].Name) == strings.ToLower(pack.Name)
+				}) >= len(aurPacks) {
 			if !seen[pack.Name] {
 				seen[pack.Name] = true
 				aurPacks = append(aurPacks, pack)
