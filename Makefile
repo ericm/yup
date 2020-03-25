@@ -14,7 +14,6 @@ build:
 install:
 	install -Dm755 ${BINAME} $(SRCDIR)$(PREFIX)/bin/${BINAME}
 	install -Dm755 completions/zsh $(SRCDIR)$(PREFIX)/share/zsh/site-functions/_${PKGBUILD}
-	command -v zsh && compdef _yup yup 
 
 uninstall:
 	rm -f $(SRCDIR)$(PREFIX)/bin/${BINAME}
