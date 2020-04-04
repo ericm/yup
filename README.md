@@ -33,18 +33,19 @@
 - Config file found at `~/.config/yup/config.json`.
 - The config file has the following options:
   ```
-  {
-  )
-  )
-  d
-  )
-  )
-  l
-  )
-  d
-  d
-  )
-  }
+{
+  "sort_mode": "closest",
+  "ncurses_mode": true,
+  "always_update_repos": false,
+  "print_pkgbuild": true,
+  "ask_pkgbuild": true,
+  "ask_redo": true,
+  "version": "1.1.1",
+  "silent_update": true,
+  "pacman_limit": 200,
+  "aur_limit": 200,
+  "vim_keybindings": false
+}
   ```
 
 ## Usage
