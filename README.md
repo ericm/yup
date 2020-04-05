@@ -33,20 +33,19 @@
 - Config file found at `~/.config/yup/config.json`.
 - The config file has the following options:
   ```
-{
-  "sort_mode": "closest",
-  "ncurses_mode": true,
-  "always_update_repos": false,
-  "print_pkgbuild": true,
-  "ask_pkgbuild": true,
-  "ask_redo": true,
-  "version": "1.1.1",
-  "silent_update": true,
-  "pacman_limit": 200,
-  "aur_limit": 200,
-  "vim_keybindings": false
-}
-  ```
+    {
+		SortMode:         "closest"|"none", # changes how results are sorted (more to come)
+		Ncurses:          bool, # Whether to default to ncurses or not (override by -n)
+		Update:           bool, # Whether to update the pacman repos before every sync command
+		PrintPkg:         bool, # Whether to print the PKGBUILD before install (for AUR)
+		AskPkg:           bool, # Whether to ask to edit PKGBUILD before install (only if PrintPkg is true)
+		AskRedo:          bool, # Whether to ask if you want to reselect packages before install
+		SilentUpdate:     bool, # Whether you want to be asked to edit PKGBUILD during system update (overrides PrintPkg)
+		PacmanLimit:      int,  # The number of packages parsed from pacman to be sorted and searched
+		AurLimit:         int,  # The number of packages parsed from the AUR to be sorted and searched
+		VimKeybindings:   bool, # Enabling Vim keybindings (j and k keys to go up and down)
+	}
+    ```
 
 ## Usage
 
