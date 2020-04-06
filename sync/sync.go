@@ -391,22 +391,22 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 		if len(pacInstall) > 0 || len(aurInstall) > 0 {
 			output.Printf("Installing Dependencies")
-		}
-		// Pacman deps
-		if err := pacmanSync(pacInstall, true, true); err != nil {
-			//output.PrintErr("%s", err)
-		}
-		// Aur deps
-		for _, dep := range aurInstall {
-			err := dep.Install(true, true)
-			if err != nil {
-				output.PrintErr("Dep Install error:")
-				return err
+			// Pacman deps
+			if err := pacmanSync(pacInstall, true, true); err != nil {
+				//output.PrintErr("%s", err)
 			}
-			// Set as a dependency
-			setDep := exec.Command("sudo", "pacman", "-D", "--asdeps", dep.name)
-			if err := setDep.Run(); err != nil {
-				return err
+			// Aur deps
+			for _, dep := range aurInstall {
+				err := dep.Install(true, true)
+				if err != nil {
+					output.PrintErr("Dep Install error:")
+					return err
+				}
+				// Set as a dependency
+				setDep := exec.Command("sudo", "pacman", "-D", "--asdeps", dep.name)
+				if err := setDep.Run(); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -435,13 +435,13 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 	for _, c := range info.Conflicts {
 		if err := exec.Command("pacman", "-T", c.Value).Run(); err == nil {
 			// This means that the conflict is installed and we should uninstall
-			scan, _ := scanner.ReadString('\n')
 			output.PrintIn(
 				"%s and %s are in conflict. Uninstall %s? (y/N)",
 				pkg.name,
 				c.Value,
 				c.Value,
 			)
+			scan, _ := scanner.ReadString('\n')
 			switch strings.TrimSpace(strings.ToLower(scan[:1])) {
 			case "y":
 				rem := exec.Command("sudo", "pacman", "-R", c.Value)
