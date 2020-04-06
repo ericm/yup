@@ -187,7 +187,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 		merge := exec.Command("git", "merge", "origin/master")
 		merge.Run()
 	}
-	if !silent || !isDep {
+	if !silent && !isDep {
 		// Print PkgBuild by default
 		conf := config.GetConfig().UserFile
 		if conf.PrintPkg {
