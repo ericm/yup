@@ -433,7 +433,8 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 		}
 	}
 	for _, c := range info.Conflicts {
-		if err := exec.Command("pacman", "-T", c.Value).Run(); err == nil {
+		existsErr := exec.Command("pacman", "-T", pkg.name).Run() // Make sure this isn't an update
+		if err := exec.Command("pacman", "-T", c.Value).Run(); err == nil && existsErr != nil {
 			// This means that the conflict is installed and we should uninstall
 			output.PrintIn(
 				"%s and %s are in conflict. Uninstall %s? (y/N)",
