@@ -155,6 +155,9 @@ func newerVersion(oldVersion, newVersion string) bool {
 	oldVer := strings.Split(oldVersion, "-")
 	newVer := strings.Split(newVersion, "-")
 	if len(oldVer) > 1 && len(newVer) > 1 {
+		if len(oldVer[0]) > 7 {
+			return oldVersion != newVersion // Likely commit hashed
+		}
 		// For rXX
 		rSplitO := strings.SplitAfter(oldVer[0], "r")
 		rSplitN := strings.SplitAfter(newVer[0], "r")
