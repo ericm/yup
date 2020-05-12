@@ -345,6 +345,41 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 				}
 			}
 		}
+		if len(optDeps) > 0 {
+			output.Printf("Found uninstalled Optional Dependencies:")
+			fmt.Print("    ")
+			for i, dep := range optDeps {
+				fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep.name)
+			}
+			fmt.Print("\n")
+			if !silent {
+				output.PrintIn("Numbers of packages TO install? (eg: 1 2 3, 1-3 or ^4)")
+				depRem, _ := scanner.ReadString('\n')
+
+				// Parse input
+				var temp []PkgBuild
+				copy(temp, optDeps)
+				ParseNumbers(depRem, &temp)
+				if len(temp) == 0 {
+					optDeps = []PkgBuild{}
+				}
+				for len(temp) > 0 {
+					curr := temp[0]
+					if len(temp) == 1 {
+						temp = []PkgBuild{}
+					} else {
+						temp = temp[1:]
+					}
+					temp = temp[1:]
+					for i, dep := range optDeps {
+						if dep.name == curr.name {
+							optDeps = append(optDeps[i:], optDeps[i+1:]...)
+							break
+						}
+					}
+				}
+			}
+		}
 
 		// Gather packages
 		aurInstall := []PkgBuild{}
