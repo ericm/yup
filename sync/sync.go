@@ -39,6 +39,7 @@ type PkgBuild struct {
 	version     string
 	depends     []string
 	makeDepends []string
+	optDepends  []string
 	update      bool
 	pacman      bool
 }
@@ -72,7 +73,7 @@ func Sync(packages []string, isAur bool, silent bool) error {
 				errChannel <- err
 			} else {
 				if len(repo) > 0 {
-					aurDload("https://aur.archlinux.org/"+repo[0].PackageBase+".git", errChannel, buildChannel, repo[0].PackageBase, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
+					aurDload("https://aur.archlinux.org/"+repo[0].PackageBase+".git", errChannel, buildChannel, repo[0].PackageBase, repo[0].Version, repo[0].Depends, repo[0].MakeDepends, repo[0].OptDepends)
 				} else {
 					errChannel <- output.Errorf("Didn't find an \033[1mAUR\033[0m package for \033[1m\033[32m%s\033[39m\033[0m, searching other repos\n", p)
 					buildChannel <- nil
@@ -298,7 +299,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 		remMakes := false
 		// Check for dependencies
 		output.Printf("Checking for dependencies")
-		deps, makeDeps, err := pkg.depCheck()
+		deps, makeDeps, optDeps, err := pkg.depCheck()
 		if err != nil {
 			return err
 		}
@@ -466,7 +467,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 }
 
 // Download an AUR package to cache
-func aurDload(url string, errChannel chan error, buildChannel chan *PkgBuild, name string, version string, depends []string, makeDepends []string) {
+func aurDload(url string, errChannel chan error, buildChannel chan *PkgBuild, name string, version string, depends []string, makeDepends []string, optDepends []string) {
 	// TODO: Check in cache
 	conf := config.GetConfig()
 	dir := filepath.Join(conf.CacheDir, name)
@@ -490,7 +491,7 @@ func aurDload(url string, errChannel chan error, buildChannel chan *PkgBuild, na
 
 	// At the end, add dir path to buildChannel
 	defer func() {
-		buildChannel <- &PkgBuild{dir, conf.CacheDir, name, version, depends, makeDepends, update, false}
+		buildChannel <- &PkgBuild{dir, conf.CacheDir, name, version, depends, makeDepends, optDepends, update, false}
 	}()
 
 	errChannel <- nil
@@ -531,7 +532,7 @@ type depBuild struct {
 
 // depCheck for AUR dependencies
 // Downloads PKGBUILD's recursively
-func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
+func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 	// Dependencies
 	deps := []depBuild{}
 	for _, dep := range pkg.depends {
@@ -542,6 +543,11 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 	makeDeps := []depBuild{}
 	for _, dep := range pkg.makeDepends {
 		makeDeps = append(makeDeps, parseDep(dep))
+	}
+
+	optDeps := []depBuild{}
+	for _, dep := range pkg.optDepends {
+		optDeps = append(optDeps, parseDep(dep))
 	}
 
 	// Sync deps
@@ -566,6 +572,17 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 		}
 	}
 
+	// Sync optDeps
+	optDepNames := []string{}
+	for _, dep := range optDeps {
+		// Check if installed
+		check := exec.Command("pacman", "-Qi", dep.name)
+		if err := check.Run(); err != nil {
+			// Probs not installed
+			optDepNames = append(optDepNames, dep.name)
+		}
+	}
+
 	// Download func
 	dload := func(errChannel chan error, buildChannel chan *PkgBuild, dep string) {
 		repo, err := aur.Info([]string{dep})
@@ -573,7 +590,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 			output.PrintErr("Dependencies error: %s", err)
 		}
 		if len(repo) > 0 {
-			go aurDload("https://aur.archlinux.org/"+repo[0].PackageBase+".git", errChannel, buildChannel, repo[0].PackageBase, repo[0].Version, repo[0].Depends, repo[0].MakeDepends)
+			go aurDload("https://aur.archlinux.org/"+repo[0].PackageBase+".git", errChannel, buildChannel, repo[0].PackageBase, repo[0].Version, repo[0].Depends, repo[0].MakeDepends, repo[0].OptDepends)
 		} else {
 			// Not on the aur
 			errChannel <- nil
@@ -596,8 +613,17 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 		dload(errChannelM, buildChannelM, dep)
 	}
 
+	// For optDeps
+	errChannelO := make(chan error, len(optDepNames))
+	buildChannelO := make(chan *PkgBuild, len(optDepNames))
+	for _, dep := range optDepNames {
+		dload(errChannelO, buildChannelO, dep)
+	}
+
 	out := []PkgBuild{}
 	outMake := []PkgBuild{}
+	outOpts := []PkgBuild{}
+
 	// Collect deps
 	for _i := 0; _i < len(depNames)*2; _i++ {
 		select {
@@ -605,9 +631,10 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 			out = append(out, *pkg)
 			// Map dependency tree
 			if !pkg.pacman {
-				newDeps, newMakeDeps, _ := pkg.depCheck()
+				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
 				out = append(newDeps, out...)
 				outMake = append(newMakeDeps, outMake...)
+				outOpts = append(newOptDeps, outOpts...)
 			}
 		case err := <-errChannel:
 			if err != nil {
@@ -617,16 +644,35 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 	}
 
 	// Collect makeDeps
-
 	for _i := 0; _i < len(makeDepNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannelM:
 			outMake = append(outMake, *pkg)
 			// Map dependency tree
 			if !pkg.pacman {
-				newDeps, newMakeDeps, _ := pkg.depCheck()
+				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
 				out = append(out, newDeps...)
 				outMake = append(outMake, newMakeDeps...)
+				outOpts = append(newOptDeps, outOpts...)
+			}
+		case err := <-errChannelM:
+			if err != nil {
+				output.PrintErr("Dependencies error: %s", err)
+			}
+		}
+	}
+
+	// Collect optDeps
+	for _i := 0; _i < len(optDepNames)*2; _i++ {
+		select {
+		case pkg := <-buildChannelO:
+			outOpts = append(outOpts, *pkg)
+			// Map dependency tree
+			if !pkg.pacman {
+				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
+				out = append(out, newDeps...)
+				outMake = append(outMake, newMakeDeps...)
+				outOpts = append(newOptDeps, outOpts...)
 			}
 		case err := <-errChannelM:
 			if err != nil {
@@ -638,8 +684,10 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 	// Filter deps for repition
 	seen := map[string]bool{}
 	seenMake := map[string]bool{}
+	seenOpts := map[string]bool{}
 	outF := []PkgBuild{}
 	outMakeF := []PkgBuild{}
+	outOptsF := []PkgBuild{}
 	for _, pack := range out {
 		if !seen[pack.name] {
 			seen[pack.name] = true
@@ -654,7 +702,14 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, error) {
 		}
 	}
 
-	return outF, outMakeF, nil
+	for _, pack := range outOpts {
+		if !seenOpts[pack.name] {
+			seenOpts[pack.name] = true
+			outOptsF = append(outOptsF, pack)
+		}
+	}
+
+	return outF, outMakeF, outOptsF, nil
 }
 
 // Get dependency syntax
