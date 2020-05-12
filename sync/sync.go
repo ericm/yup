@@ -425,6 +425,19 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 			}
 		}
 
+		if len(optDeps) > 0 {
+			// Install deps packages
+			for _, dep := range optDeps {
+				if dep.pacman {
+					// Install from pacman
+					pacInstall = append(pacInstall, dep.name)
+				} else {
+					// Install using Install in silent mode
+					aurInstall = append(aurInstall, dep)
+				}
+			}
+		}
+
 		if len(pacInstall) > 0 || len(aurInstall) > 0 {
 			output.Printf("Installing Dependencies")
 			// Pacman deps
