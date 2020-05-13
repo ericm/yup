@@ -357,12 +357,9 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 				depRem, _ := scanner.ReadString('\n')
 
 				// Parse input
-				var temp []PkgBuild
+				temp := make([]PkgBuild, len(optDeps))
 				copy(temp, optDeps)
 				ParseNumbers(depRem, &temp)
-				if len(temp) == 0 {
-					optDeps = []PkgBuild{}
-				}
 				for len(temp) > 0 {
 					curr := temp[0]
 					if len(temp) == 1 {
@@ -370,10 +367,9 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 					} else {
 						temp = temp[1:]
 					}
-					temp = temp[1:]
 					for i, dep := range optDeps {
 						if dep.name == curr.name {
-							optDeps = append(optDeps[i:], optDeps[i+1:]...)
+							optDeps = append(optDeps[:i], optDeps[i+1:]...)
 							break
 						}
 					}
