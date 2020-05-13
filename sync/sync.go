@@ -680,8 +680,8 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 			// Map dependency tree
 			if !pkg.pacman {
 				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
-				out = append(newDeps, out...)
-				outMake = append(newMakeDeps, outMake...)
+				out = append(out, newDeps...)
+				outMake = append(outMake, newMakeDeps...)
 				outOpts = append(outOpts, newOptDeps...)
 			}
 		case err := <-errChannel:
@@ -722,7 +722,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 				outMake = append(outMake, newMakeDeps...)
 				outOpts = append(outOpts, newOptDeps...)
 			}
-		case err := <-errChannelM:
+		case err := <-errChannelO:
 			if err != nil {
 				output.PrintErr("Dependencies error: %s", err)
 			}
