@@ -720,7 +720,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
 				out = append(out, newDeps...)
 				outMake = append(outMake, newMakeDeps...)
-				outOpts = append(newOptDeps, outOpts...)
+				outOpts = append(outOpts, newOptDeps...)
 			}
 		case err := <-errChannelM:
 			if err != nil {
