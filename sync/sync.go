@@ -19,11 +19,6 @@ import (
 	"github.com/ericm/yup/config"
 )
 
-// func Search(terms ...string) error {
-// 	fmt.Println(aur.AURURL)
-// 	return nil
-// }
-
 // Download wrapper for io.Reader
 type Download struct {
 	io.Reader
