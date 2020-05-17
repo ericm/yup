@@ -72,13 +72,14 @@ func init() {
 
 	// Initial definition of custom commands
 	commands = []pair{
-		pair{"h", "help"},
-		pair{"V", "version"},
-		pair{"S", "sync"},
-		pair{"Q", "query"},
-		pair{"c", "clean"},
-		pair{"C", "cache"},
-		pair{"Y", "yupfile"},
+		{"h", "help"},
+		{"V", "version"},
+		{"S", "sync"},
+		{"R", "remove"},
+		{"Q", "query"},
+		{"c", "clean"},
+		{"C", "cache"},
+		{"Y", "yupfile"},
 	}
 
 	for _, arg := range commands {
@@ -219,6 +220,15 @@ func (args *Arguments) getActions() error {
 		packs = append(packs, groups...)
 
 		search.SortPacks(args.target, packs)
+		return nil
+	}
+	if args.argExist("R", "remove") {
+		pkgs := strings.Split(strings.Trim(args.target, " "), " ")
+		for _, name := range pkgs {
+			if err := sync.Remove(name); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 	if args.argExist("C", "cache") {

@@ -379,9 +379,7 @@ Redo:
 		} else if newPacks != nil {
 			// Remove
 			for _, pac := range newPacks {
-				rem := exec.Command("sudo", "pacman", "-R", pac.Name)
-				output.SetStd(rem)
-				if err := rem.Run(); err != nil {
+				if err := sync.Remove(pac.Name); err != nil {
 					output.PrintErr("%s", err)
 				}
 			}

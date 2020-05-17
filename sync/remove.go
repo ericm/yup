@@ -36,14 +36,18 @@ func Remove(name string) error {
 		if len(deps) > 0 {
 			output.Printf("Removing packages requiring %s:", name)
 			for _, dep := range deps {
-				if err := exec.Command("sudo", "pacman", "-R", dep).Run(); err != nil {
+				cmd := exec.Command("sudo", "pacman", "-R", "--noconfirm", dep)
+				output.SetStd(cmd)
+				if err := cmd.Run(); err != nil {
 					output.PrintErr(err.Error())
 				}
 			}
 		}
 	}
 	output.Printf("Removing %s:", name)
-	if err := exec.Command("sudo", "pacman", "-R", name).Run(); err != nil {
+	cmd := exec.Command("sudo", "pacman", "-R", name)
+	output.SetStd(cmd)
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 	return nil
