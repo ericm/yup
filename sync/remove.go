@@ -28,6 +28,7 @@ func Remove(name string) error {
 		for i, dep := range deps {
 			fmt.Printf("\033[1m%d\033[0m %s  ", i+1, dep)
 		}
+		fmt.Println()
 		output.PrintIn("Numbers of packages NOT to remove? (eg: 1 2 3, 1-3 or ^4)")
 		depRem, _ := scanner.ReadString('\n')
 
@@ -55,13 +56,16 @@ func Remove(name string) error {
 
 func getRequiredBy(db *alpm.DB, name string, seen map[string]bool) []string {
 	pkg := db.Pkg(name)
+	if pkg == nil {
+		return []string{}
+	}
 	deps := pkg.ComputeRequiredBy()
 	if len(deps) == 0 {
 		return []string{}
 	}
 	currDeps := []string{}
 	for _, dep := range deps {
-		if seen[dep] {
+		if !seen[dep] {
 			currDeps = append(currDeps, dep)
 		} else {
 			seen[dep] = true
