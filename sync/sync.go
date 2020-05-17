@@ -170,6 +170,66 @@ func ParseNumbers(input string, packs *[]PkgBuild) {
 
 }
 
+// ParseNumbersStr filters according to user input
+func ParseNumbersStr(input string, packs *[]string) {
+	inputs := strings.Split((strings.ToLower(strings.TrimSpace(input))), " ")
+	seen := map[int]bool{}
+	for _, s := range inputs {
+		// 1-3
+		if strings.Contains(s, "-") {
+			if spl := strings.Split(s, "-"); len(spl) == 2 {
+				// Get int vals for range
+				firstT, errF := strconv.Atoi(spl[0])
+				secondT, errS := strconv.Atoi(spl[1])
+				if errF == nil && errS == nil {
+					// Convert range from visual representation
+					first := len(*packs) - firstT
+					second := len(*packs) - secondT
+					// Filter
+					for i := second; i <= first; i++ {
+						seen[i] = true
+					}
+				}
+			}
+			continue
+		}
+		// ^4
+		if strings.Contains(s, "^") {
+			if num, err := strconv.Atoi(s[1:]); err == nil {
+				// Filter for the number
+				for i := range *packs {
+					ind := len(*packs) - i
+					if ind == num {
+						continue
+					}
+					seen[ind] = true
+				}
+			}
+			continue
+		}
+
+		if num, err := strconv.Atoi(s); err == nil {
+			// Find package from input
+			index := len(*packs) - num
+			// Add to the slice
+			if index < len(*packs) && index >= 0 && !seen[index] {
+				seen[index] = true
+			}
+		}
+	}
+
+	newPacks := *packs
+
+	for i := range *packs {
+		if seen[i] {
+			newPacks = append(newPacks[:i], newPacks[i+1:]...)
+		}
+	}
+
+	*packs = newPacks
+
+}
+
 // Install the pkgBuild
 // assuming repo is now cloned or fetched
 func (pkg *PkgBuild) Install(silent, isDep bool) error {
