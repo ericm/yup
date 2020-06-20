@@ -169,6 +169,13 @@ func newerVersion(oldVersion, newVersion string) bool {
 		if oldVer[0] == newVer[0] {
 			relOld, _ := strconv.Atoi(oldVer[1])
 			relNew, _ := strconv.Atoi(newVer[1])
+			if len(rSplitO) > 1 && len(rSplitN) > 1 {
+				rSplitOld, _ := strconv.Atoi(rSplitO[1])
+				rSplitNew, _ := strconv.Atoi(rSplitN[1])
+				if rSplitOld < rSplitNew {
+					return true
+				}
+			}
 			if relOld < relNew {
 				return true
 			}
