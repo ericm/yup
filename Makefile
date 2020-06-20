@@ -4,6 +4,8 @@ SRCDIR :=
 BINAME := yup
 PKGBUILD := yup
 
+export CGO_LDFLAGS_ALLOW = -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now
+
 build:
 	go get
 	go install
@@ -11,7 +13,7 @@ build:
 
 install:
 	install -Dm755 ${BINAME} $(SRCDIR)$(PREFIX)/bin/${BINAME}
-	install -Dm755 completions/zsh $(SRCDIR)$(PREFIX)/share/zsh/site-functions/completions/_${PKGBUILD}
+	install -Dm755 completions/zsh $(SRCDIR)$(PREFIX)/share/zsh/site-functions/_${PKGBUILD}
 
 uninstall:
 	rm -f $(SRCDIR)$(PREFIX)/bin/${BINAME}

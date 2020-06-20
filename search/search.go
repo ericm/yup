@@ -22,7 +22,7 @@ import (
 
 var handle *alpm.Handle
 
-// Initialize alpm
+// Init alpm
 func Init() error {
 	var err error
 	handle, err = alpm.Initialize("/", "/var/lib/pacman")
@@ -65,7 +65,7 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 	}
 
 	// Generate query
-	queryS := strings.Split(query, " ")
+	queryS := strings.Split(strings.ToLower(query), " ")
 	aurPacks := []aur.Pkg{}
 
 	// Search the AUR
@@ -83,12 +83,18 @@ func Aur(query string, print bool, installed bool) ([]output.Package, error) {
 		matched := true
 
 		for _, q := range queryS {
-			if !((strings.Contains(pack.Name, q) || strings.Contains(pack.Description, q)) && matched) {
+			if !((strings.Contains(strings.ToLower(pack.Name), q) ||
+				strings.Contains(strings.ToLower(pack.Description), q)) &&
+				matched) {
 				matched = false
 			}
 		}
 
-		if matched && sort.Search(len(aurPacks), func(i int) bool { return aurPacks[i].Name == pack.Name }) >= len(aurPacks) {
+		if matched &&
+			sort.Search(len(aurPacks),
+				func(i int) bool {
+					return strings.ToLower(aurPacks[i].Name) == strings.ToLower(pack.Name)
+				}) >= len(aurPacks) {
 			if !seen[pack.Name] {
 				seen[pack.Name] = true
 				aurPacks = append(aurPacks, pack)
@@ -245,6 +251,7 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 
 }
 
+// PacmanGroups outputs packages for groups matching the term
 func PacmanGroups(term string) ([]output.Package, error) {
 	term = strings.ToLower(term)
 	pac := exec.Command("pacman", "-Sg")
@@ -372,9 +379,7 @@ Redo:
 		} else if newPacks != nil {
 			// Remove
 			for _, pac := range newPacks {
-				rem := exec.Command("sudo", "pacman", "-R", pac.Name)
-				output.SetStd(rem)
-				if err := rem.Run(); err != nil {
+				if err := sync.Remove(pac.Name); err != nil {
 					output.PrintErr("%s", err)
 				}
 			}
@@ -551,16 +556,28 @@ Resize:
 		if !timeout {
 		Sw:
 			switch goncurses.Key(ch) {
+			case 'k':
+				if config.GetConfig().UserFile.VimKeybindings && selected < len(*packs) {
+					// Scroll forward
+					selected++
+					update = true
+				}
+			case 'j':
+				if config.GetConfig().UserFile.VimKeybindings && selected > 1 {
+					// Scroll backward
+					selected--
+					update = true
+				}
 			case goncurses.KEY_UP, goncurses.KEY_SF, 'w':
 				// Scroll forward
 				if selected < len(*packs) {
-					selected += 1
+					selected++
 					update = true
 				}
 			case goncurses.KEY_DOWN, goncurses.KEY_SR, 's':
 				// Scroll backward
 				if selected > 1 {
-					selected -= 1
+					selected--
 					update = true
 				}
 			case goncurses.KEY_MOUSE:
@@ -650,9 +667,8 @@ Resize:
 
 				if ch == 'r' {
 					return newPack, false
-				} else {
-					return newPack, true
 				}
+				return newPack, true
 
 			case '-':
 				if newSel != 0 && !notSel {
@@ -899,7 +915,7 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 		}
 		stdscr.AttrOn(goncurses.A_DIM)
 		stdscr.MovePrint(y, cur, "/")
-		cur += 1
+		cur++
 		stdscr.AttrOff(goncurses.A_DIM)
 		if check {
 			stdscr.ColorOff(9)
@@ -925,14 +941,14 @@ func printPacks(stdscr *goncurses.Window, packs *[]output.Package, selected int,
 		// Installed
 		if item.Installed {
 			stdscr.MovePrint(y, cur, "(")
-			cur += 1
+			cur++
 			stdscr.AttrOn(goncurses.A_BOLD)
 			stdscr.ColorOn(5)
 			stdscr.MovePrint(y, cur, "INSTALLED")
 			cur += 9
 			if item.InstalledVersion != item.Version {
 				// Outdated
-				cur += 1
+				cur++
 				stdscr.MovePrint(y, cur, "OUTDATED")
 				stdscr.ColorOff(5)
 				stdscr.AttrOff(goncurses.A_BOLD)
@@ -1002,9 +1018,9 @@ func ToBytes(data string) int {
 }
 
 // ToString Turns 1024 into 1.00 KiB
-func ToString(data_i int64) string {
+func ToString(dataI int64) string {
 	b := float32(1024)
-	data := float32(data_i)
+	data := float32(dataI)
 	i := 0
 	for data != 0 && data > 1024 {
 		data /= b

@@ -1,18 +1,17 @@
 #compdef yup
 
-typeset -A opt_args
-setopt extendedglob
-
-_pacman_opts_commands-(
-        {-D,--database}'[Modify database]'
-        {-F,--files}'[Query the files database]'
-        {-G,--getpkgbuild}'[Get PKGBUILD from ABS or AUR]'
-        {-Q,--query}'[Query the package database]'
-        {-R,--remove}'[Remove a package from the system]'
-        {-P,--show}'[Print yay information]'
-        {-S,--sync}'[Synchronize packages]'
-        {-T,--deptest}'[Check if dependencies are installed]'
-        {-U,--upgrade}'[Upgrade a package]'
-        {-V,--version}'[Display version and exit]'
-        '(-h --help)'{-h,--help}'[Display usage]'
-)
+_arguments -s \
+	'(-V --version)'{-v,--version}'[Show the version number and quit]' \
+	'(-h --help)'{-h,--help}'[Show help message and quit]' \
+	'(-D --database)'{-D,--database}'[]' \
+	'(-F --Files)'{-F,--Files}'[]' \
+	'(-Q --query)'{-Q,--query}'[]' \
+	'(-R --remove)'{-R,--remove}'[]' \
+	'(-S --sync)'{-S,--sync}'[]' \
+	'(-T --deptest)'{-T,--deptest}'[]' \
+	'(-c)'-c'[Cleans cache and unused dependencies]' \
+	'(-C)'-C'[Cleans AUR cache only]' \
+	'(-a)'-a'[Operates on the AUR exclusively]' \
+	'(-n)'-n'[Runs in non-ncurses mode]' \
+	'(-Y)'-Y'[Install packages from a Yupfile]' \
+	'(-Qos)'-Qos'[Orders installed packages by install size]'

@@ -2,13 +2,14 @@ package yupfile
 
 import (
 	"fmt"
-	"github.com/ericm/yup/output"
-	"github.com/ericm/yup/sync"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/ericm/yup/output"
+	"github.com/ericm/yup/sync"
 )
 
 // Pack represents a yupack
@@ -18,6 +19,7 @@ type Pack struct {
 	aur bool
 }
 
+// Parse the yupfile
 func Parse(argc string) error {
 	args := strings.Split(argc, " ")
 	if len(args) > 0 {
@@ -59,6 +61,7 @@ func Parse(argc string) error {
 	return fmt.Errorf("Error parsing yupfile path")
 }
 
+// Install packages from the yupfile
 func Install(packs []Pack) error {
 	output.Printf("Installing packages from yupfile")
 	refresh := exec.Command("sudo", "pacman", "-Sy")

@@ -3,51 +3,57 @@
     <p>An <b>AUR</b> helper and more</p>
 </div>
 
-[![AUR version](https://img.shields.io/aur/version/yup.svg)](https://aur.archlinux.org/packages/yup/)
-[![GitHub](https://img.shields.io/github/license/ericm/yup.svg)](https://github.com/ericm/yup/blob/master/LICENSE)
-[![GitHub contributors](https://img.shields.io/github/contributors/ericm/yup.svg)](https://github.com/ericm/yup/graphs/contributors)
+[![AUR version](https://img.shields.io/aur/version/yup.svg?style=for-the-badge)](https://aur.archlinux.org/packages/yup/)
+[![AUR bin version](https://img.shields.io/aur/version/yup-bin?color=%230084ff&label=bin&style=for-the-badge)](https://aur.archlinux.org/packages/yup-bin/)
+[![GitHub](https://img.shields.io/github/license/ericm/yup.svg?style=for-the-badge)](https://github.com/ericm/yup/blob/master/LICENSE)
+[![GitHub contributors](https://img.shields.io/github/contributors/ericm/yup.svg?style=for-the-badge)](https://github.com/ericm/yup/graphs/contributors)
 
 **Yup** helps you install packages with ease on Arch Linux
 
 ## Features
-- Searching with `yup [search-terms]` returns most accurate results
-![](assets/scr1.png?raw=true)
 
-- Uses *ncurses* to display search results. This allows for mouse interaction in the terminal and easier navigation.
-![](assets/scr2.gif?raw=true)
+- Searching with `yup [search-terms]` returns most accurate results
+  ![](assets/scr1.png?raw=true)
+
+- Uses _ncurses_ to display search results. This allows for mouse interaction in the terminal and easier navigation.
+  [![asciicast](https://asciinema.org/a/dx5Dk0uu4aPEVk9r03jqiZOWP.svg)](https://asciinema.org/a/dx5Dk0uu4aPEVk9r03jqiZOWP)
 - Don't want to use ncurses? Use `yup -n` to use non-ncurses mode
 
 - Want to search the AUR exclusively? Use `yup -a`
 
-- Like *yay*, type `yup` to run a system upgrade.
+- Like _yay_, type `yup` to run a system upgrade.
 
 - An easy to use config file located at `~/.config/yup/config.json` in JSON format.
-    
 
-- Want to see which packages are cluttering up your system? Run `yup -Qos` to get a list ordered package size.
+* Want to see which packages are cluttering up your system? Run `yup -Qos` to get a list ordered package size.
+
 ## Configuration
+
 - Config file found at `~/.config/yup/config.json`.
 - The config file has the following options:
-    ```
+  ```
     {
-		SortMode:      "closest"|"none", // changes how results are sorted (more to come)
-		Ncurses:       bool, # Whether to default to ncurses or not (override by -n)
-		Update:        bool, # Whether to update the pacman repos before every sync command
-		PrintPkg:      bool, # Whether to print the PKGBUILD before install (for AUR)
-		AskPkg:        bool, # Whether to ask to edit PKGBUILD before install (only if PrintPkg is true)
-		AskRedo:       bool, # Whether to ask if you want to reselect packages before install
-		SilentUpdate:  bool, # Whether you want to be asked to edit PKGBUILD during system update (overrides PrintPkg)
-		PacmanLimit:   int, # The number of packages parsed from pacman to be sorted and searched
-		AurLimit:      int, # The number of packages parsed from the AUR to be sorted and searched
+		SortMode:         "closest"|"none", # changes how results are sorted (more to come)
+		Ncurses:          bool, # Whether to default to ncurses or not (override by -n)
+		Update:           bool, # Whether to update the pacman repos before every sync command
+		PrintPkg:         bool, # Whether to print the PKGBUILD before install (for AUR)
+		AskPkg:           bool, # Whether to ask to edit PKGBUILD before install (only if PrintPkg is true)
+		AskRedo:          bool, # Whether to ask if you want to reselect packages before install
+		SilentUpdate:     bool, # Whether you want to be asked to edit PKGBUILD during system update (overrides PrintPkg)
+		PacmanLimit:      int,  # The number of packages parsed from pacman to be sorted and searched
+		AurLimit:         int,  # The number of packages parsed from the AUR to be sorted and searched
+		VimKeybindings:   bool, # Enabling Vim keybindings (j and k keys to go up and down)
 	}
     ```
+
 ## Usage
+
 ```
     yup                 Updates AUR and pacman packages (Like -Syu)
     yup <package(s)>    Searches for that packages and provides an install dialogue
 Operations:
-    yup {-h --help}             
-    yup {-V --version}          
+    yup {-h --help}
+    yup {-V --version}
     yup {-D --database} <options> <package(s)>
     yup {-F --files}    <options> <package(s)>
     yup {-Q --query}    <options> <package(s)>
@@ -65,11 +71,12 @@ Custom operations:
 ```
 
 ## Differences between yay or trizen
+
 - Yup gives you the **most accurate results** first. As seen in the example above, yup sorts the results to bring the most accurate to the start.
 
 - `Yupfiles` are small files that allow you to batch install packages with a single command. [Here's an example Yupfile](test.Yupfile)
 
-- Yup uses *ncurses*. This allows users to both scroll while not displacing the bottom bar and easily navigate to certain results using more natural forms of user input.
+- Yup uses _ncurses_. This allows users to both scroll while not displacing the bottom bar and easily navigate to certain results using more natural forms of user input.
 
 - Yup has an easy config file seperate to that of pacman's. This allows it to be more customisable from the get go.
 
@@ -81,21 +88,36 @@ Custom operations:
 
 - After selecting packages to install, you can revise your decision if you made a mistake.
 
-- Yup will *soon* allow you to disable any of the dialogue during install using the config menu.
+- Yup will _soon_ allow you to disable any of the dialogue during install using the config menu.
 
 ## Installing
+
 ### From the AUR
+
 1. `git clone https://aur.archlinux.org/yup.git`
 2. `cd yup`
 3. `makepkg -si`
 
+### From the AUR (binary)
+
+1. `git clone https://aur.archlinux.org/yup-bin.git`
+2. `cd yup-bin`
+3. `makepkg -si`
+
 ### From source
+
 Make sure you have `go>=1.12`, `ncurses` and `make`.
+
 1. Clone the repo
 2. Run `make`
 3. Install with `make install`
 
+### Completions not working on zsh
+
+- You'll need to add `compaudit && compinit` to the bottom of your .zshrc
+
 ## Credits
+
 Copyright 2019 Eric Moynihan
 
 Inspired by [Jguer](https://github.com/Jguer)'s [yay](https://github.com/Jguer/yay)

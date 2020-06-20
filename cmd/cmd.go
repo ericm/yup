@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strings"
 
 	"github.com/ericm/yup/output"
 	"github.com/ericm/yup/search"
@@ -31,7 +32,7 @@ type pair struct {
 }
 
 // Version of yup
-const Version = "1.0.3"
+const Version = "1.1.4"
 
 // Constants for output
 const help = `Usage:
@@ -71,13 +72,14 @@ func init() {
 
 	// Initial definition of custom commands
 	commands = []pair{
-		pair{"h", "help"},
-		pair{"V", "version"},
-		pair{"S", "sync"},
-		pair{"Q", "query"},
-		pair{"c", "clean"},
-		pair{"C", "cache"},
-		pair{"Y", "yupfile"},
+		{"h", "help"},
+		{"V", "version"},
+		{"S", "sync"},
+		{"R", "remove"},
+		{"Q", "query"},
+		{"c", "clean"},
+		{"C", "cache"},
+		{"Y", "yupfile"},
 	}
 
 	for _, arg := range commands {
@@ -148,128 +150,135 @@ func (args *Arguments) getActions() error {
 				return update.AurUpdate()
 			}
 			return update.Update()
-		} else {
-			conFile := config.GetConfig()
-			conFile.Ncurses = args.argExist("n", "non-ncurses")
-			// Update if wanted
-			if conFile.UserFile.Update {
-				// Refresh
-				output.Printf("Refreshing local repositories")
-				refresh := exec.Command("sudo", "pacman", "-Sy")
-				output.SetStd(refresh)
-				if err := refresh.Run(); err != nil {
-					return err
-				}
+		}
+		conFile := config.GetConfig()
+		conFile.Ncurses = args.argExist("n", "non-ncurses")
+		// Update if wanted
+		if conFile.UserFile.Update {
+			// Refresh
+			output.Printf("Refreshing local repositories")
+			refresh := exec.Command("sudo", "pacman", "-Sy")
+			output.SetStd(refresh)
+			if err := refresh.Run(); err != nil {
+				return err
 			}
-			// Call search
-			output.Printf("Searching and sorting your query...")
+		}
+		// Call search
+		output.Printf("Searching and sorting your query...")
 
-			// Get aur packs in a gorroutine
-			aurChan := make(chan []output.Package)
-			var aurErr error
+		// Get aur packs in a gorroutine
+		aurChan := make(chan []output.Package)
+		var aurErr error
+		go func(ch chan []output.Package) {
+			aur, errAur := search.Aur(args.target, false, false)
+			if errAur != nil {
+				aurErr = errAur
+			}
+			ch <- aur
+		}(aurChan)
+
+		// Get pacman packs in a gorroutine
+		pacChan := make(chan []output.Package)
+		var pacErr error
+		if !args.argExist("a", "aur") {
 			go func(ch chan []output.Package) {
-				aur, errAur := search.Aur(args.target, false, false)
-				if errAur != nil {
-					aurErr = errAur
+				// Get pacman packs
+				pacman, errPac := search.Pacman(args.target, false, false)
+				if errPac != nil {
+					pacErr = errPac
 				}
-				ch <- aur
-			}(aurChan)
+				ch <- pacman
+			}(pacChan)
+		} else {
+			go func(ch chan []output.Package) {
+				pacChan <- []output.Package{}
+			}(pacChan)
+		}
 
-			// Get pacman packs in a gorroutine
-			pacChan := make(chan []output.Package)
-			var pacErr error
-			if !args.argExist("a", "aur") {
-				go func(ch chan []output.Package) {
-					// Get pacman packs
-					pacman, errPac := search.Pacman(args.target, false, false)
-					if errPac != nil {
-						pacErr = errPac
-					}
-					ch <- pacman
-				}(pacChan)
-			} else {
-				go func(ch chan []output.Package) {
-					pacChan <- []output.Package{}
-				}(pacChan)
-			}
+		// Combine into one slice
+		var packs []output.Package
 
-			// Combine into one slice
-			var packs []output.Package
-
-			for i := 0; i < 2; i++ {
-				select {
-				case aurPacks := <-aurChan:
-					if aurErr != nil {
-						output.PrintErr("AUR lookup error: %s", aurErr)
-					}
-					packs = append(packs, aurPacks...)
-				case pacPacks := <-pacChan:
-					if pacErr != nil {
-						return pacErr
-					}
-					packs = append(packs, pacPacks...)
+		for i := 0; i < 2; i++ {
+			select {
+			case aurPacks := <-aurChan:
+				if aurErr != nil {
+					output.PrintErr("AUR lookup error: %s", aurErr)
 				}
+				packs = append(packs, aurPacks...)
+			case pacPacks := <-pacChan:
+				if pacErr != nil {
+					return pacErr
+				}
+				packs = append(packs, pacPacks...)
 			}
+		}
 
-			groups, err := search.PacmanGroups(args.target)
-			if err != nil {
+		groups, err := search.PacmanGroups(args.target)
+		if err != nil {
+			return err
+		}
+		packs = append(packs, groups...)
+
+		search.SortPacks(args.target, packs)
+		return nil
+	}
+	if args.argExist("R", "remove") {
+		pkgs := strings.Split(strings.Trim(args.target, " "), " ")
+		for _, name := range pkgs {
+			if err := sync.Remove(name); err != nil {
 				return err
 			}
-			packs = append(packs, groups...)
-
-			search.SortPacks(args.target, packs)
-			return nil
 		}
-	} else {
-		if args.argExist("C", "cache") {
-			return clean.Aur()
-		}
+		return nil
+	}
+	if args.argExist("C", "cache") {
+		return clean.Aur()
+	}
 
-		if args.argExist("c", "clean") {
-			return clean.Clean()
-		}
+	if args.argExist("c", "clean") {
+		return clean.Clean()
+	}
 
-		if args.argExist("Y", "yupfile") {
-			return yupfile.Parse(args.target)
-		}
+	if args.argExist("Y", "yupfile") {
+		return yupfile.Parse(args.target)
+	}
 
-		if args.argExist("S", "sync") {
-			return args.syncCheck()
-		}
+	if args.argExist("S", "sync") {
+		return args.syncCheck()
+	}
 
-		if args.argExist("V", "version") {
-			// Version
-			fmt.Println(Version)
-			return nil
-		}
+	if args.argExist("V", "version") {
+		// Version
+		fmt.Println(Version)
+		return nil
+	}
 
-		if args.argExist("Q", "query") {
-			// Check for custom flag; -Qos
-			// This sorts by Install size
-			if args.argExist("o", "order-by") && args.argExist("s", "size") {
-				output.Printf("Sorting your query by install size")
-				pacman, err := search.PacmanQi()
-				sort.Sort(bySize(pacman))
+	if args.argExist("Q", "query") {
+		// Check for custom flag; -Qos
+		// This sorts by Install size
+		if args.argExist("o", "order-by") && args.argExist("s", "size") {
+			output.Printf("Sorting your query by install size")
+			pacman, err := search.PacmanQi()
+			sort.Sort(bySize(pacman))
 
-				// Print sorted
-				for i, pack := range pacman {
-					fmt.Print(len(pacman) - i)
-					output.PrintPackage(pack, "sso")
-				}
-
-				return err
+			// Print sorted
+			for i, pack := range pacman {
+				fmt.Print(len(pacman) - i)
+				output.PrintPackage(pack, "sso")
 			}
 
-			// Default case
-			sendToPacman(false)
-			return nil
+			return err
 		}
 
-		if args.argExist("h", "help") {
-			// Help
-			fmt.Print(help)
-			return nil
-		}
+		// Default case
+		sendToPacman(false)
+		return nil
+	}
+
+	if args.argExist("h", "help") {
+		// Help
+		fmt.Print(help)
+		return nil
 	}
 	// Probs shouldn't reach this point
 	return fmt.Errorf("Error in parsing operations")
@@ -356,7 +365,7 @@ func (args *Arguments) syncCheck() error {
 	}
 
 	// Default case
-	return sync.Sync([]string{args.target}, true, false)
+	return sync.Sync(strings.Split(args.target, " "), true, false)
 }
 
 // Returns whether or not an arg exists

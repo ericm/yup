@@ -147,15 +147,17 @@ func AurUpdate() error {
 
 	if config.GetConfig().UserFile.SilentUpdate {
 		return sync.Sync(syncUp, true, true)
-	} else {
-		return sync.Sync(syncUp, true, false)
 	}
+	return sync.Sync(syncUp, true, false)
 }
 
 func newerVersion(oldVersion, newVersion string) bool {
 	oldVer := strings.Split(oldVersion, "-")
 	newVer := strings.Split(newVersion, "-")
 	if len(oldVer) > 1 && len(newVer) > 1 {
+		if len(oldVer[0]) > 7 {
+			return oldVersion != newVersion // Likely commit hashed
+		}
 		// For rXX
 		rSplitO := strings.SplitAfter(oldVer[0], "r")
 		rSplitN := strings.SplitAfter(newVer[0], "r")
@@ -169,9 +171,8 @@ func newerVersion(oldVersion, newVersion string) bool {
 			relNew, _ := strconv.Atoi(newVer[1])
 			if relOld < relNew {
 				return true
-			} else {
-				return false
 			}
+			return false
 		}
 		// Get version diff
 		dotOld := strings.Split(oldVer[0], ".")
