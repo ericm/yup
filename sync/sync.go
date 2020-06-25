@@ -629,6 +629,24 @@ type depBuild struct {
 	greater bool
 }
 
+var depCheckMap = make(map[string]bool)
+
+func checkRecursively(pkg *PkgBuild, out, outMake, outOpts []PkgBuild) {
+	newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
+	for _, dep := range newDeps {
+		depCheckMap[dep.name] = true
+	}
+	for _, dep := range newMakeDeps {
+		depCheckMap[dep.name] = true
+	}
+	for _, dep := range newOptDeps {
+		depCheckMap[dep.name] = true
+	}
+	out = append(out, newDeps...)
+	outMake = append(outMake, newMakeDeps...)
+	outOpts = append(outOpts, newOptDeps...)
+}
+
 // depCheck for AUR dependencies
 // Downloads PKGBUILD's recursively
 func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
@@ -729,11 +747,8 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 		case pkg := <-buildChannel:
 			out = append(out, *pkg)
 			// Map dependency tree
-			if !pkg.pacman {
-				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
-				out = append(out, newDeps...)
-				outMake = append(outMake, newMakeDeps...)
-				outOpts = append(outOpts, newOptDeps...)
+			if !pkg.pacman && !depCheckMap[pkg.name] {
+				checkRecursively(pkg, out, outMake, outOpts)
 			}
 		case err := <-errChannel:
 			if err != nil {
@@ -748,11 +763,8 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 		case pkg := <-buildChannelM:
 			outMake = append(outMake, *pkg)
 			// Map dependency tree
-			if !pkg.pacman {
-				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
-				out = append(out, newDeps...)
-				outMake = append(outMake, newMakeDeps...)
-				outOpts = append(outOpts, newOptDeps...)
+			if !pkg.pacman && !depCheckMap[pkg.name] {
+				checkRecursively(pkg, out, outMake, outOpts)
 			}
 		case err := <-errChannelM:
 			if err != nil {
@@ -769,6 +781,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 			// Map dependency tree
 			if !pkg.pacman {
 				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
+				fmt.Println(newDeps, newMakeDeps, newOptDeps)
 				out = append(out, newDeps...)
 				outMake = append(outMake, newMakeDeps...)
 				outOpts = append(outOpts, newOptDeps...)
@@ -807,7 +820,6 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 			outOptsF = append(outOptsF, pack)
 		}
 	}
-
 	return outF, outMakeF, outOptsF, nil
 }
 
