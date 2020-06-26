@@ -635,7 +635,7 @@ type depBuild struct {
 
 var depCheckMap = make(map[string]bool)
 
-func checkRecursively(pkg *PkgBuild, out, outMake, outOpts []PkgBuild) {
+func checkRecursively(pkg *PkgBuild, out, outMake, outOpts *[]PkgBuild) {
 	newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
 	for _, dep := range newDeps {
 		depCheckMap[dep.name] = true
@@ -646,9 +646,9 @@ func checkRecursively(pkg *PkgBuild, out, outMake, outOpts []PkgBuild) {
 	for _, dep := range newOptDeps {
 		depCheckMap[dep.name] = true
 	}
-	out = append(out, newDeps...)
-	outMake = append(outMake, newMakeDeps...)
-	outOpts = append(outOpts, newOptDeps...)
+	*out = append(*out, newDeps...)
+	*outMake = append(*outMake, newMakeDeps...)
+	*outOpts = append(*outOpts, newOptDeps...)
 }
 
 // depCheck for AUR dependencies
@@ -751,8 +751,8 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 		case pkg := <-buildChannel:
 			out = append(out, *pkg)
 			// Map dependency tree
-			if !pkg.pacman && !depCheckMap[pkg.name] {
-				checkRecursively(pkg, out, outMake, outOpts)
+			if !pkg.pacman {
+				checkRecursively(pkg, &out, &outMake, &outOpts)
 			}
 		case err := <-errChannel:
 			if err != nil {
@@ -768,7 +768,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 			outMake = append(outMake, *pkg)
 			// Map dependency tree
 			if !pkg.pacman && !depCheckMap[pkg.name] {
-				checkRecursively(pkg, out, outMake, outOpts)
+				checkRecursively(pkg, &out, &outMake, &outOpts)
 			}
 		case err := <-errChannelM:
 			if err != nil {
