@@ -438,9 +438,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 		if len(deps) > 0 {
 			// Install deps packages
-			for i := len(deps) - 1; i >= 0; i-- {
-				dep := deps[i]
-				fmt.Println(dep.name)
+			for _, dep := range deps {
 				if dep.pacman {
 					// Install from pacman
 					pacInstall = append(pacInstall, dep.name)
@@ -453,8 +451,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 		if len(makeDeps) > 0 {
 			// Install makeDeps packages
-			for i := len(makeDeps) - 1; i >= 0; i-- {
-				dep := makeDeps[i]
+			for _, dep := range makeDeps {
 				if dep.pacman {
 					// Install from pacman
 					pacInstall = append(pacInstall, dep.name)
@@ -481,8 +478,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 		if len(optDeps) > 0 {
 			// Install deps packages
-			for i := len(optDeps) - 1; i >= 0; i-- {
-				dep := optDeps[i]
+			for _, dep := range optDeps {
 				if dep.pacman {
 					// Install from pacman
 					pacInstall = append(pacInstall, dep.name)
@@ -646,9 +642,9 @@ func checkRecursively(pkg *PkgBuild, out, outMake, outOpts *[]PkgBuild) {
 	for _, dep := range newOptDeps {
 		depCheckMap[dep.name] = true
 	}
-	*out = append(*out, newDeps...)
-	*outMake = append(*outMake, newMakeDeps...)
-	*outOpts = append(*outOpts, newOptDeps...)
+	*out = append(newDeps, *out...)
+	*outMake = append(newMakeDeps, *outMake...)
+	*outOpts = append(newOptDeps, *outOpts...)
 }
 
 // depCheck for AUR dependencies
@@ -749,7 +745,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 	for _i := 0; _i < len(depNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannel:
-			out = append(out, *pkg)
+			out = append([]PkgBuild{*pkg}, out...)
 			// Map dependency tree
 			if !pkg.pacman {
 				checkRecursively(pkg, &out, &outMake, &outOpts)
@@ -765,7 +761,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 	for _i := 0; _i < len(makeDepNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannelM:
-			outMake = append(outMake, *pkg)
+			outMake = append([]PkgBuild{*pkg}, outMake...)
 			// Map dependency tree
 			if !pkg.pacman && !depCheckMap[pkg.name] {
 				checkRecursively(pkg, &out, &outMake, &outOpts)
