@@ -438,7 +438,9 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 		if len(deps) > 0 {
 			// Install deps packages
-			for _, dep := range deps {
+			for i := len(deps) - 1; i >= 0; i-- {
+				dep := deps[i]
+				fmt.Println(dep.name)
 				if dep.pacman {
 					// Install from pacman
 					pacInstall = append(pacInstall, dep.name)
@@ -451,7 +453,8 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 		if len(makeDeps) > 0 {
 			// Install makeDeps packages
-			for _, dep := range makeDeps {
+			for i := len(makeDeps) - 1; i >= 0; i-- {
+				dep := makeDeps[i]
 				if dep.pacman {
 					// Install from pacman
 					pacInstall = append(pacInstall, dep.name)
@@ -478,7 +481,8 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 		if len(optDeps) > 0 {
 			// Install deps packages
-			for _, dep := range optDeps {
+			for i := len(optDeps) - 1; i >= 0; i-- {
+				dep := optDeps[i]
 				if dep.pacman {
 					// Install from pacman
 					pacInstall = append(pacInstall, dep.name)
