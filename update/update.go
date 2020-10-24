@@ -23,8 +23,12 @@ type installedPack struct {
 
 // Update runs system update from repos
 func Update() error {
+	flg := "-Syu"
+	if strings.Contains(os.Args[len(os.Args)-1], "yy") {
+		flg = "-Syyu"
+	}
 	output.Printf("Updating from local repositories")
-	cmd := exec.Command("sudo", "pacman", "-Syu")
+	cmd := exec.Command("sudo", "pacman", flg)
 	output.SetStd(cmd)
 	if err := cmd.Run(); err != nil {
 		return err
