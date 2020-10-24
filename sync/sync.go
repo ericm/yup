@@ -747,7 +747,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 		case pkg := <-buildChannel:
 			out = append([]PkgBuild{*pkg}, out...)
 			// Map dependency tree
-			if !pkg.pacman {
+			if !depCheckMap[pkg.name] {
 				checkRecursively(pkg, &out, &outMake, &outOpts)
 			}
 		case err := <-errChannel:
@@ -763,7 +763,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 		case pkg := <-buildChannelM:
 			outMake = append([]PkgBuild{*pkg}, outMake...)
 			// Map dependency tree
-			if !pkg.pacman && !depCheckMap[pkg.name] {
+			if !depCheckMap[pkg.name] {
 				checkRecursively(pkg, &out, &outMake, &outOpts)
 			}
 		case err := <-errChannelM:
@@ -779,7 +779,7 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 		case pkg := <-buildChannelO:
 			outOpts = append(outOpts, *pkg)
 			// Map dependency tree
-			if !pkg.pacman {
+			if !depCheckMap[pkg.name] {
 				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
 				fmt.Println(newDeps, newMakeDeps, newOptDeps)
 				out = append(out, newDeps...)
