@@ -2,6 +2,7 @@ package sync
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -37,6 +38,12 @@ type PkgBuild struct {
 	optDepends  []string
 	update      bool
 	pacman      bool
+}
+
+type depPkg struct {
+	PkgBuild
+	isDep bool
+	deps  []*depPkg
 }
 
 // Sync from the AUR first, then other configured repos.
@@ -112,6 +119,66 @@ func Sync(packages []string, isAur bool, silent bool) error {
 
 // ParseNumbers filters according to user input
 func ParseNumbers(input string, packs *[]PkgBuild) {
+	inputs := strings.Split((strings.ToLower(strings.TrimSpace(input))), " ")
+	seen := map[int]bool{}
+	for _, s := range inputs {
+		// 1-3
+		if strings.Contains(s, "-") {
+			if spl := strings.Split(s, "-"); len(spl) == 2 {
+				// Get int vals for range
+				firstT, errF := strconv.Atoi(spl[0])
+				secondT, errS := strconv.Atoi(spl[1])
+				if errF == nil && errS == nil {
+					// Convert range from visual representation
+					first := len(*packs) - firstT
+					second := len(*packs) - secondT
+					// Filter
+					for i := second; i <= first; i++ {
+						seen[i] = true
+					}
+				}
+			}
+			continue
+		}
+		// ^4
+		if strings.Contains(s, "^") {
+			if num, err := strconv.Atoi(s[1:]); err == nil {
+				// Filter for the number
+				for i := range *packs {
+					ind := len(*packs) - i
+					if ind == num {
+						continue
+					}
+					seen[ind] = true
+				}
+			}
+			continue
+		}
+
+		if num, err := strconv.Atoi(s); err == nil {
+			// Find package from input
+			index := len(*packs) - num
+			// Add to the slice
+			if index < len(*packs) && index >= 0 && !seen[index] {
+				seen[index] = true
+			}
+		}
+	}
+
+	newPacks := *packs
+
+	for i := range *packs {
+		if seen[i] {
+			newPacks = append(newPacks[:i], newPacks[i+1:]...)
+		}
+	}
+
+	*packs = newPacks
+
+}
+
+// ParseNumbersDep filters according to user input.
+func ParseNumbersDep(input string, packs *[]depPkg) {
 	inputs := strings.Split((strings.ToLower(strings.TrimSpace(input))), " ")
 	seen := map[int]bool{}
 	for _, s := range inputs {
@@ -371,7 +438,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 				depRem, _ := scanner.ReadString('\n')
 
 				// Parse input
-				ParseNumbers(depRem, &deps)
+				ParseNumbersDep(depRem, &deps)
 			}
 		}
 
@@ -388,7 +455,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 				output.PrintIn("Numbers of packages not to install? (eg: 1 2 3, 1-3 or ^4)")
 
 				depNum, _ := scanner.ReadString('\n')
-				ParseNumbers(depNum, &makeDeps)
+				ParseNumbersDep(depNum, &makeDeps)
 
 				output.PrintIn("Remove Make Dependencies after install? (y/N)")
 
@@ -412,13 +479,13 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 				depRem, _ := scanner.ReadString('\n')
 
 				// Parse input
-				temp := make([]PkgBuild, len(optDeps))
+				temp := make([]depPkg, len(optDeps))
 				copy(temp, optDeps)
-				ParseNumbers(depRem, &temp)
+				ParseNumbersDep(depRem, &temp)
 				for len(temp) > 0 {
 					curr := temp[0]
 					if len(temp) == 1 {
-						temp = []PkgBuild{}
+						temp = []depPkg{}
 					} else {
 						temp = temp[1:]
 					}
@@ -433,21 +500,8 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 		}
 
 		// Gather packages
-		aurInstall := []PkgBuild{}
+		aurInstall := []depPkg{}
 		pacInstall := []string{}
-
-		if len(deps) > 0 {
-			// Install deps packages
-			for _, dep := range deps {
-				if dep.pacman {
-					// Install from pacman
-					pacInstall = append(pacInstall, dep.name)
-				} else {
-					// Install using Install in silent mode
-					aurInstall = append(aurInstall, dep)
-				}
-			}
-		}
 
 		if len(makeDeps) > 0 {
 			// Install makeDeps packages
@@ -455,7 +509,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 				if dep.pacman {
 					// Install from pacman
 					pacInstall = append(pacInstall, dep.name)
-				} else {
+				} else if !dep.isDep {
 					// Install using Install in silent mode
 					aurInstall = append(aurInstall, dep)
 				}
@@ -463,7 +517,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 			// At end, remove make packs as necessary
 			if remMakes {
-				defer func(depM []PkgBuild) {
+				defer func(depM []depPkg) {
 					output.Printf("Removing Make Dependencies")
 					for _, dep := range depM {
 						rm := exec.Command("sudo", "pacman", "-R", dep.name)
@@ -476,33 +530,51 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 			}
 		}
 
-		if len(optDeps) > 0 {
-			// Install deps packages
-			for _, dep := range optDeps {
-				if dep.pacman {
-					// Install from pacman
-					pacInstall = append(pacInstall, dep.name)
-				} else {
-					// Install using Install in silent mode
-					aurInstall = append(aurInstall, dep)
-				}
+		// Install deps packages
+		for _, dep := range deps {
+			if dep.pacman {
+				// Install from pacman
+				pacInstall = append(pacInstall, dep.name)
+			} else if !dep.isDep {
+				// Install using Install in silent mode
+				aurInstall = append(aurInstall, dep)
+			}
+		}
+
+		// Install deps packages
+		for _, dep := range optDeps {
+			if dep.pacman {
+				// Install from pacman
+				pacInstall = append(pacInstall, dep.name)
+			} else if !dep.isDep {
+				// Install using Install in silent mode
+				aurInstall = append(aurInstall, dep)
 			}
 		}
 
 		if len(pacInstall) > 0 || len(aurInstall) > 0 {
 			output.Printf("Installing Dependencies")
 			// Pacman deps
-			if err := pacmanSync(pacInstall, true, true); err != nil {
-				//output.PrintErr("%s", err)
+			if errs := pacmanSync(pacInstall, true, true); err != nil {
+				out := ""
+				for _, e := range errs {
+					out = fmt.Sprintf("%s; %s", out, e.Error())
+				}
+				return errors.New(out)
 			}
 			// Aur deps
 			for _, dep := range aurInstall {
-				err := dep.Install(true, true)
-				if err != nil {
+				for _, subDep := range dep.deps {
+					if err := subDep.depInstall(); err != nil {
+						output.PrintErr("SubDep Install error:")
+						return err
+					}
+				}
+				if err := dep.Install(true, true); err != nil {
 					output.PrintErr("Dep Install error:")
 					return err
 				}
-				// Set as a dependency
+				// Set as a dependencies
 				setDep := exec.Command("sudo", "pacman", "-D", "--asdeps", dep.name)
 				if err := setDep.Run(); err != nil {
 					return err
@@ -623,6 +695,20 @@ func pacmanSync(args []string, silent bool, deps bool) []error {
 	return errOut
 }
 
+func (pkg *depPkg) depInstall() error {
+	for _, dep := range pkg.deps {
+		if !dep.pacman {
+			if err := dep.depInstall(); err != nil {
+				return err
+			}
+		}
+	}
+	if err := pkg.Install(true, true); err != nil {
+		return err
+	}
+	return nil
+}
+
 type depBuild struct {
 	name    string
 	version string
@@ -631,25 +717,25 @@ type depBuild struct {
 
 var depCheckMap = make(map[string]bool)
 
-func checkRecursively(pkg *PkgBuild, out, outMake, outOpts *[]PkgBuild) {
-	newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
+func checkRecursively(pkg *depPkg, out, outMake, outOpts *[]depPkg) {
+	newDeps, newMakeDeps, _, _ := pkg.depCheck()
 	for _, dep := range newDeps {
+		dep.isDep = true
+		pkg.deps = append(pkg.deps, &dep)
 		depCheckMap[dep.name] = true
 	}
 	for _, dep := range newMakeDeps {
-		depCheckMap[dep.name] = true
-	}
-	for _, dep := range newOptDeps {
+		dep.isDep = true
+		pkg.deps = append(pkg.deps, &dep)
 		depCheckMap[dep.name] = true
 	}
 	*out = append(newDeps, *out...)
 	*outMake = append(newMakeDeps, *outMake...)
-	*outOpts = append(newOptDeps, *outOpts...)
 }
 
 // depCheck for AUR dependencies
 // Downloads PKGBUILD's recursively
-func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
+func (pkg *PkgBuild) depCheck() ([]depPkg, []depPkg, []depPkg, error) {
 	// Dependencies
 	deps := []depBuild{}
 	for _, dep := range pkg.depends {
@@ -737,18 +823,19 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 		dload(errChannelO, buildChannelO, dep)
 	}
 
-	out := []PkgBuild{}
-	outMake := []PkgBuild{}
-	outOpts := []PkgBuild{}
+	out := []depPkg{}
+	outMake := []depPkg{}
+	outOpts := []depPkg{}
 
 	// Collect deps
 	for _i := 0; _i < len(depNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannel:
-			out = append([]PkgBuild{*pkg}, out...)
+			dep := depPkg{PkgBuild: *pkg}
+			out = append([]depPkg{dep}, out...)
 			// Map dependency tree
 			if !depCheckMap[pkg.name] {
-				checkRecursively(pkg, &out, &outMake, &outOpts)
+				checkRecursively(&dep, &out, &outMake, &outOpts)
 			}
 		case err := <-errChannel:
 			if err != nil {
@@ -761,10 +848,11 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 	for _i := 0; _i < len(makeDepNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannelM:
-			outMake = append([]PkgBuild{*pkg}, outMake...)
+			dep := depPkg{PkgBuild: *pkg}
+			outMake = append([]depPkg{dep}, outMake...)
 			// Map dependency tree
 			if !depCheckMap[pkg.name] {
-				checkRecursively(pkg, &out, &outMake, &outOpts)
+				checkRecursively(&dep, &out, &outMake, &outOpts)
 			}
 		case err := <-errChannelM:
 			if err != nil {
@@ -777,7 +865,8 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 	for _i := 0; _i < len(optDepNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannelO:
-			outOpts = append(outOpts, *pkg)
+			dep := depPkg{PkgBuild: *pkg}
+			outOpts = append(outOpts, dep)
 			// Map dependency tree
 			if !depCheckMap[pkg.name] {
 				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
@@ -797,9 +886,9 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 	seen := map[string]bool{}
 	seenMake := map[string]bool{}
 	seenOpts := map[string]bool{}
-	outF := []PkgBuild{}
-	outMakeF := []PkgBuild{}
-	outOptsF := []PkgBuild{}
+	outF := []depPkg{}
+	outMakeF := []depPkg{}
+	outOptsF := []depPkg{}
 	for _, pack := range out {
 		if !seen[pack.name] {
 			seen[pack.name] = true
