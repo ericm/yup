@@ -502,10 +502,12 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 		// Gather packages
 		aurInstall := []*depPkg{}
 		pacInstall := []string{}
+		allDeps := []string{"pacman", "-D", "--asdeps"}
 
 		if len(makeDeps) > 0 {
 			// Install makeDeps packages
 			for _, dep := range makeDeps {
+				allDeps = append(allDeps, dep.name)
 				if dep.pacman {
 					// Install from pacman
 					pacInstall = append(pacInstall, dep.name)
@@ -532,6 +534,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 		// Install deps packages
 		for _, dep := range deps {
+			allDeps = append(allDeps, dep.name)
 			if dep.pacman {
 				// Install from pacman
 				pacInstall = append(pacInstall, dep.name)
@@ -543,6 +546,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 		// Install deps packages
 		for _, dep := range optDeps {
+			allDeps = append(allDeps, dep.name)
 			if dep.pacman {
 				// Install from pacman
 				pacInstall = append(pacInstall, dep.name)
@@ -574,11 +578,11 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 					output.PrintErr("Dep Install error:")
 					return err
 				}
-				// Set as a dependencies
-				setDep := exec.Command("sudo", "pacman", "-D", "--asdeps", dep.name)
-				if err := setDep.Run(); err != nil {
-					return err
-				}
+			}
+			// Set as a dependencies
+			setDep := exec.Command("sudo", allDeps...)
+			if err := setDep.Run(); err != nil {
+				return err
 			}
 		}
 	}
@@ -696,7 +700,6 @@ func pacmanSync(args []string, silent bool, deps bool) []error {
 }
 
 func (pkg *depPkg) depInstall() error {
-	fmt.Println(pkg.name, pkg.deps)
 	for _, dep := range pkg.deps {
 		if !dep.pacman {
 			if err := dep.depInstall(); err != nil {
@@ -871,7 +874,6 @@ func (pkg *PkgBuild) depCheck() ([]*depPkg, []*depPkg, []*depPkg, error) {
 			// Map dependency tree
 			if !depCheckMap[pkg.name] {
 				newDeps, newMakeDeps, newOptDeps, _ := pkg.depCheck()
-				fmt.Println(newDeps, newMakeDeps, newOptDeps)
 				out = append(out, newDeps...)
 				outMake = append(outMake, newMakeDeps...)
 				outOpts = append(outOpts, newOptDeps...)
