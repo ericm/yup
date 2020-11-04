@@ -826,18 +826,18 @@ func (pkg *PkgBuild) depCheck() ([]PkgBuild, []PkgBuild, []PkgBuild, error) {
 // Get dependency syntax
 func parseDep(dep string) depBuild {
 	dep = strings.TrimSpace(dep)
-
-	if strings.Contains(dep, "=<") {
+	switch {
+	case strings.Contains(dep, "=<"):
 		dep = strings.Split(dep, "=<")[0]
-	} else if strings.Contains(dep, "=>") {
+	case strings.Contains(dep, "=>"):
 		dep = strings.Split(dep, "=>")[0]
-	} else if strings.Contains(dep, ">") {
+	case strings.Contains(dep, ">"):
 		dep = strings.Split(dep, ">")[0]
-	} else if strings.Contains(dep, "<") {
+	case strings.Contains(dep, "<"):
 		dep = strings.Split(dep, "<")[0]
-	} else if strings.Contains(dep, "==") {
+	case strings.Contains(dep, "=="):
 		dep = strings.Split(dep, "==")[0]
-	} else if strings.Contains(dep, "=") {
+	case strings.Contains(dep, "="):
 		dep = strings.Split(dep, "=")[0]
 	}
 	return depBuild{name: dep}
