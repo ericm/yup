@@ -178,7 +178,7 @@ func ParseNumbers(input string, packs *[]PkgBuild) {
 }
 
 // ParseNumbersDep filters according to user input.
-func ParseNumbersDep(input string, packs *[]depPkg) {
+func ParseNumbersDep(input string, packs *[]*depPkg) {
 	inputs := strings.Split((strings.ToLower(strings.TrimSpace(input))), " ")
 	seen := map[int]bool{}
 	for _, s := range inputs {
@@ -479,13 +479,13 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 				depRem, _ := scanner.ReadString('\n')
 
 				// Parse input
-				temp := make([]depPkg, len(optDeps))
+				temp := make([]*depPkg, len(optDeps))
 				copy(temp, optDeps)
 				ParseNumbersDep(depRem, &temp)
 				for len(temp) > 0 {
 					curr := temp[0]
 					if len(temp) == 1 {
-						temp = []depPkg{}
+						temp = []*depPkg{}
 					} else {
 						temp = temp[1:]
 					}
@@ -500,7 +500,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 		}
 
 		// Gather packages
-		aurInstall := []depPkg{}
+		aurInstall := []*depPkg{}
 		pacInstall := []string{}
 
 		if len(makeDeps) > 0 {
@@ -517,7 +517,7 @@ func (pkg *PkgBuild) Install(silent, isDep bool) error {
 
 			// At end, remove make packs as necessary
 			if remMakes {
-				defer func(depM []depPkg) {
+				defer func(depM []*depPkg) {
 					output.Printf("Removing Make Dependencies")
 					for _, dep := range depM {
 						rm := exec.Command("sudo", "pacman", "-R", dep.name)
@@ -696,6 +696,7 @@ func pacmanSync(args []string, silent bool, deps bool) []error {
 }
 
 func (pkg *depPkg) depInstall() error {
+	fmt.Println(pkg.name, pkg.deps)
 	for _, dep := range pkg.deps {
 		if !dep.pacman {
 			if err := dep.depInstall(); err != nil {
@@ -717,16 +718,16 @@ type depBuild struct {
 
 var depCheckMap = make(map[string]bool)
 
-func checkRecursively(pkg *depPkg, out, outMake, outOpts *[]depPkg) {
+func checkRecursively(pkg *depPkg, out, outMake, outOpts *[]*depPkg) {
 	newDeps, newMakeDeps, _, _ := pkg.depCheck()
 	for _, dep := range newDeps {
 		dep.isDep = true
-		pkg.deps = append(pkg.deps, &dep)
+		pkg.deps = append(pkg.deps, dep)
 		depCheckMap[dep.name] = true
 	}
 	for _, dep := range newMakeDeps {
 		dep.isDep = true
-		pkg.deps = append(pkg.deps, &dep)
+		pkg.deps = append(pkg.deps, dep)
 		depCheckMap[dep.name] = true
 	}
 	*out = append(newDeps, *out...)
@@ -735,7 +736,7 @@ func checkRecursively(pkg *depPkg, out, outMake, outOpts *[]depPkg) {
 
 // depCheck for AUR dependencies
 // Downloads PKGBUILD's recursively
-func (pkg *PkgBuild) depCheck() ([]depPkg, []depPkg, []depPkg, error) {
+func (pkg *PkgBuild) depCheck() ([]*depPkg, []*depPkg, []*depPkg, error) {
 	// Dependencies
 	deps := []depBuild{}
 	for _, dep := range pkg.depends {
@@ -823,19 +824,19 @@ func (pkg *PkgBuild) depCheck() ([]depPkg, []depPkg, []depPkg, error) {
 		dload(errChannelO, buildChannelO, dep)
 	}
 
-	out := []depPkg{}
-	outMake := []depPkg{}
-	outOpts := []depPkg{}
+	out := []*depPkg{}
+	outMake := []*depPkg{}
+	outOpts := []*depPkg{}
 
 	// Collect deps
 	for _i := 0; _i < len(depNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannel:
-			dep := depPkg{PkgBuild: *pkg}
-			out = append([]depPkg{dep}, out...)
+			dep := &depPkg{PkgBuild: *pkg}
+			out = append([]*depPkg{dep}, out...)
 			// Map dependency tree
 			if !depCheckMap[pkg.name] {
-				checkRecursively(&dep, &out, &outMake, &outOpts)
+				checkRecursively(dep, &out, &outMake, &outOpts)
 			}
 		case err := <-errChannel:
 			if err != nil {
@@ -848,11 +849,11 @@ func (pkg *PkgBuild) depCheck() ([]depPkg, []depPkg, []depPkg, error) {
 	for _i := 0; _i < len(makeDepNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannelM:
-			dep := depPkg{PkgBuild: *pkg}
-			outMake = append([]depPkg{dep}, outMake...)
+			dep := &depPkg{PkgBuild: *pkg}
+			outMake = append([]*depPkg{dep}, outMake...)
 			// Map dependency tree
 			if !depCheckMap[pkg.name] {
-				checkRecursively(&dep, &out, &outMake, &outOpts)
+				checkRecursively(dep, &out, &outMake, &outOpts)
 			}
 		case err := <-errChannelM:
 			if err != nil {
@@ -865,7 +866,7 @@ func (pkg *PkgBuild) depCheck() ([]depPkg, []depPkg, []depPkg, error) {
 	for _i := 0; _i < len(optDepNames)*2; _i++ {
 		select {
 		case pkg := <-buildChannelO:
-			dep := depPkg{PkgBuild: *pkg}
+			dep := &depPkg{PkgBuild: *pkg}
 			outOpts = append(outOpts, dep)
 			// Map dependency tree
 			if !depCheckMap[pkg.name] {
@@ -886,9 +887,9 @@ func (pkg *PkgBuild) depCheck() ([]depPkg, []depPkg, []depPkg, error) {
 	seen := map[string]bool{}
 	seenMake := map[string]bool{}
 	seenOpts := map[string]bool{}
-	outF := []depPkg{}
-	outMakeF := []depPkg{}
-	outOptsF := []depPkg{}
+	outF := []*depPkg{}
+	outMakeF := []*depPkg{}
+	outOptsF := []*depPkg{}
 	for _, pack := range out {
 		if !seen[pack.name] {
 			seen[pack.name] = true
