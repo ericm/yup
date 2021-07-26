@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/Jguer/go-alpm"
+	"github.com/Jguer/go-alpm/v2"
 	"github.com/ericm/yup/output"
 )
 
@@ -20,7 +20,7 @@ func Remove(name string) error {
 	if err != nil {
 		return err
 	}
-	deps := getRequiredBy(db, name, map[string]bool{name: true})
+	deps := getRequiredBy(db.(*alpm.DB), name, map[string]bool{name: true})
 	if len(deps) > 0 {
 		scanner := bufio.NewReader(os.Stdin)
 		output.Printf("These packages require %s:", name)
