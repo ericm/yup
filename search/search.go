@@ -12,7 +12,7 @@ import (
 
 	"time"
 
-	"github.com/Jguer/go-alpm"
+	"github.com/Jguer/go-alpm/v2"
 	"github.com/ericm/goncurses"
 	"github.com/ericm/yup/config"
 	"github.com/ericm/yup/output"
