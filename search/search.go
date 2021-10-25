@@ -147,7 +147,8 @@ func Pacman(query string, print bool, installed bool) ([]output.Package, error) 
 	search := exec.Command("pacman", append([]string{"-Ss"}, strings.Split(query, " ")...)...)
 	run, err := search.Output()
 	if err != nil {
-		return []output.Package{}, nil
+		execErr := err.(*exec.ExitError)
+		return []output.Package{}, fmt.Errorf("%w: %s", execErr, execErr.Stderr)
 	}
 
 	// Find Package vals
