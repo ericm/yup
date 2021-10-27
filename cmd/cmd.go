@@ -223,6 +223,10 @@ func (args *Arguments) getActions() error {
 		return nil
 	}
 	if args.argExist("R", "remove") {
+		if len(args.options) > 1 {
+			sendToPacman(true)
+			return nil
+		}
 		pkgs := strings.Split(strings.Trim(args.target, " "), " ")
 		for _, name := range pkgs {
 			if err := sync.Remove(name); err != nil {
