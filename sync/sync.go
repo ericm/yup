@@ -225,16 +225,19 @@ func ParseNumbersDep(input string, packs *[]*depPkg) {
 		}
 	}
 
-	newPacks := *packs
-
+	// Nilify unwanted packages.
 	for i := range *packs {
 		if seen[i] {
-			newPacks = append(newPacks[:i], newPacks[i+1:]...)
+			(*packs)[i] = nil
 		}
 	}
-
+	newPacks := []*depPkg{}
+	for _, pack := range *packs {
+		if pack != nil {
+			newPacks = append(newPacks, pack)
+		}
+	}
 	*packs = newPacks
-
 }
 
 // ParseNumbersStr filters according to user input
