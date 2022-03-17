@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -158,57 +159,49 @@ func AurUpdate() error {
 func newerVersion(oldVersion, newVersion string) bool {
 	oldVer := strings.Split(oldVersion, "-")
 	newVer := strings.Split(newVersion, "-")
+	regex := "^r?[0-9]+$" // true if is number, false if commit hash
+
+	// check if version tag (1.2.3-1)
 	if len(oldVer) > 1 && len(newVer) > 1 {
-		if len(oldVer[0]) > 7 {
-			return oldVersion != newVersion // Likely commit hashed
-		}
-		// For rXX
-		rSplitO := strings.SplitAfter(oldVer[0], "r")
-		rSplitN := strings.SplitAfter(newVer[0], "r")
-		if len(rSplitO) > 0 && len(rSplitN) > 0 {
-			oldVer[0] = rSplitO[0]
-			newVer[0] = rSplitN[0]
-		}
-		// Get rel
-		if oldVer[0] == newVer[0] {
-			relOld, _ := strconv.Atoi(oldVer[1])
-			relNew, _ := strconv.Atoi(newVer[1])
-			if len(rSplitO) > 1 && len(rSplitN) > 1 {
-				rSplitOld, _ := strconv.Atoi(rSplitO[1])
-				rSplitNew, _ := strconv.Atoi(rSplitN[1])
-				if rSplitOld < rSplitNew {
-					return true
-				}
-			}
-			if relOld < relNew {
+		old := strings.Split(oldVer[0], ".")
+		new := strings.Split(newVer[0], ".")
+
+		lenOld := len(old)
+
+		// iterating through each member of the version tag
+		for i := 0; i < len(new); i++ {
+			if i == lenOld {
 				return true
 			}
-			return false
-		}
-		// Get version diff
-		dotOld := strings.Split(oldVer[0], ".")
-		dotNew := strings.Split(newVer[0], ".")
-		var m int
-		if len(dotOld) > len(dotNew) {
-			m = len(dotNew)
-		} else {
-			m = len(dotOld)
-		}
-		for i := 0; i < m; i++ {
-			// Get ints
-			oldNum, errOld := strconv.Atoi(dotOld[i])
-			newNum, errNew := strconv.Atoi(dotNew[i])
-			if errOld == nil && errNew == nil {
-				if newNum > oldNum {
-					return true
+
+			match_old, _ := regexp.MatchString(regex, old[i])
+			match_new, _ := regexp.MatchString(regex, new[i])
+
+			if match_old && match_new { // is number
+				slice_old := 0
+				slice_new := 0
+
+                                // removing "r" if needed
+				if strings.HasPrefix(old[i], "r") {
+					slice_old = 1
 				}
-			} else {
-				if dotNew[i] > dotOld[i] {
-					return true
+				if strings.HasPrefix(new[i], "r") {
+					slice_new = 1
 				}
+
+				// string has already been checked to be a number
+				number_old, _ := strconv.Atoi(old[i][slice_old:])
+				number_new, _ := strconv.Atoi(new[i][slice_new:])
+
+				if number_old != number_new {
+					return number_old < number_new
+				}
+			} else { // is commit hash
+				return old[i] != new[i]
 			}
 		}
 	}
 
+	// version tag isn't right, don't do anything
 	return false
 }
