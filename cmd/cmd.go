@@ -32,7 +32,7 @@ type pair struct {
 }
 
 // Version of yup
-const Version = "1.1.7"
+const Version = "1.1.8"
 
 // Constants for output
 const help = `Usage:
