@@ -512,24 +512,25 @@ Resize:
 	goncurses.MouseMask(goncurses.M_ALL, nil) // temporarily enable all mouse clicks
 	// Init the ncurses colours
 	goncurses.StartColor()
-	goncurses.InitPair(1, goncurses.C_RED, goncurses.C_BLACK)
+	goncurses.UseDefaultColors()
+	goncurses.InitPair(1, goncurses.C_RED, -1)
 	goncurses.InitPair(11, goncurses.C_RED, goncurses.C_WHITE)
-	goncurses.InitPair(2, goncurses.C_CYAN, goncurses.C_BLACK)
+	goncurses.InitPair(2, goncurses.C_CYAN, -1)
 	goncurses.InitPair(12, goncurses.C_CYAN, goncurses.C_WHITE)
-	goncurses.InitPair(3, goncurses.C_YELLOW, goncurses.C_BLACK)
+	goncurses.InitPair(3, goncurses.C_YELLOW, -1)
 	goncurses.InitPair(13, goncurses.C_YELLOW, goncurses.C_WHITE)
-	goncurses.InitPair(4, goncurses.C_GREEN, goncurses.C_BLACK)
+	goncurses.InitPair(4, goncurses.C_GREEN, -1)
 	goncurses.InitPair(14, goncurses.C_GREEN, goncurses.C_WHITE)
-	goncurses.InitPair(5, goncurses.C_MAGENTA, goncurses.C_BLACK)
+	goncurses.InitPair(5, goncurses.C_MAGENTA, -1)
 	goncurses.InitPair(15, goncurses.C_MAGENTA, goncurses.C_WHITE)
-	goncurses.InitPair(6, goncurses.C_WHITE, goncurses.C_BLACK)
+	goncurses.InitPair(6, goncurses.C_WHITE, -1)
 	goncurses.InitPair(16, goncurses.C_WHITE, goncurses.C_WHITE)
 	// Selected
 	goncurses.InitPair(7, goncurses.C_BLACK, goncurses.C_WHITE)
 	goncurses.InitPair(9, goncurses.C_BLACK, goncurses.C_MAGENTA)
 
 	// Menu
-	goncurses.InitPair(8, goncurses.C_BLUE, goncurses.C_BLACK)
+	goncurses.InitPair(8, goncurses.C_BLUE, -1)
 
 	goncurses.InitPair(10, goncurses.C_BLACK, goncurses.C_WHITE)
 
