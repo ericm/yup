@@ -557,6 +557,34 @@ Resize:
 		if !timeout {
 		Sw:
 			switch goncurses.Key(ch) {
+			case 339: // PAGE UP
+				if !(selected == len(*packs)) {
+					rows, _ := stdscr.MaxYX()
+					selected += (rows - 3) / 2
+					if selected > len(*packs) {
+						selected = len(*packs)
+					}
+					update = true
+				}
+			case 338: // PAGE DOWN
+				if !(selected == 1) {
+					rows, _ := stdscr.MaxYX()
+					selected -= (rows - 3) / 2
+					if selected < 1 {
+						selected = 1
+					}
+					update = true
+				}
+			case goncurses.KEY_END:
+				if selected != 1 {
+					selected = 1
+					update = true
+				}
+			case goncurses.KEY_HOME:
+				if selected != len(*packs) {
+					selected = len(*packs)
+					update = true
+				}
 			case 'k':
 				if config.GetConfig().UserFile.VimKeybindings && selected < len(*packs) {
 					// Scroll forward
