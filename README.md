@@ -78,7 +78,7 @@ Custom operations:
 
 - Yup uses _ncurses_. This allows users to both scroll while not displacing the bottom bar and easily navigate to certain results using more natural forms of user input.
 
-- Yup has an easy config file seperate to that of pacman's. This allows it to be more customisable from the get go.
+- Yup has an easy config file separate to that of pacman's. This allows it to be more customisable from the get go.
 
 - Yup has both `yup -c` (for clearing all package cache) and yup `yup -C` (for clearing yup's cache only).
 
